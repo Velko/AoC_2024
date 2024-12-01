@@ -15,10 +15,10 @@ fn main() -> anyhow::Result<()> {
     //     println!("{:?}", x);
     // }
 
-    let result1 = match_lists_1(locations);
+    let result1 = match_lists_1(&locations);
     println!("Result p1: {}", result1);
 
-    let result2 = 0;
+    let result2 = match_lists_2(&locations);;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -44,7 +44,7 @@ fn parse_locations<S: AsRef<str>>(dim: S) -> Result<(i32, i32), InvalidInput>
     Ok(res)
 }
 
-fn match_lists_1(locations: Vec<(i32, i32)>) -> i32 {
+fn match_lists_1(locations: &Vec<(i32, i32)>) -> i32 {
 
     let first_list = 
         locations
@@ -63,6 +63,28 @@ fn match_lists_1(locations: Vec<(i32, i32)>) -> i32 {
         .map(|(first, second)| (first-second).abs())
         .sum()
 }
+
+fn match_lists_2(locations: &Vec<(i32, i32)>) -> i32 {
+
+    let first_list = 
+        locations
+            .iter()
+            .map(|(first, _)| first);
+
+    let second_list = 
+        locations
+            .iter()
+            .map(|(_, second)| second)
+            .collect_vec();
+
+    first_list
+        .map(|&item| second_list
+                        .iter()
+                        .filter(|&&m| *m == item)
+                        .count() as i32 * item)
+        .sum()
+}
+
 
 #[cfg(test)]
 mod tests {
