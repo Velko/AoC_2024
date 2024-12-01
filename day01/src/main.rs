@@ -11,14 +11,10 @@ fn main() -> anyhow::Result<()> {
             .map(parse_locations)
             .try_collect_vec()?;
 
-    // for x in locations {
-    //     println!("{:?}", x);
-    // }
-
     let result1 = match_lists_1(&locations);
     println!("Result p1: {}", result1);
 
-    let result2 = match_lists_2(&locations);;
+    let result2 = match_lists_2(&locations);
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -85,14 +81,3 @@ fn match_lists_2(locations: &Vec<(i32, i32)>) -> i32 {
         .sum()
 }
 
-
-#[cfg(test)]
-mod tests {
-    //use super::*;
-
-    #[test]
-    fn test_works() {
-
-        assert_eq!(1, 1);
-    }
-}
