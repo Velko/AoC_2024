@@ -1,0 +1,5 @@
+/sync.config
+Cargo.lock
+inputs/
+puzzles/
+target/
