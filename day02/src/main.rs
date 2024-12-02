@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = count_safe_reports_1(&reports);
     println!("Result p1: {}", result1);
 
-    let result2 = 0;
+    let result2 = count_safe_reports_2(&reports);
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -59,14 +59,40 @@ fn calc_diffs(report: &[i32]) -> Vec<(i32, i32)> {
         .collect()
 }
 
+fn count_safe_reports_2(reports: &Vec<Vec<i32>>) -> usize {
+    reports
+        .into_iter()
+        .filter(|r|is_report_safe(r) || is_report_safe_when_item_removed(r))
+        .count()
+}
+
+fn is_report_safe_when_item_removed(report: &Vec<i32>) -> bool {
+    (0..report.len())
+        .any(|nth| is_report_safe(&clone_nth_skipped(report, nth)))
+}
+
+fn clone_nth_skipped(report: &Vec<i32>, nth: usize) -> Vec<i32> {
+    report
+        .into_iter()
+        .enumerate()
+        .filter(|&(i, _)| i != nth)
+        .map(|(_, &v)| v)
+        .collect()
+}
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_works() {
+    fn test_skip_one() {
 
-        assert_eq!(1, 1);
+        let input = vec![1, 2, 3, 4, 5];
+
+        let skipped = clone_nth_skipped(&input, 1);
+
+
+        assert_eq!(skipped, vec![1, 3, 4, 5]);
     }
 }
