@@ -35,19 +35,21 @@ fn parse_report<S: AsRef<str>>(dim: S) -> Result<Vec<i32>, InvalidInput>
 fn count_safe_reports_1(reports: &Vec<Vec<i32>>) -> usize {
     reports
         .into_iter()
-        .filter(|r| {
-            let diffs = calc_diffs(r.as_slice());
-
-            diffs
-                .iter()
-                .all(|(v, _)| 1 <= *v && *v <= 3)
-            &&
-            diffs
-                .iter()
-                .unique_by(|(_, s)| s)
-                .count() == 1
-            })
+        .filter(|r|is_report_safe(r))
         .count()
+}
+
+fn is_report_safe(report: &Vec<i32>) -> bool {
+    let diffs = calc_diffs(report.as_slice());
+
+    diffs
+        .iter()
+        .all(|(v, _)| 1 <= *v && *v <= 3)
+    &&
+    diffs
+        .iter()
+        .unique_by(|(_, s)| s)
+        .count() == 1
 }
 
 fn calc_diffs(report: &[i32]) -> Vec<(i32, i32)> {
