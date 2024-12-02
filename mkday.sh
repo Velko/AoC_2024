@@ -18,4 +18,5 @@ ln -s ../puzzles/$DAY.txt readme.txt
 
 cargo add --path ../aoc_tools/
 cargo add anyhow
+cargo add itertools
 cp ../boiler/main.rs src/
