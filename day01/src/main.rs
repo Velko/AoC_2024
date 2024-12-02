@@ -1,10 +1,11 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 use itertools::Itertools;
+use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
 
     let input = aoc_tools::Input::from_cmd()?.read_lines()?;
-    
+
     let locations =
         input
             .iter()
@@ -24,7 +25,7 @@ fn main() -> anyhow::Result<()> {
 fn parse_locations<S: AsRef<str>>(dim: S) -> Result<(i32, i32), InvalidInput>
     where S: Into<String>{
     let r = dim.as_ref();
-    
+
     let parsed =
         r
             .split_ascii_whitespace()
@@ -42,13 +43,13 @@ fn parse_locations<S: AsRef<str>>(dim: S) -> Result<(i32, i32), InvalidInput>
 
 fn match_lists_1(locations: &Vec<(i32, i32)>) -> i32 {
 
-    let first_list = 
+    let first_list =
         locations
             .iter()
             .map(|(first, _)| first)
             .sorted();
 
-    let second_list = 
+    let second_list =
         locations
             .iter()
             .map(|(_, second)| second)
@@ -62,22 +63,23 @@ fn match_lists_1(locations: &Vec<(i32, i32)>) -> i32 {
 
 fn match_lists_2(locations: &Vec<(i32, i32)>) -> i32 {
 
-    let first_list = 
+    let first_list =
         locations
             .iter()
             .map(|(first, _)| first);
 
-    let second_list = 
+    let second_list: HashMap<_, _> =
         locations
-            .iter()
-            .map(|(_, second)| second)
-            .collect_vec();
+            .into_iter()
+            .map(|&(_, second)| second)
+            .sorted()
+            .chunk_by(|&x|x)
+            .into_iter()
+            .map(|(key, val)| (key, val.count()))
+            .collect();
 
     first_list
-        .map(|&item| second_list
-                        .iter()
-                        .filter(|&&m| *m == item)
-                        .count() as i32 * item)
+        .map(|item| *second_list.get(item).unwrap_or(&0) as i32 * item)
         .sum()
 }
 
