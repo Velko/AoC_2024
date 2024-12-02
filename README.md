@@ -25,3 +25,23 @@ Process one list, counting the matching items in another. Multiply and sum them 
 Could made a little refactoring as there's some code repetition in solution for Part 2, but it is simple enough anyway.
 
 Could come back and polish it some more, when in the mood.
+
+Day 2
+=====
+
+Part 1
+------
+
+It could have been done using a loop, but [windows()](https://doc.rust-lang.org/std/primitive.slice.html#method.windows) function
+allows to make it more elegant.
+
+
+Part 2
+------
+
+A flashback to the [mirrors](https://adventofcode.com/2023/day/13). Solved it by simply checking all possibilities. I'm sure there might be a
+smarter solution, but the number of records is small enough for a simple one.
+
+Encountered a potential function for library extension: skip_nth() on Iterator. Will see if I will need it more than once.
+
+It's just Day 2 - we're warming up :-)
