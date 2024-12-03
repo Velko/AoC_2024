@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{env, io::{self, BufRead}, fs::File, collections::HashMap};
+use std::{env, io::{self, BufRead, Read}, fs::File, collections::HashMap};
 
 use itertools::Itertools;
 
@@ -42,6 +42,15 @@ impl Input {
         reader
             .lines()
             .collect()
+    }
+
+    pub fn read_all(&self) -> io::Result<String> {
+        let mut reader = self.open_file()?;
+
+        let mut contents = String::new();
+        reader.read_to_string(&mut contents)?;
+
+        Ok(contents)
     }
 
     pub fn read_grid(&self) -> io::Result<Vec<Vec<char>>> {
