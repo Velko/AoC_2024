@@ -6,4 +6,5 @@ members = [
     "aoc_tools",
     "day01",
     "day02",
+    "day03",
 ]

@@ -1,0 +1,10 @@
+[package]
+name = "day03"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.93"
+aoc_tools = { version = "0.1.0", path = "../aoc_tools" }
+itertools = "0.13.0"
+regex = "1.11.1"
