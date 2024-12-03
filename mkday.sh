@@ -9,11 +9,13 @@ DAY=$1
 
 cargo new day$DAY
 touch inputs/in_$DAY.txt
+touch inputs/sample_$DAY.txt
 touch puzzles/$DAY.txt
 
 cd day$DAY
 
 ln -s ../inputs/in_$DAY.txt input.txt
+ln -s ../inputs/sample_$DAY.txt sample.txt
 ln -s ../puzzles/$DAY.txt readme.txt
 
 cargo add --path ../aoc_tools/
