@@ -45,3 +45,16 @@ smarter solution, but the number of records is small enough for a simple one.
 Encountered a potential function for library extension: skip_nth() on Iterator. Will see if I will need it more than once.
 
 It's just Day 2 - we're warming up :-)
+
+Day 3
+=====
+
+Part 1
+------
+
+Just a simple regex.
+
+Part 2
+------
+
+Ok, ok. Not that simple regex. And a state machine.
