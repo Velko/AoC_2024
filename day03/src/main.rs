@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use aoc_tools::{InvalidInput, ResultExt};
 use regex::Regex;
 
 fn main() -> anyhow::Result<()> {
@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = extract_and_multiply_1(&input)?;
     println!("Result p1: {}", result1);
 
-    let result2 = 0;
+    let result2 = extract_and_multiply_2(&input)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -30,6 +30,35 @@ fn extract_and_multiply_1(input: &str) -> Result<u32, InvalidInput> {
 
     Ok(total)
 }
+
+
+fn extract_and_multiply_2(input: &str) -> Result<u32, InvalidInput> {
+    let re = Regex::new(r"(?:(mul)\s*\(\s*(\d+)\s*,\s*(\d+)\s*\))|(?:(do(?:n't)?)\s*\(\s*\))").unwrap();
+
+    let mut total: u32 = 0;
+
+    let mut enabled = true;
+
+    for caps in re.captures_iter(input) {
+
+        enabled = match caps.get(4).map(|m|m.as_str()) {
+            Some("do") => true,
+            Some("don't") => false,
+            _ => enabled,
+        };
+
+        if enabled && caps.get(1).is_some() {
+            let n1 = caps.get(2).map(|m| m.as_str()).map_err_to_invalid_input(input)?;
+            let n2 = caps.get(3).map(|m| m.as_str()).map_err_to_invalid_input(input)?;
+            let arg1 = str::parse::<u32>(n1).map_err_to_invalid_input(n1)?;
+            let arg2 = str::parse::<u32>(n2).map_err_to_invalid_input(n2)?;
+            total += arg1 * arg2;
+        }
+    }
+
+    Ok(total)
+}
+
 
 
 #[cfg(test)]
