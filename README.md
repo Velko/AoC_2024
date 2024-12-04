@@ -58,3 +58,36 @@ Part 2
 ------
 
 Ok, ok. Not that simple regex. And a state machine.
+
+Day 4
+=====
+
+Part 1
+------
+
+Looking for an X and then look around at growing distance for M A S.
+
+<pre>
+S     S
+ A   A
+  M M
+   X
+  M M
+ A   A
+S     S
+</pre>
+
+Luckily I already had a helper for neighboring cell selection in a grid. Had to improve it a bit to support distances larger than 1 and to
+return None for invalid coordinates, instead of skipping them.
+
+
+Part 2
+------
+
+Now we can look for an A, and check the corner cells of a dist=1 neighbours. There are only 4 valid patterns: MMSS, MSMS, SSMM and SMSM.
+
+<pre>
+0 2
+ A
+5 7
+</pre>
