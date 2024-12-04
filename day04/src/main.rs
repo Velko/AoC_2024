@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Neighbours2D};
+use aoc_tools::{InvalidInput, ResultExt, Neighbours2D};
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?.read_grid()?;
@@ -6,7 +6,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = find_words_1(&input)?;
     println!("Result p1: {}", result1);
 
-    let result2 = 0;
+    let result2 = find_x_2(&input)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -46,6 +46,52 @@ fn find_words_1(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
 
     Ok(total)
 }
+
+fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
+    let height = input.len();
+    let width = input.get(0).map_err_to_invalid_input("Empty input")?.len();
+
+    let search = vec![
+        vec![Some('M'), Some('S'), Some('M'), Some('S')],
+        vec![Some('M'), Some('M'), Some('S'), Some('S')],
+        vec![Some('S'), Some('S'), Some('M'), Some('M')],
+        vec![Some('S'), Some('M'), Some('S'), Some('M')],
+    ];
+
+    let mut total = 0;
+
+    for y in 1..height-1 {
+        for x in 1..width-1 {
+
+            if get_char_xy(input, Some((x, y))) == Some('A') {
+
+                let block: Vec<_> = Neighbours2D::new(x, y, width, height)
+                    .map(|xy| get_char_xy(input, xy))
+                    .collect();
+
+                // pick the corners
+                // 012
+                // 3 4
+                // 567
+
+                let cross: Vec<_> =
+                    block
+                        .into_iter()
+                        .enumerate()
+                        .filter(|&(i, _)| i == 0 || i == 2 || i == 5 || i == 7)
+                        .map(|(_, v)| v)
+                        .collect();
+
+                if search.contains(&cross) {
+                    total += 1;
+                }
+            }
+        }
+    }
+
+    Ok(total)
+}
+
 
 fn get_char_xy(input: &Vec<Vec<char>>, coords: Option<(usize, usize)>) -> Option<char> {
     if let Some((x, y)) = coords {
