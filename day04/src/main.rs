@@ -1,4 +1,5 @@
 use aoc_tools::{InvalidInput, ResultExt, Neighbours2D};
+use std::collections::HashSet;
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?.read_grid()?;
@@ -51,6 +52,8 @@ fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
     let height = input.len();
     let width = input.get(0).map_err_to_invalid_input("Empty input")?.len();
 
+    let corner_indices = HashSet::from([0, 2, 5, 7]);
+
     let search = vec![
         vec![Some('M'), Some('S'), Some('M'), Some('S')],
         vec![Some('M'), Some('M'), Some('S'), Some('S')],
@@ -78,7 +81,7 @@ fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
                     block
                         .into_iter()
                         .enumerate()
-                        .filter(|&(i, _)| i == 0 || i == 2 || i == 5 || i == 7)
+                        .filter(|(i, _)| corner_indices.contains(i))
                         .map(|(_, v)| v)
                         .collect();
 

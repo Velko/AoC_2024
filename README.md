@@ -68,13 +68,13 @@ Part 1
 Looking for an X and then look around at growing distance for M A S.
 
 <pre>
-S     S
- A   A
-  M M
-   X
-  M M
- A   A
-S     S
+S  S  S
+ A A A
+  MMM
+SAMXMAS
+  MMM
+ A A A
+S  S  S
 </pre>
 
 Luckily I already had a helper for neighboring cell selection in a grid. Had to improve it a bit to support distances larger than 1 and to
