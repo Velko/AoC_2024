@@ -107,4 +107,14 @@ mod tests {
 
         assert_eq!(None, neigh.next());
     }
+
+    #[test]
+    fn test_neighbours_0_0_valid_only() {
+        let mut neigh = Neighbours2D::new(0, 0, 5, 5).filter_map(|n|n);
+
+        assert_eq!(Some((1, 0)), neigh.next());
+        assert_eq!(Some((0, 1)), neigh.next());
+        assert_eq!(Some((1, 1)), neigh.next());
+        assert_eq!(None, neigh.next());
+    }
 }
