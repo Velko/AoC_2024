@@ -29,6 +29,16 @@ impl Neighbours2D {
         }
     }
 
+    fn get_neighbour(&self, off_row: isize, off_col: isize) -> Option<(usize, usize)> {
+        let n_col = self.col.checked_add_signed(off_col * self.distance as isize)?;
+        let n_row = self.row.checked_add_signed(off_row * self.distance as isize)?;
+
+        if n_col < self.width && n_row < self.height {
+            Some((n_col, n_row))
+        } else {
+            None
+        }
+    }
 
 }
 
@@ -36,23 +46,8 @@ impl Iterator for Neighbours2D {
     type Item = Option<(usize, usize)>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some((off_row, off_col)) = self.offsets.next()  {
-            if let Some(n_col) = self.col.checked_add_signed(off_col * self.distance as isize)
-            {
-               if let Some(n_row) = self.row.checked_add_signed(off_row * self.distance as isize) {
-                    if n_col < self.width && n_row < self.height {
-                        return Some(Some((n_col, n_row)));
-                    } else {
-                        return Some(None);
-                    }
-               } else {
-                return Some(None);
-                }
-            } else {
-                return Some(None);
-            }
-        }
-        None
+        let (off_row, off_col) = self.offsets.next()?;
+        Some(self.get_neighbour(off_row, off_col))
     }
 }
 
