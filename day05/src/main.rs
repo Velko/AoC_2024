@@ -19,7 +19,6 @@ fn main() -> anyhow::Result<()> {
          .map(parse_update)
          .try_collect_vec()?;
 
-
     let rule_map: HashMap<u32, HashSet<u32>> = rules
         .iter()
         .sorted_by_key(|(k, _)| k)
@@ -134,9 +133,19 @@ fn cmp_by_rules(a: &u32, b: &u32, page_rules: &HashMap<u32, HashSet<u32>>) -> Or
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_works() {
+    use aoc_tools::load_samples;
 
-        assert_eq!(1, 1);
+    #[test]
+    fn test_works() -> anyhow::Result<()> {
+
+        let samples = load_samples()?;
+
+        let result = *samples.get("sample.txt").unwrap_or(&0u64);
+
+
+
+        assert_eq!(result, 143);
+
+        Ok(())
     }
 }
