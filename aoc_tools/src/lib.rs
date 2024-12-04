@@ -12,3 +12,6 @@ pub use namereg::NameRegistry;
 
 mod neighbours;
 pub use neighbours::Neighbours2D;
+
+mod samples;
+pub use samples::TestSamples;

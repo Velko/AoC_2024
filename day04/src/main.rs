@@ -122,8 +122,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_works() {
+    fn test_sample_1() -> anyhow::Result<()> {
 
-        assert_eq!(1, 1);
+        let input = aoc_tools::Input::from_filename("sample.txt")?.read_grid()?;
+
+        let result1 = find_words_1(&input)?;
+
+        assert_eq!(18, result1);
+        Ok(())
+    }
+
+    #[test]
+    fn test_sample_2() -> anyhow::Result<()> {
+
+        let input = aoc_tools::Input::from_filename("sample.txt")?.read_grid()?;
+
+        let result2 = find_x_2(&input)?;
+
+        assert_eq!(9, result2);
+        Ok(())
     }
 }
