@@ -78,23 +78,9 @@ fn parse_update<S: AsRef<str>>(dim: S) -> Result<Vec<u32>, InvalidInput>
 }
 
 fn is_update_safe(update: &Vec<u32>, rules: &Vec<(u32, u32)>) -> bool {
-    for (index, page) in update.iter().enumerate() {
-        let page_rules = rules
-            .iter()
-            .filter(|(p, _)| p == page)
-            .map(|(_, p)| p );
-        for chk_page in page_rules {
-            let chk_pos = update
-                .iter()
-                .position(|p| p == chk_page)
-                .unwrap_or(usize::MAX);
-
-            if chk_pos < index {
-                return false;
-            }
-        }
-    }
-    true
+    update
+        .iter()
+        .is_sorted_by(|a, b| cmp_by_rules(a, b, rules) != Ordering::Greater)
 }
 
 fn extract_middle_page(update: &Vec<u32>) -> u32 {
