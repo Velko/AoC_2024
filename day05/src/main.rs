@@ -110,23 +110,24 @@ fn extract_middle_page(update: &Vec<u32>) -> u32 {
 fn fix_unsafe_update(bad_one: &Vec<u32>, rules: &Vec<(u32, u32)>) -> Vec<u32> {
     let mut fixed = bad_one.clone();
 
-    fixed.sort_by(|a, b|
-    {
-        let mut page_rules = rules
-            .iter()
-            .filter(|(p, _)| p == a)
-            .map(|(_, p)| p );
-
-            if page_rules.contains(b) {
-                Ordering::Less
-            } else if a == b {
-                Ordering::Equal
-            } else {
-                Ordering::Greater
-            }
-    });
+    fixed.sort_by(|a, b| cmp_by_rules(a, b, rules));
 
     fixed
+}
+
+fn cmp_by_rules(a: &u32, b: &u32, rules: &Vec<(u32, u32)>) -> Ordering {
+    let mut page_rules = rules
+        .iter()
+        .filter(|(p, _)| p == a)
+        .map(|(_, p)| p );
+
+    if page_rules.contains(b) {
+        Ordering::Less
+    } else if a == b {
+        Ordering::Equal
+    } else {
+        Ordering::Greater
+    }
 }
 
 
