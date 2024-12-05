@@ -91,3 +91,20 @@ Now we can look for an A, and check the corner cells of a dist=1 neighbours. The
  A
 5 7
 </pre>
+
+
+Day 5
+=====
+
+Part 1
+------
+
+Implemented it the hard way, by iterating, comparing indices and whatnot.
+
+After completing _Part 2_ I came back and re-worked it using is_sorted_by() and the same comparison.
+
+
+Part 2
+------
+
+Could not come up with a viable algorithm at first. And then it hit me: it's just a sorting, using custom comparison function!
