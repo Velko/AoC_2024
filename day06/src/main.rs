@@ -14,7 +14,6 @@ fn main() -> anyhow::Result<()> {
 
     let result2 = calculate_p2(&parsed);
     println!("Result p2: {}", result2);
-    // Wrong Result p2: 1847, 2120
 
     Ok(())
 }
@@ -31,15 +30,22 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
-    let (g, (x, y)) = input;
-    let mut grid = g.clone();
+    let (grid, (x, y)) = input;
+
+    let visited = walk_unobstructed(&grid, *x, *y);
+
+    visited.len()
+}
+
+fn walk_unobstructed(grid: &Grid, x: usize, y: usize) -> HashSet<(usize, usize)> {
+    let mut visited: HashSet<(usize, usize)> = HashSet::new();
 
     let height = grid.len();
     let width = grid.get(0).unwrap().len();
 
-    let mut guard = GuardState::new(*x, *y);
+    let mut guard = GuardState::new(x, y);
 
-    let mut steps: usize = 0;
+    visited.insert((x, y));
 
     while let Some(new_pos) = guard.step(width, height) {
 
@@ -52,96 +58,62 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
         guard = new_pos;
 
-        if *cell_val != 'X' {
-            steps += 1;
-            *grid.get_mut(guard.posy).unwrap().get_mut(guard.posx).unwrap() = 'X';
-        }
+        visited.insert((guard.posx, guard.posy));
+
     }
 
-    steps
+    visited
 }
-
-type VisitedGrid = Vec<Vec<HashSet<Direction>>>;
 
 fn calculate_p2(input: &ParsedInput) -> usize {
     let (grid, (x, y)) = input;
 
+    let mut base_path = walk_unobstructed(&grid, *x, *y);
+
+    base_path.remove(&(*x, *y));
+
+    let mut obstacles = 0;
+
+    for (obx, oby) in base_path.iter() {
+        let mut check_grid = grid.clone();
+        *check_grid.get_mut(*oby).unwrap().get_mut(*obx).unwrap() = 'O';
+
+        if walk_detect_loop(&check_grid, *x, *y) {
+            obstacles += 1;
+        }
+    }
+
+    obstacles
+}
+
+fn walk_detect_loop(grid: &Grid, x: usize, y: usize) -> bool {
+    let mut visited: HashSet<GuardState> = HashSet::new();
+
     let height = grid.len();
     let width = grid.get(0).unwrap().len();
 
-    let mut visited: VisitedGrid =
-        (0..height)
-            .map(|_| (0..width)
-                .map(|_| HashSet::new())
-                .collect())
-            .collect();
+    let mut guard = GuardState::new(x, y);
 
-    let mut guard = GuardState::new(*x, *y);
-
-    let mut num_obstacles: usize = 0;
-
-    if check_if_obstacle_makes_loop(&guard, &visited, &grid) {
-        num_obstacles += 1;
-    }
+    visited.insert(guard);
 
     while let Some(new_pos) = guard.step(width, height) {
 
         let cell_val = grid.get(new_pos.posy).unwrap().get(new_pos.posx).unwrap();
 
-        if *cell_val == '#' {
+        if *cell_val == '#' || *cell_val == 'O' {
             guard = guard.turn();
             continue;
         }
 
         guard = new_pos;
 
-        visited.get_mut(guard.posy).unwrap().get_mut(guard.posx).unwrap().insert(guard.dir);
-
-        //print_grid(&grid);
-
-
-
-        if check_if_obstacle_makes_loop(&guard, &visited, &grid) {
-            num_obstacles += 1;
-        }
-    }
-
-    num_obstacles
-}
-
-fn check_if_obstacle_makes_loop(initial_state: &GuardState, visited_template: &VisitedGrid, grid: &Grid) -> bool {
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-
-    let mut visited = visited_template.clone();
-    let mut what_if_turned = initial_state.turn();
-
-    while let Some(nextstep) = what_if_turned.step(width, height) {
-
-        if *grid.get(nextstep.posy).unwrap().get(nextstep.posx).unwrap() == '#' {
-            what_if_turned = what_if_turned.turn();
-            continue;
-        }
-
-        what_if_turned = nextstep;
-
-        let next_val = visited.get(what_if_turned.posy).unwrap().get(what_if_turned.posx).unwrap();
-        if next_val.contains(&what_if_turned.dir) {
-            //println!("Loop if turned");
+        if visited.contains(&guard) {
             return true;
         }
-        visited.get_mut(what_if_turned.posy).unwrap().get_mut(what_if_turned.posx).unwrap().insert(what_if_turned.dir);
+        visited.insert(guard);
     }
+
     false
-}
-
-fn print_grid(grid: &Vec<Vec<char>>) {
-    for r in grid.iter() {
-        let line: String = r.into_iter().collect();
-        println!("{}", line);
-    }
-
-    println!();
 }
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
@@ -163,11 +135,14 @@ impl Direction {
     }
 }
 
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 struct GuardState {
     posx: usize,
     posy: usize,
     dir: Direction,
 }
+
 
 impl GuardState {
     pub fn new(x: usize, y: usize) -> Self {
