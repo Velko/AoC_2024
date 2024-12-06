@@ -1,5 +1,6 @@
 use aoc_tools::{InvalidInput, NumExt};
 use std::collections::HashSet;
+use rayon::prelude::*;
 
 type Grid = Vec<Vec<char>>;
 
@@ -73,7 +74,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     base_path.remove(&(*x, *y));
 
     let obstacles = base_path
-        .iter()
+        .par_iter()
         .map(|(obx, oby)|walk_detect_loop(&grid, *x, *y, *obx, *oby))
         .sum();
 
