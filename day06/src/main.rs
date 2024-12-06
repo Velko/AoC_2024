@@ -1,4 +1,4 @@
-use aoc_tools::{InvalidInput};
+use aoc_tools::{InvalidInput, NumExt};
 use std::collections::HashSet;
 
 type Grid = Vec<Vec<char>>;
@@ -143,7 +143,6 @@ struct GuardState {
     dir: Direction,
 }
 
-
 impl GuardState {
     pub fn new(x: usize, y: usize) -> Self {
         Self {
@@ -163,20 +162,16 @@ impl GuardState {
 
     pub fn step(&self, width: usize, height: usize) -> Option<Self> {
         let newx = match self.dir {
-            Direction::Right => self.posx + 1,
-            Direction::Left => self.posx.checked_add_signed(-1)?,
+            Direction::Right => self.posx.clamped_add_signed(1, width)?,
+            Direction::Left => self.posx.clamped_add_signed(-1, width)?,
             _ => self.posx,
         };
 
-        if newx >= width { return None; }
-
         let newy = match self.dir {
-            Direction::Down => self.posy + 1,
-            Direction::Up => self.posy.checked_add_signed(-1)?,
+            Direction::Down => self.posy.clamped_add_signed(1, height)?,
+            Direction::Up => self.posy.clamped_add_signed(-1, height)?,
             _ => self.posy,
         };
-
-        if newy >= height { return None; }
 
         Some(Self {
             posx: newx,

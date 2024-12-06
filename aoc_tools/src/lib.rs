@@ -15,3 +15,6 @@ pub use neighbours::Neighbours2D;
 
 mod samples;
 pub use samples::TestSamples;
+
+mod numext;
+pub use numext::NumExt;
