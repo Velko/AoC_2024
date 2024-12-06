@@ -1,4 +1,5 @@
 use aoc_tools::{InvalidInput, NumExt};
+use ndarray::{Array3, ShapeBuilder};
 use std::collections::HashSet;
 use rayon::prelude::*;
 
@@ -82,14 +83,14 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 }
 
 fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> usize {
-    let mut visited: HashSet<GuardState> = HashSet::new();
-
     let height = grid.len();
     let width = grid.get(0).unwrap().len();
 
+    let mut visited: Array3<bool> = Array3::from_elem((width, height, 4).f(), false);
+
     let mut guard = GuardState::new(x, y);
 
-    visited.insert(guard);
+    *visited.get_mut(guard.as_index()).unwrap() = true;
 
     while let Some(new_pos) = guard.step(width, height) {
 
@@ -102,10 +103,10 @@ fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> 
 
         guard = new_pos;
 
-        if visited.contains(&guard) {
+        if *visited.get(guard.as_index()).unwrap() {
             return 1;
         }
-        visited.insert(guard);
+        *visited.get_mut(guard.as_index()).unwrap() = true;
     }
 
     0
@@ -131,7 +132,6 @@ impl Direction {
 }
 
 
-#[derive(Eq, Hash, PartialEq, Clone, Copy)]
 struct GuardState {
     posx: usize,
     posy: usize,
@@ -173,6 +173,10 @@ impl GuardState {
             posy: newy,
             dir: self.dir,
         })
+    }
+
+    pub fn as_index(&self) -> (usize, usize, usize) {
+        (self.posx, self.posy, self.dir as usize)
     }
 }
 
