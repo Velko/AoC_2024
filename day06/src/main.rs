@@ -112,7 +112,7 @@ fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> 
     0
 }
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy)]
 enum Direction {
     Up,
     Right,
