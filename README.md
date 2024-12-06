@@ -125,3 +125,13 @@ Part 2
 I'm sure there is a smart solution, but after several unsuccessful attempts, I reverted to one of the dumbest. Check, what happens if I
 place an obstacle on every tile in path from Part 1. At this stage it is still viable to force it, but the complexity level has started to
 rise.
+
+Came back with some optimizations:
+
+* Converted the obstacle check to not rely on external state. Rewrote the invocation to functional style. Then it was straightforward
+  change to `par_iter()` from [rayon](https://docs.rs/rayon/latest/rayon/index.html) crate. Bam! Instant parallelism!
+* Converted loop tracker from HashSet of coordinates and directions to a 3D array of bools, indexed by coordinates and directions. HashSet
+  is _supposed_ to be fast, but it is slow when compared to array indexing. Not sure if [ndarray](https://docs.rs/ndarray/latest/ndarray/)
+  is the right choice, as it appears to be quite heavy, but I don't think that a hand-crafted one would make much difference.
+
+Got the runtime down from 22s to around 1s. It is still not in the millisecond range as some brag on Reddit, but whatever.
