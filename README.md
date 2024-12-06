@@ -108,3 +108,20 @@ Part 2
 ------
 
 Could not come up with a viable algorithm at first. And then it hit me: it's just a sorting, using custom comparison function!
+
+
+Day 6
+=====
+
+Part 1
+------
+
+A lighter version of [bouncing beams](https://adventofcode.com/2023/day/16)? Nothing fancy - just walk the path and count steps. No, keep track of visited tiles.
+
+
+Part 2
+------
+
+I'm sure there is a smart solution, but after several unsuccessful attempts, I reverted to one of the dumbest. Check, what happens if I
+place an obstacle on every tile in path from Part 1. At this stage it is still viable to force it, but the complexity level has started to
+rise.
