@@ -72,18 +72,15 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     base_path.remove(&(*x, *y));
 
-    let mut obstacles = 0;
-
-    for (obx, oby) in base_path.iter() {
-        if walk_detect_loop(&grid, *x, *y, *obx, *oby) {
-            obstacles += 1;
-        }
-    }
+    let obstacles = base_path
+        .iter()
+        .map(|(obx, oby)|walk_detect_loop(&grid, *x, *y, *obx, *oby))
+        .sum();
 
     obstacles
 }
 
-fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> bool {
+fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> usize {
     let mut visited: HashSet<GuardState> = HashSet::new();
 
     let height = grid.len();
@@ -105,12 +102,12 @@ fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> 
         guard = new_pos;
 
         if visited.contains(&guard) {
-            return true;
+            return 1;
         }
         visited.insert(guard);
     }
 
-    false
+    0
 }
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
