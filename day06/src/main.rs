@@ -1,4 +1,5 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use aoc_tools::{InvalidInput};
+use std::collections::HashSet;
 
 type Grid = Vec<Vec<char>>;
 
@@ -13,6 +14,7 @@ fn main() -> anyhow::Result<()> {
 
     let result2 = calculate_p2(&parsed);
     println!("Result p2: {}", result2);
+    // Wrong Result p2: 1847, 2120
 
     Ok(())
 }
@@ -44,7 +46,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         let cell_val = grid.get(new_pos.posy).unwrap().get(new_pos.posx).unwrap();
 
         if *cell_val == '#' {
-            guard.turn();
+            guard = guard.turn();
             continue;
         }
 
@@ -59,11 +61,90 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     steps
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+type VisitedGrid = Vec<Vec<HashSet<Direction>>>;
+
+fn calculate_p2(input: &ParsedInput) -> usize {
+    let (grid, (x, y)) = input;
+
+    let height = grid.len();
+    let width = grid.get(0).unwrap().len();
+
+    let mut visited: VisitedGrid =
+        (0..height)
+            .map(|_| (0..width)
+                .map(|_| HashSet::new())
+                .collect())
+            .collect();
+
+    let mut guard = GuardState::new(*x, *y);
+
+    let mut num_obstacles: usize = 0;
+
+    if check_if_obstacle_makes_loop(&guard, &visited, &grid) {
+        num_obstacles += 1;
+    }
+
+    while let Some(new_pos) = guard.step(width, height) {
+
+        let cell_val = grid.get(new_pos.posy).unwrap().get(new_pos.posx).unwrap();
+
+        if *cell_val == '#' {
+            guard = guard.turn();
+            continue;
+        }
+
+        guard = new_pos;
+
+        visited.get_mut(guard.posy).unwrap().get_mut(guard.posx).unwrap().insert(guard.dir);
+
+        //print_grid(&grid);
+
+
+
+        if check_if_obstacle_makes_loop(&guard, &visited, &grid) {
+            num_obstacles += 1;
+        }
+    }
+
+    num_obstacles
 }
 
-#[derive(Clone, Copy)]
+fn check_if_obstacle_makes_loop(initial_state: &GuardState, visited_template: &VisitedGrid, grid: &Grid) -> bool {
+    let height = grid.len();
+    let width = grid.get(0).unwrap().len();
+
+    let mut visited = visited_template.clone();
+    let mut what_if_turned = initial_state.turn();
+
+    while let Some(nextstep) = what_if_turned.step(width, height) {
+
+        if *grid.get(nextstep.posy).unwrap().get(nextstep.posx).unwrap() == '#' {
+            what_if_turned = what_if_turned.turn();
+            continue;
+        }
+
+        what_if_turned = nextstep;
+
+        let next_val = visited.get(what_if_turned.posy).unwrap().get(what_if_turned.posx).unwrap();
+        if next_val.contains(&what_if_turned.dir) {
+            //println!("Loop if turned");
+            return true;
+        }
+        visited.get_mut(what_if_turned.posy).unwrap().get_mut(what_if_turned.posx).unwrap().insert(what_if_turned.dir);
+    }
+    false
+}
+
+fn print_grid(grid: &Vec<Vec<char>>) {
+    for r in grid.iter() {
+        let line: String = r.into_iter().collect();
+        println!("{}", line);
+    }
+
+    println!();
+}
+
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 enum Direction {
     Up,
     Right,
@@ -97,8 +178,12 @@ impl GuardState {
         }
     }
 
-    pub fn turn(&mut self) {
-        self.dir = self.dir.turn();
+    pub fn turn(&self) -> GuardState {
+        Self {
+            posx: self.posx,
+            posy: self.posy,
+            dir: self.dir.turn(),
+        }
     }
 
     pub fn step(&self, width: usize, height: usize) -> Option<Self> {
@@ -159,13 +244,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_sample_p2() -> anyhow::Result<()> {
         let (parsed, expected) = load_sample(1)?;
 
         let result2 = calculate_p2(&parsed);
 
-        assert_eq!(expected, result2);
+        assert_eq!(expected, result2 as u64);
         Ok(())
     }
 }
