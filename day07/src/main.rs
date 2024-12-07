@@ -1,4 +1,5 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use rayon::prelude::*;
 
 type ParsedInput = Vec<(u64, Vec<u64>)>;
 
@@ -67,7 +68,7 @@ fn calc_exp_value_1(expected: u64, args: &Vec<u64>) -> bool {
 
 fn calculate_p2(input: &ParsedInput) -> u64 {
     input
-        .into_iter()
+        .into_par_iter()
         .filter(|(expected, args)| calc_exp_value_2(*expected, args))
         .map(|(expected, _)| expected)
         .sum()
@@ -76,7 +77,7 @@ fn calculate_p2(input: &ParsedInput) -> u64 {
 fn calc_exp_value_2(expected: u64, args: &Vec<u64>) -> bool {
 
     (0..(1 << (args.len()-1) * 2))
-        .into_iter()
+        .into_par_iter()
         .any(|pattern| {
             let (_, result) = args
                 .into_iter()

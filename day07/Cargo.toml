@@ -7,3 +7,4 @@ edition = "2024"
 anyhow = "1.0.94"
 aoc_tools = { version = "0.1.0", path = "../aoc_tools" }
 itertools = "0.13.0"
+rayon = "1.10.0"
