@@ -38,12 +38,12 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(input: &ParsedInput) -> u64 {
     input
         .into_iter()
-        .filter(|(expected, args)| calc_exp_value(*expected, args))
+        .filter(|(expected, args)| calc_exp_value_1(*expected, args))
         .map(|(expected, _)| expected)
         .sum()
 }
 
-fn calc_exp_value(expected: u64, args: &Vec<u64>) -> bool {
+fn calc_exp_value_1(expected: u64, args: &Vec<u64>) -> bool {
 
     (0..(1 << args.len()-1))
         .into_iter()
@@ -65,8 +65,39 @@ fn calc_exp_value(expected: u64, args: &Vec<u64>) -> bool {
         })
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> u64 {
+    input
+        .into_iter()
+        .filter(|(expected, args)| calc_exp_value_2(*expected, args))
+        .map(|(expected, _)| expected)
+        .sum()
+}
+
+fn calc_exp_value_2(expected: u64, args: &Vec<u64>) -> bool {
+
+    (0..(1 << (args.len()-1) * 2))
+        .into_iter()
+        .any(|pattern| {
+            let (_, result) = args
+                .into_iter()
+                .cloned()
+                .enumerate()
+                .reduce(|(_, total), (idx, item)| {
+                    match (pattern & (3 << ((idx - 1)*2))) >> ((idx - 1)*2) {
+                        0 | 1 => (idx, total + item),
+                        2 => (idx, total * item),
+                        3 => (idx, concat_numbers(total, item)),
+                        _ => panic!(),
+                    }
+                })
+                .unwrap();
+
+            result == expected
+        })
+}
+
+fn concat_numbers(a: u64, b: u64) -> u64 {
+    format!("{}{}", a, b).parse().unwrap()
 }
 
 #[cfg(test)]
@@ -92,7 +123,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_sample_p2() -> anyhow::Result<()> {
         let (parsed, expected) = load_sample(1)?;
 
