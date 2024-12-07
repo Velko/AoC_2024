@@ -135,3 +135,22 @@ Came back with some optimizations:
   is the right choice, as it appears to be quite heavy, but I don't think that a hand-crafted one would make much difference.
 
 Got the runtime down from 22s to around 1s. It is still not in the millisecond range as some brag on Reddit, but whatever.
+
+
+Day 7
+=====
+
+Part 1
+------
+
+Just checking all possible combinations. Iterating from 0 to 2^num gives a nice bit pattern for operator selection.
+
+
+Part 2
+------
+
+Ok, now it is base-3? Not in the mood for that! What about base4 then? Just ignore one of them (or map one of the operations
+twice). Now we can iterate from 0 to 4^num and select 2-bit patterns.
+
+A bit slower than I would like, but still "forceable". Parallelizing improved that from 3m9s to 51s. Probably I could
+memoize something for greater improvement, but I'm good for now.
