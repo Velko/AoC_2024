@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use aoc_tools::{IterMoreTools, ResultExt};
 use rayon::prelude::*;
 
 type ParsedInput = Vec<(u64, Vec<u64>)>;
@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = calculate_p1(&parsed);
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2_v2(&parsed);
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -66,35 +66,49 @@ fn calc_exp_value_1(expected: u64, args: &Vec<u64>) -> bool {
         })
 }
 
-fn calculate_p2(input: &ParsedInput) -> u64 {
+fn calculate_p2_v2(input: &ParsedInput) -> u64 {
     input
         .into_par_iter()
-        .filter(|(expected, args)| calc_exp_value_2(*expected, args))
+        .filter(|(expected, args)| calc_exp_value_2_v2(*expected, args))
         .map(|(expected, _)| expected)
         .sum()
 }
 
-fn calc_exp_value_2(expected: u64, args: &Vec<u64>) -> bool {
+fn calc_exp_value_2_v2(expected: u64, args: &Vec<u64>) -> bool {
 
-    (0..(1 << (args.len()-1) * 2))
-        .into_par_iter()
-        .any(|pattern| {
-            let (_, result) = args
-                .into_iter()
-                .cloned()
-                .enumerate()
-                .reduce(|(_, total), (idx, item)| {
-                    match (pattern & (3 << ((idx - 1)*2))) >> ((idx - 1)*2) {
-                        0 | 1 => (idx, total + item),
-                        2 => (idx, total * item),
-                        3 => (idx, concat_numbers(total, item)),
-                        _ => panic!(),
-                    }
-                })
-                .unwrap();
+    let mut args = args.into_iter().cloned();
 
-            result == expected
-        })
+    if let Some(value) = args.next() {
+        let m = apply_op_and_check(expected, value, args);
+        m
+    } else {
+        false
+    }
+}
+
+fn apply_op_and_check<I>(expected: u64, calculated: u64, mut args: I) -> bool
+    where I: Iterator<Item = u64> + Clone
+{
+    if calculated > expected {
+        return false;
+    }
+
+    if let Some(arg) = args.next() {
+        let add_res = calculated + arg;
+        if apply_op_and_check(expected, add_res, args.clone()) {
+            return true;
+        }
+
+        let mul_res = calculated * arg;
+        if apply_op_and_check(expected, mul_res, args.clone()) {
+            return true;
+        }
+
+        let concat_res = concat_numbers(calculated, arg);
+        return apply_op_and_check(expected, concat_res, args.clone());
+    } else {
+        return expected == calculated;
+    }
 }
 
 fn concat_numbers(a: u64, b: u64) -> u64 {
@@ -124,10 +138,10 @@ mod tests {
     }
 
     #[test]
-    fn test_sample_p2() -> anyhow::Result<()> {
+    fn test_sample_p2_v2() -> anyhow::Result<()> {
         let (parsed, expected) = load_sample(1)?;
 
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2_v2(&parsed);
 
         assert_eq!(expected, result2);
         Ok(())

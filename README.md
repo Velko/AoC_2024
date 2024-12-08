@@ -156,6 +156,11 @@ A bit slower than I would like, but still "forceable". Parallelizing improved th
 memoize something for greater improvement, but I'm good for now.
 
 
+_Later:_ It appears that implementing this recursively makes a difference. Even the slowest and less optimized version
+(intentionally worsened to power of 4) completes in 19s. Switching to power of 3 speeds it up to 1.5s, early termination
+if result of operations exceeds expected - down to 0.9s, and finally applying parallelization gets it down to 0.38s.
+Overall - an enormous improvement over my first implementation. Sill, for me it feels a lot harder to understand and debug.
+
 
 Day 8
 =====
