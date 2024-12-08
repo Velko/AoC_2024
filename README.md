@@ -154,3 +154,20 @@ twice). Now we can iterate from 0 to 4^num and select 2-bit patterns.
 
 A bit slower than I would like, but still "forceable". Parallelizing improved that from 3m9s to 51s. Probably I could
 memoize something for greater improvement, but I'm good for now.
+
+
+
+Day 8
+=====
+
+Part 1
+------
+
+A puzzle that was hard to understand, but fairly easy to implement. Just add the same distance to the each end of a pair.
+
+
+Part 2
+------
+
+A direct extension of Part 1. Instead of simply checking if the antinode is on the map, keep going until it isn't. And include the
+starting positions.
