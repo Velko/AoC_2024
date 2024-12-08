@@ -45,7 +45,7 @@ mod tests {
 
         let result1 = calculate_p1(&parsed);
 
-        assert_eq!(expected, result1);
+        assert_eq!(expected, result1 as u64);
         Ok(())
     }
 
@@ -56,7 +56,7 @@ mod tests {
 
         let result2 = calculate_p2(&parsed);
 
-        assert_eq!(expected, result2);
+        assert_eq!(expected, result2 as u64);
         Ok(())
     }
 }
