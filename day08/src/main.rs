@@ -56,20 +56,18 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
 
     for (_, loc) in loc_groups.into_iter() {
-        let pairs: Vec<_> = loc.into_iter().combinations(2).collect();
-        for ab in pairs.into_iter() {
-            if let [(ax, ay), (bx, by)] = ab.as_slice() {
+        let pairs = loc.into_iter().tuple_combinations::<(_, _)>();
+        for ((ax, ay), (bx, by)) in pairs {
 
-                let diffx = *bx as isize - *ax as isize;
-                let diffy = *by as isize - *ay as isize;
+            let diffx = *bx as isize - *ax as isize;
+            let diffy = *by as isize - *ay as isize;
 
-                if let Some(anta) = calc_ant(*ax, *ay, -diffx, -diffy, *width, *height) {
-                    antinodes.insert(anta);
-                }
+            if let Some(anta) = calc_ant(*ax, *ay, -diffx, -diffy, *width, *height) {
+                antinodes.insert(anta);
+            }
 
-                if let Some(antb) = calc_ant(*bx, *by, diffx, diffy, *width, *height) {
-                    antinodes.insert(antb);
-                }
+            if let Some(antb) = calc_ant(*bx, *by, diffx, diffy, *width, *height) {
+                antinodes.insert(antb);
             }
         }
     }
@@ -91,24 +89,21 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
 
     for (_, loc) in loc_groups.into_iter() {
-        let pairs: Vec<_> = loc.into_iter().combinations(2).collect();
-        for ab in pairs.into_iter() {
-            if let [(ax, ay), (bx, by)] = ab.as_slice() {
+        let pairs = loc.into_iter().tuple_combinations::<(_, _)>();
+        for ((ax, ay), (bx, by)) in pairs {
+            let diffx = *bx as isize - *ax as isize;
+            let diffy = *by as isize - *ay as isize;
 
-                let diffx = *bx as isize - *ax as isize;
-                let diffy = *by as isize - *ay as isize;
+            let mut multiplier = 0;
+            while let Some(anta) = calc_ant(*ax, *ay, -diffx * multiplier, -diffy * multiplier, *width, *height) {
+                antinodes.insert(anta);
+                multiplier += 1;
+            }
 
-                let mut multiplier = 0;
-                while let Some(anta) = calc_ant(*ax, *ay, -diffx * multiplier, -diffy * multiplier, *width, *height) {
-                    antinodes.insert(anta);
-                    multiplier += 1;
-                }
-
-                multiplier = 0;
-                while let Some(antb) = calc_ant(*bx, *by, diffx * multiplier, diffy * multiplier, *width, *height) {
-                    antinodes.insert(antb);
-                    multiplier += 1;
-                }
+            multiplier = 0;
+            while let Some(antb) = calc_ant(*bx, *by, diffx * multiplier, diffy * multiplier, *width, *height) {
+                antinodes.insert(antb);
+                multiplier += 1;
             }
         }
     }
