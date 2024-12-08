@@ -2,7 +2,7 @@ use aoc_tools::{NumExt};
 use itertools::Itertools;
 use std::collections::HashSet;
 
-type ParsedInput = (Vec<(char, (usize, usize))>, (usize, usize));
+type ParsedInput = (Vec<(char, Vec<(usize, usize)>)>, (usize, usize));
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -33,25 +33,25 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         }
     }
 
-    Ok((locations, (width, height)))
-}
-
-fn calculate_p1(input: &ParsedInput) -> usize {
-    let (locations, (width, height)) = input;
-
     let grouping = locations
         .into_iter()
-        .sorted_by_key(|(k, _)| k)
-        .chunk_by(|(k, _)| k);
+        .sorted_by_key(|(k, _)| *k)
+        .chunk_by(|(k, _)| *k);
 
     let loc_groups: Vec<_> = grouping
         .into_iter()
-        .map(|(key, val)| (*key,
+        .map(|(key, val)| (key,
             val
-                .map(|(_, v)| *v)
+                .map(|(_, v)| v)
                 .collect::<Vec<(usize, usize)>>()
         ))
         .collect();
+
+    Ok((loc_groups, (width, height)))
+}
+
+fn calculate_p1(input: &ParsedInput) -> usize {
+    let (loc_groups, (width, height)) = input;
 
     let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
 
@@ -86,21 +86,7 @@ fn calc_ant(x: usize, y: usize, dx: isize, dy: isize, width: usize, height: usiz
 
 
 fn calculate_p2(input: &ParsedInput) -> usize {
-    let (locations, (width, height)) = input;
-
-    let grouping = locations
-        .into_iter()
-        .sorted_by_key(|(k, _)| k)
-        .chunk_by(|(k, _)| k);
-
-    let loc_groups: Vec<_> = grouping
-        .into_iter()
-        .map(|(key, val)| (*key,
-            val
-                .map(|(_, v)| *v)
-                .collect::<Vec<(usize, usize)>>()
-        ))
-        .collect();
+    let (loc_groups, (width, height)) = input;
 
     let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
 
