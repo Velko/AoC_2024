@@ -85,8 +85,49 @@ fn calc_ant(x: usize, y: usize, dx: isize, dy: isize, width: usize, height: usiz
 }
 
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> usize {
+    let (locations, (width, height)) = input;
+
+    let grouping = locations
+        .into_iter()
+        .sorted_by_key(|(k, _)| k)
+        .chunk_by(|(k, _)| k);
+
+    let loc_groups: Vec<_> = grouping
+        .into_iter()
+        .map(|(key, val)| (*key,
+            val
+                .map(|(_, v)| *v)
+                .collect::<Vec<(usize, usize)>>()
+        ))
+        .collect();
+
+    let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
+
+    for (_, loc) in loc_groups.into_iter() {
+        let pairs: Vec<_> = loc.into_iter().combinations(2).collect();
+        for ab in pairs.into_iter() {
+            if let [(ax, ay), (bx, by)] = ab.as_slice() {
+
+                let diffx = *bx as isize - *ax as isize;
+                let diffy = *by as isize - *ay as isize;
+
+                let mut multiplier = 0;
+                while let Some(anta) = calc_ant(*ax, *ay, -diffx * multiplier, -diffy * multiplier, *width, *height) {
+                    antinodes.insert(anta);
+                    multiplier += 1;
+                }
+
+                multiplier = 0;
+                while let Some(antb) = calc_ant(*bx, *by, diffx * multiplier, diffy * multiplier, *width, *height) {
+                    antinodes.insert(antb);
+                    multiplier += 1;
+                }
+            }
+        }
+    }
+
+    antinodes.len()
 }
 
 #[cfg(test)]
@@ -112,7 +153,16 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    fn test_sample_2_p2() -> anyhow::Result<()> {
+        let (parsed, expected) = load_sample(2)?;
+
+        let result2 = calculate_p2(&parsed);
+
+        assert_eq!(expected, result2 as u64);
+        Ok(())
+    }
+
+    #[test]
     fn test_sample_p2() -> anyhow::Result<()> {
         let (parsed, expected) = load_sample(1)?;
 
@@ -121,4 +171,6 @@ mod tests {
         assert_eq!(expected, result2 as u64);
         Ok(())
     }
+
+
 }
