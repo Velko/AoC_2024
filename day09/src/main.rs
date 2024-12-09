@@ -1,7 +1,7 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 use std::iter::repeat_n;
 
-type ParsedInput = Vec<Option<usize>>;
+type ParsedInput = Vec<(Option<usize>, usize)>;
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -23,20 +23,20 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let mut in_c = in_str.chars().into_iter();
     let mut file_id = 0;
 
-    let mut disk_map: Vec<Option<usize>> = Vec::new();
+    let mut file_desc: Vec<(Option<usize>, usize)> = Vec::new();
 
     while let Some(file_len) = in_c.next() {
-        disk_map.extend(repeat_n(Some(file_id), parse_char(file_len)));
+        file_desc.push((Some(file_id), parse_char(file_len)));
 
         file_id += 1;
         if let Some(space_len) = in_c.next() {
-            disk_map.extend(repeat_n(None, parse_char(space_len)));
+            file_desc.push((None, parse_char(space_len)));
         } else {
             break;
         }
     }
 
-    Ok(disk_map)
+    Ok(file_desc)
 }
 
 fn parse_char(c: char) -> usize {
@@ -44,7 +44,7 @@ fn parse_char(c: char) -> usize {
 }
 
 fn calculate_p1(input: &ParsedInput) -> u64 {
-    let mut disk_map = input.clone();
+    let mut disk_map = expand_disk_map(input);
 
     let mut start_idx = 0;
     let mut end_idx = disk_map.len() - 1;
@@ -66,9 +66,23 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
         end_idx -= 1;
     }
 
+    calculate_disk_checksum(&disk_map)
+}
+
+fn expand_disk_map(input: &ParsedInput) -> Vec<Option<usize>> {
+    let mut disk_map: Vec<Option<usize>> = Vec::new();
+
+    for (val, count) in input.into_iter() {
+        disk_map.extend(repeat_n(val, *count));
+    }
+
+    disk_map
+}
+
+fn calculate_disk_checksum(disk_map: &Vec<Option<usize>>) -> u64 {
     disk_map
         .into_iter()
-        .filter_map(|f|f)
+        .filter_map(|f|*f)
         .enumerate()
         .map(|(pos, file_id)| pos as u64 * file_id as u64)
         .sum()
