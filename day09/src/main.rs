@@ -1,6 +1,11 @@
 use std::iter::repeat_n;
 
-type ParsedInput = Vec<(Option<usize>, usize)>;
+struct InputItem {
+    file_id: Option<usize>,
+    size: usize,
+}
+
+type ParsedInput = Vec<InputItem>;
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -22,14 +27,20 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let mut in_c = in_str.chars().into_iter();
     let mut file_id = 0;
 
-    let mut file_desc: Vec<(Option<usize>, usize)> = Vec::new();
+    let mut file_desc = Vec::new();
 
     while let Some(file_len) = in_c.next() {
-        file_desc.push((Some(file_id), parse_char(file_len)));
-
+        file_desc.push(InputItem {
+            file_id: Some(file_id),
+            size: parse_char(file_len),
+        });
         file_id += 1;
+
         if let Some(space_len) = in_c.next() {
-            file_desc.push((None, parse_char(space_len)));
+            file_desc.push(InputItem {
+                file_id: None,
+                size: parse_char(space_len),
+            });
         } else {
             break;
         }
@@ -72,8 +83,8 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
 fn expand_disk_map(input: &ParsedInput) -> Vec<(Option<usize>, usize)> {
     let mut disk_map: Vec<(Option<usize>, usize)> = Vec::new();
 
-    for (val, count) in input.into_iter() {
-        disk_map.extend(repeat_n((*val, *count), *count));
+    for item in input.into_iter() {
+        disk_map.extend(repeat_n((item.file_id, item.size), item.size));
     }
 
     disk_map
