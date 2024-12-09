@@ -1,1 +1,1 @@
-../inputs/in_07.txt
+../private/inputs/in_07.txt

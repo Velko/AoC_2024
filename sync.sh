@@ -2,5 +2,5 @@
 
 MIRROR=`cat sync.config`
 
-rsync -a inputs puzzles $MIRROR
-rsync -a $MIRROR/inputs $MIRROR/puzzles .
+rsync -a private/inputs private/puzzles $MIRROR
+rsync -a $MIRROR/inputs $MIRROR/puzzles private
