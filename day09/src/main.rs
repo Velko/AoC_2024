@@ -5,6 +5,12 @@ struct InputItem {
     size: usize,
 }
 
+#[derive(Clone, Copy)]
+struct FileSysItem {
+    file_id: Option<usize>,
+    size: usize,
+}
+
 type ParsedInput = Vec<InputItem>;
 
 fn main() -> anyhow::Result<()> {
@@ -61,17 +67,20 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
     let mut end_idx = disk_map.len() - 1;
 
     while start_idx < end_idx {
-        while disk_map[start_idx].0.is_some() {
+        while disk_map[start_idx].file_id.is_some() {
             start_idx += 1;
         }
 
-        while disk_map[end_idx].0.is_none() {
+        while disk_map[end_idx].file_id.is_none() {
             end_idx -= 1;
         }
 
         disk_map[start_idx]
             = disk_map[end_idx];
-            disk_map[end_idx] = (None, 0);
+            disk_map[end_idx] = FileSysItem {
+                file_id: None,
+                size: 0,
+            };
 
         start_idx += 1;
         end_idx -= 1;
@@ -80,21 +89,27 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
     calculate_disk_checksum(&disk_map)
 }
 
-fn expand_disk_map(input: &ParsedInput) -> Vec<(Option<usize>, usize)> {
-    let mut disk_map: Vec<(Option<usize>, usize)> = Vec::new();
+fn expand_disk_map(input: &ParsedInput) -> Vec<FileSysItem> {
+    let mut disk_map = Vec::new();
 
     for item in input.into_iter() {
-        disk_map.extend(repeat_n((item.file_id, item.size), item.size));
+        disk_map.extend(repeat_n(
+            FileSysItem {
+                file_id: item.file_id,
+                size: item.size
+            },
+            item.size)
+        );
     }
 
     disk_map
 }
 
-fn calculate_disk_checksum(disk_map: &[(Option<usize>, usize)]) -> u64 {
+fn calculate_disk_checksum(disk_map: &[FileSysItem]) -> u64 {
     disk_map
         .into_iter()
         .enumerate()
-        .map(|(pos, (file_id, _))| pos as u64 * file_id.unwrap_or(0) as u64 )
+        .map(|(pos, item)| pos as u64 * item.file_id.unwrap_or(0) as u64 )
         .sum()
 }
 
@@ -105,11 +120,11 @@ fn calculate_p2(input: &ParsedInput) -> u64 {
     let mut block_idx = disk_map.len() - 1;
 
     loop {
-        while disk_map[block_idx].0.is_none() {
+        while disk_map[block_idx].file_id.is_none() {
             block_idx -= 1;
         }
 
-        let block_size = disk_map[block_idx].1;
+        let block_size = disk_map[block_idx].size;
         block_idx -= block_size - 1;
 
         //println!("{:?}", &disk_map.as_slice()[end_idx..end_idx + block_size]);
@@ -122,7 +137,7 @@ fn calculate_p2(input: &ParsedInput) -> u64 {
 
 
         if free_idx < disk_map.len() && block_idx > free_idx {
-            let free_size = disk_map[free_idx].1;
+            let free_size = disk_map[free_idx].size;
 
             //println!("{:?}", &disk_map.as_slice()[free_idx..free_idx + free_size]);
 
@@ -146,21 +161,27 @@ fn calculate_p2(input: &ParsedInput) -> u64 {
     calculate_disk_checksum(&disk_map)
 }
 
-fn not_fit(block: &(Option<usize>, usize), wanted: usize) -> bool {
-    block.0.is_some() || block.1 < wanted
+fn not_fit(block: &FileSysItem, wanted: usize) -> bool {
+    block.file_id.is_some() || block.size < wanted
 }
 
-fn move_block(disk_map: &mut [(Option<usize>, usize)], free_idx: usize, block_idx: usize, block_size: usize) {
+fn move_block(disk_map: &mut [FileSysItem], free_idx: usize, block_idx: usize, block_size: usize) {
     for i in 0..block_size {
         disk_map[free_idx + i] = disk_map[block_idx + i];
 
-        disk_map[block_idx + i] = (None, block_size);
+        disk_map[block_idx + i] = FileSysItem {
+            file_id: None,
+            size: block_size,
+        };
     }
 }
 
-fn resize_remaining_free(disk_map: &mut [(Option<usize>, usize)], free_idx: usize, free_size: usize) {
+fn resize_remaining_free(disk_map: &mut [FileSysItem], free_idx: usize, free_size: usize) {
     for i in 0..free_size {
-        disk_map[free_idx + i] = (None, free_size);
+        disk_map[free_idx + i] = FileSysItem {
+            file_id: None,
+            size: free_size,
+        };
     }
 }
 
