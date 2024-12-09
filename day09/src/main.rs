@@ -43,23 +43,24 @@ fn parse_char(c: char) -> usize {
 }
 
 fn calculate_p1(input: &ParsedInput) -> u64 {
-    let mut disk_map = expand_disk_map(input);
+    let mut dm = expand_disk_map(input);
+    let disk_map = dm.as_mut_slice();
 
     let mut start_idx = 0;
     let mut end_idx = disk_map.len() - 1;
 
     while start_idx < end_idx {
-        while disk_map.get(start_idx).unwrap().0.is_some() {
+        while disk_map[start_idx].0.is_some() {
             start_idx += 1;
         }
 
-        while disk_map.get(end_idx).unwrap().0.is_none() {
+        while disk_map[end_idx].0.is_none() {
             end_idx -= 1;
         }
 
-        *disk_map.get_mut(start_idx).unwrap()
-            = *disk_map.get(end_idx).unwrap();
-        *disk_map.get_mut(end_idx).unwrap() = (None, 0);
+        disk_map[start_idx]
+            = disk_map[end_idx];
+            disk_map[end_idx] = (None, 0);
 
         start_idx += 1;
         end_idx -= 1;
@@ -78,7 +79,7 @@ fn expand_disk_map(input: &ParsedInput) -> Vec<(Option<usize>, usize)> {
     disk_map
 }
 
-fn calculate_disk_checksum(disk_map: &Vec<(Option<usize>, usize)>) -> u64 {
+fn calculate_disk_checksum(disk_map: &[(Option<usize>, usize)]) -> u64 {
     disk_map
         .into_iter()
         .enumerate()
@@ -87,29 +88,30 @@ fn calculate_disk_checksum(disk_map: &Vec<(Option<usize>, usize)>) -> u64 {
 }
 
 fn calculate_p2(input: &ParsedInput) -> u64 {
-    let mut disk_map = expand_disk_map(input);
+    let mut dm = expand_disk_map(input);
+    let mut disk_map = dm.as_mut_slice();
 
     let mut block_idx = disk_map.len() - 1;
 
     loop {
-        while disk_map.get(block_idx).unwrap().0.is_none() {
+        while disk_map[block_idx].0.is_none() {
             block_idx -= 1;
         }
 
-        let block_size = disk_map.get(block_idx).unwrap().1;
+        let block_size = disk_map[block_idx].1;
         block_idx -= block_size - 1;
 
         //println!("{:?}", &disk_map.as_slice()[end_idx..end_idx + block_size]);
 
         let mut free_idx = 0;
 
-        while free_idx < disk_map.len() && not_fit(disk_map.get(free_idx).unwrap(), block_size) {
+        while free_idx < disk_map.len() && not_fit(&disk_map[free_idx], block_size) {
             free_idx += 1;
         }
 
 
         if free_idx < disk_map.len() && block_idx > free_idx {
-            let free_size = disk_map.get(free_idx).unwrap().1;
+            let free_size = disk_map[free_idx].1;
 
             //println!("{:?}", &disk_map.as_slice()[free_idx..free_idx + free_size]);
 
@@ -137,18 +139,17 @@ fn not_fit(block: &(Option<usize>, usize), wanted: usize) -> bool {
     block.0.is_some() || block.1 < wanted
 }
 
-fn move_block(disk_map: &mut Vec<(Option<usize>, usize)>, free_idx: usize, block_idx: usize, block_size: usize) {
+fn move_block(disk_map: &mut [(Option<usize>, usize)], free_idx: usize, block_idx: usize, block_size: usize) {
     for i in 0..block_size {
-        *disk_map.get_mut(free_idx + i).unwrap()
-            = *disk_map.get(block_idx + i).unwrap();
+        disk_map[free_idx + i] = disk_map[block_idx + i];
 
-        *disk_map.get_mut(block_idx + i).unwrap() = (None, block_size);
+        disk_map[block_idx + i] = (None, block_size);
     }
 }
 
-fn resize_remaining_free(disk_map: &mut Vec<(Option<usize>, usize)>, free_idx: usize, free_size: usize) {
+fn resize_remaining_free(disk_map: &mut [(Option<usize>, usize)], free_idx: usize, free_size: usize) {
     for i in 0..free_size {
-        *disk_map.get_mut(free_idx + i).unwrap() = (None, free_size);
+        disk_map[free_idx + i] = (None, free_size);
     }
 }
 
