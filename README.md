@@ -176,3 +176,28 @@ Part 2
 
 A direct extension of Part 1. Instead of simply checking if the antinode is on the map, keep going until it isn't. And include the
 starting positions.
+
+
+Day 9
+=====
+
+Part 1
+------
+
+Seemed to be simple enough to just expand the disk map and do it as described in the puzzle.
+
+I only get a feeling that as further I go, by code gets dirtier and dirtier. I'm writing more and more loops, instead of functional
+stuff. Then I do not bother with error handling that much: throwing in some unwrap()s gets it done. Also I'm not building proper
+structs anymore - now it's tuples, over vectors, over tuples.
+
+
+Part 2
+------
+
+I had a suspicion during the Part 1, what the second part will be. At first I tried to think of a proper one, using indexed ranges
+and whatnot, but it seemed to be a bit too complicated. Then I reverted to an updated version of the Part 1, just moving whole blocks,
+instead of single fragments. A slight optimization there was to also store the block/space length with each item, so that start/end
+of them could be calculated more quickly. In hopes that won't be necessary, I also left out coalescing of free space (I did not need it).
+
+The end result was not particulary fast, but still got the answer. I will probably come back and write more optimal solution, but this
+is fine for now.
