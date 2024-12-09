@@ -1,1 +1,1 @@
-../puzzles/03.txt
+../private/puzzles/03.txt

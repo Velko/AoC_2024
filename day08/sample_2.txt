@@ -1,1 +1,1 @@
-../inputs/sample_08_2.txt
+../private/inputs/sample_08_2.txt
