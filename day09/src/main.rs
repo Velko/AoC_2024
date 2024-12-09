@@ -50,17 +50,17 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
     let mut end_idx = disk_map.len() - 1;
 
     while start_idx < end_idx {
-        while disk_map.get(start_idx).unwrap().is_some() {
+        while disk_map.get(start_idx).unwrap().0.is_some() {
             start_idx += 1;
         }
 
-        while disk_map.get(end_idx).unwrap().is_none() {
+        while disk_map.get(end_idx).unwrap().0.is_none() {
             end_idx -= 1;
         }
 
         *disk_map.get_mut(start_idx).unwrap()
             = *disk_map.get(end_idx).unwrap();
-        *disk_map.get_mut(end_idx).unwrap() = None;
+        *disk_map.get_mut(end_idx).unwrap() = (None, 0);
 
         start_idx += 1;
         end_idx -= 1;
@@ -69,20 +69,20 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
     calculate_disk_checksum(&disk_map)
 }
 
-fn expand_disk_map(input: &ParsedInput) -> Vec<Option<usize>> {
-    let mut disk_map: Vec<Option<usize>> = Vec::new();
+fn expand_disk_map(input: &ParsedInput) -> Vec<(Option<usize>, usize)> {
+    let mut disk_map: Vec<(Option<usize>, usize)> = Vec::new();
 
     for (val, count) in input.into_iter() {
-        disk_map.extend(repeat_n(val, *count));
+        disk_map.extend(repeat_n((*val, *count), *count));
     }
 
     disk_map
 }
 
-fn calculate_disk_checksum(disk_map: &Vec<Option<usize>>) -> u64 {
+fn calculate_disk_checksum(disk_map: &Vec<(Option<usize>, usize)>) -> u64 {
     disk_map
         .into_iter()
-        .filter_map(|f|*f)
+        .filter_map(|(f, _)|*f)
         .enumerate()
         .map(|(pos, file_id)| pos as u64 * file_id as u64)
         .sum()
