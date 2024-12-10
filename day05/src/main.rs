@@ -159,11 +159,13 @@ mod tests {
     use super::*;
 
     use aoc_tools::TestSamples;
+    use aoc_tools::ResultExt;
 
     #[test]
     fn test_sample_1() -> anyhow::Result<()> {
         let samples = TestSamples::try_new()?;
-        let (input, expected) = samples.get_sample(0)?;
+        let (input, expected, _) = samples.get_sample(0)?;
+        let expected = expected.map_err_to_invalid_input("Expected value missing")?;
 
         let (updates, rule_map) = parse_input(input)?;
 
@@ -176,7 +178,8 @@ mod tests {
     #[test]
     fn test_sample_2() -> anyhow::Result<()> {
         let samples = TestSamples::try_new()?;
-        let (input, expected) = samples.get_sample(1)?;
+        let (input, expected, _) = samples.get_sample(1)?;
+        let expected = expected.map_err_to_invalid_input("Expected value missing")?;
 
         let (updates, rule_map) = parse_input(input)?;
 
