@@ -75,12 +75,13 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
             end_idx -= 1;
         }
 
-        disk_map[start_idx]
-            = disk_map[end_idx];
-            disk_map[end_idx] = FileSysItem {
-                file_id: None,
-                size: 0,
-            };
+        if start_idx >= end_idx { break; }
+
+        disk_map[start_idx] = disk_map[end_idx];
+        disk_map[end_idx] = FileSysItem {
+            file_id: None,
+            size: 0,
+        };
 
         start_idx += 1;
         end_idx -= 1;
@@ -199,34 +200,38 @@ fn resize_remaining_free(disk_map: &mut [FileSysItem], free_idx: usize, free_siz
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use super::*;
     use aoc_tools::TestSamples;
-    use aoc_tools::ResultExt;
 
-    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, u64)> {
+    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;
-        let (input, expected, _) = samples.get_sample(index)?;
+        let (input, expected1, expected2) = samples.get_sample(index)?;
         let parsed = parse_input(input)?;
-        Ok((parsed, expected.map_err_to_invalid_input("Expected value missing")?))
+        Ok((parsed, expected1, expected2))
     }
 
-    #[test]
-    fn test_sample_p1() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(0)?;
+    #[rstest]
+    #[case(load_sample(0)?)]
+    #[case(load_sample(1)?)]
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
 
-        assert_eq!(expected, result1 as u64);
+        assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
-    #[test]
-    fn test_sample_p2() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(1)?;
+    #[rstest]
+    #[case(load_sample(0)?)]
+    #[case(load_sample(1)?)]
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
 
-        assert_eq!(expected, result2 as u64);
+        println!("{:?}", expected);
+
+        assert_eq!(expected, Some(result2 as u64));
         Ok(())
     }
 }
