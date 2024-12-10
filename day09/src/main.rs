@@ -201,12 +201,13 @@ fn resize_remaining_free(disk_map: &mut [FileSysItem], free_idx: usize, free_siz
 mod tests {
     use super::*;
     use aoc_tools::TestSamples;
+    use aoc_tools::ResultExt;
 
     fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, u64)> {
         let samples = TestSamples::try_new()?;
-        let (input, expected) = samples.get_sample(index)?;
+        let (input, expected, _) = samples.get_sample(index)?;
         let parsed = parse_input(input)?;
-        Ok((parsed, expected))
+        Ok((parsed, expected.map_err_to_invalid_input("Expected value missing")?))
     }
 
     #[test]
