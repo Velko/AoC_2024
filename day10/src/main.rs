@@ -110,11 +110,10 @@ mod tests {
     }
 
     #[rstest]
-    #[case(0)]
-    #[case(2)]
-    #[case(3)]
-    fn test_sample_p1(#[case] sample_num: usize) -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(sample_num)?;
+    #[case(load_sample(0)?)]
+    #[case(load_sample(2)?)]
+    #[case(load_sample(3)?)]
+    fn test_sample_p1(#[case] (parsed, expected): (ParsedInput, u64)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
 
@@ -122,9 +121,9 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_sample_p2() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(1)?;
+    #[rstest]
+    #[case(load_sample(1)?)]
+    fn test_sample_p2(#[case] (parsed, expected): (ParsedInput, u64)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
 
