@@ -201,3 +201,21 @@ of them could be calculated more quickly. In hopes that won't be necessary, I al
 
 The end result was not particulary fast, but still got the answer. I will probably come back and write more optimal solution, but this
 is fine for now.
+
+
+Day 10
+======
+
+Part 1
+------
+
+Walking around recursively and counting the target cells that can be reached.
+
+I misunderstood the assignment at first and counted number of ways, how those peaks could be reached. Spent quite some time to figure out
+why my answers were nowhere near to the expected ones.
+
+
+Part 2
+------
+
+Funny enough, my incorrect version for Part 1 was actually a solution for Part 2.
