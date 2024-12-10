@@ -98,6 +98,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use super::*;
     use aoc_tools::TestSamples;
 
@@ -108,36 +109,18 @@ mod tests {
         Ok((parsed, expected))
     }
 
-    #[test]
-    fn test_sample_p1() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(0)?;
+    #[rstest]
+    #[case(0)]
+    #[case(2)]
+    #[case(3)]
+    fn test_sample_p1(#[case] sample_num: usize) -> anyhow::Result<()> {
+        let (parsed, expected) = load_sample(sample_num)?;
 
         let result1 = calculate_p1(&parsed);
 
         assert_eq!(expected, result1 as u64);
         Ok(())
     }
-
-    #[test]
-    fn test_sample_1_p1() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(2)?;
-
-        let result1 = calculate_p1(&parsed);
-
-        assert_eq!(expected, result1 as u64);
-        Ok(())
-    }
-
-    #[test]
-    fn test_sample_2_p1() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(3)?;
-
-        let result1 = calculate_p1(&parsed);
-
-        assert_eq!(expected, result1 as u64);
-        Ok(())
-    }
-
 
     #[test]
     fn test_sample_p2() -> anyhow::Result<()> {
