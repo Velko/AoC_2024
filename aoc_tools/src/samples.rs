@@ -1,4 +1,5 @@
 use std::{io::{self, BufRead}, fs::File};
+use itertools::Itertools;
 use crate::IterMoreTools;
 use crate::ResultExt;
 use crate::InvalidInput;
@@ -37,19 +38,17 @@ impl TestSamples {
 }
 
 fn parse_sample_line(s: String) -> Result<(String, u64), InvalidInput> {
-    let mut parts = s.split('=');
-    Ok((parts
-            .next()
-            .map_err_to_invalid_input(s.as_str())?
-            .trim()
-            .to_owned(),
-        str::parse::<u64>(parts
-                .next()
-                .map_err_to_invalid_input(s.as_str())?
-                .trim()
-            )
-            .map_err_to_invalid_input(s.as_str())?
-    ))
+    let (filename, expected) = s
+        .split('=')
+        .map(|p| p.trim())
+        .collect_tuple()
+        .map_err_to_invalid_input(s.as_str())?;
+
+    let val = expected
+        .parse::<u64>()
+        .map_err_to_invalid_input(expected)?;
+
+    Ok((filename.to_owned(), val))
 }
 
 #[cfg(test)]
