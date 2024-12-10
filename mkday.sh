@@ -11,7 +11,7 @@ cargo new day$DAY
 touch private/inputs/in_$DAY.txt
 touch private/inputs/sample_$DAY.txt
 cp boiler/tests.txt private/inputs/tests_$DAY.txt
-touch puzzles/$DAY.txt
+touch private/puzzles/$DAY.txt
 
 
 cd day$DAY
