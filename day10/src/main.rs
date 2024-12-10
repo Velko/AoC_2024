@@ -1,8 +1,7 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 use aoc_tools::NumExt;
 use std::collections::HashSet;
 
-type ParsedInput = Vec<Vec<char>>;
+type ParsedInput = (Vec<Vec<char>>, Vec<(usize, usize)>, (usize, usize));
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -18,16 +17,15 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
-    Ok(input.read_grid()?)
-}
 
-fn calculate_p1(input: &ParsedInput) -> usize {
-    let height = input.len();
-    let width = input.get(0).unwrap().len();
+    let grid = input.read_grid()?;
+
+    let height = grid.len();
+    let width = grid.get(0).unwrap().len();
 
     let mut starts: Vec<(usize, usize)> = Vec::new();
 
-    for (y, row) in input.iter().enumerate() {
+    for (y, row) in grid.iter().enumerate() {
         for (x, cell) in row.into_iter().enumerate() {
             if *cell == '0' {
                 starts.push((x, y));
@@ -35,14 +33,17 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         }
     }
 
-    //println!("{:?}", starts);
+    Ok((grid, starts, (width, height)))
+}
 
+fn calculate_p1(input: &ParsedInput) -> usize {
+    let (grid, starts, (width, height)) = input;
 
     let mut total = 0;
 
     for pos in starts.into_iter() {
         let mut reached: HashSet<(usize, usize)> = HashSet::new();
-        walk_path_1(&input, pos, width, height, '0', &mut reached);
+        walk_path(&grid, *pos, *width, *height, '0', &mut reached);
 
         total += reached.len()
     }
@@ -51,38 +52,32 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 }
 
 
-fn walk_path_1(grid: &ParsedInput, (posx, posy): (usize, usize), width: usize, height: usize, current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
-
-    //print!("{:?}, {}", (posx, posy), current_step);
+fn walk_path(grid: &Vec<Vec<char>>, (posx, posy): (usize, usize), width: usize, height: usize, current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
 
     if *grid.get(posy).unwrap().get(posx).unwrap() != current_step {
-        //println!("Exit");
         return 0;
     }
 
     if current_step == '9' {
-        //println!("Score");
         reached.insert((posx, posy));
         return 1;
     }
-
-    //println!();
 
     let mut score = 0;
 
     let next_step = (current_step as u8 + 1) as char;
 
     if let Some(next_x) = posx.clamped_add_signed(1, width) {
-        score += walk_path_1(grid, (next_x, posy), width, height, next_step, reached);
+        score += walk_path(grid, (next_x, posy), width, height, next_step, reached);
     }
     if let Some(next_x) = posx.clamped_add_signed(-1, width) {
-        score += walk_path_1(grid, (next_x, posy), width, height, next_step, reached);
+        score += walk_path(grid, (next_x, posy), width, height, next_step, reached);
     }
     if let Some(next_y) = posy.clamped_add_signed(1, height) {
-        score += walk_path_1(grid, (posx, next_y), width, height, next_step, reached);
+        score += walk_path(grid, (posx, next_y), width, height, next_step, reached);
     }
     if let Some(next_y) = posy.clamped_add_signed(-1, height) {
-        score += walk_path_1(grid, (posx, next_y), width, height, next_step, reached);
+        score += walk_path(grid, (posx, next_y), width, height, next_step, reached);
     }
 
     score
@@ -91,27 +86,13 @@ fn walk_path_1(grid: &ParsedInput, (posx, posy): (usize, usize), width: usize, h
 
 
 fn calculate_p2(input: &ParsedInput) -> usize {
-    let height = input.len();
-    let width = input.get(0).unwrap().len();
-
-    let mut starts: Vec<(usize, usize)> = Vec::new();
-
-    for (y, row) in input.iter().enumerate() {
-        for (x, cell) in row.into_iter().enumerate() {
-            if *cell == '0' {
-                starts.push((x, y));
-            }
-        }
-    }
-
-    //println!("{:?}", starts);
-
+    let (grid, starts, (width, height)) = input;
 
     let mut reached: HashSet<(usize, usize)> = HashSet::new();
 
     starts
         .into_iter()
-        .map(|pos| walk_path_1(&input, pos, width, height, '0', &mut reached))
+        .map(|pos| walk_path(&grid, *pos, *width, *height, '0', &mut reached))
         .sum()
 }
 
