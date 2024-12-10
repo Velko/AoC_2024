@@ -6,7 +6,7 @@ use crate::InvalidInput;
 use crate::Input;
 
 pub struct TestSamples {
-    samples: Vec<(String, u64)>,
+    samples: Vec<(String, Option<u64>, Option<u64>)>,
 }
 
 impl TestSamples {
@@ -29,26 +29,32 @@ impl TestSamples {
         })
     }
 
-    pub fn get_sample(&self, index: usize) -> anyhow::Result<(Input, u64)> {
+    pub fn get_sample(&self, index: usize) -> anyhow::Result<(Input, Option<u64>, Option<u64>)> {
 
-        let (filename, exp_result) = self.samples.get(index).map_err_to_invalid_input("Invalid sample index")?;
+        let (filename, exp_result1, exp_result2) = self.samples.get(index).map_err_to_invalid_input("Invalid sample index")?;
 
-        Ok((crate::Input::from_filename(filename)?, *exp_result))
+        Ok((crate::Input::from_filename(filename)?, *exp_result1, *exp_result2))
     }
 }
 
-fn parse_sample_line(s: String) -> Result<(String, u64), InvalidInput> {
+fn parse_sample_line(s: String) -> Result<(String, Option<u64>, Option<u64>), InvalidInput> {
     let (filename, expected) = s
         .split('=')
         .map(|p| p.trim())
         .collect_tuple()
         .map_err_to_invalid_input(s.as_str())?;
 
-    let val = expected
-        .parse::<u64>()
+    let (first, second) = expected
+        .split(',')
+        .map(|p| p.trim().parse::<u64>().ok())
+        .chain(Some(None).into_iter())
+        .take(2)
+        .collect_tuple()
         .map_err_to_invalid_input(expected)?;
 
-    Ok((filename.to_owned(), val))
+    println!("{:?}, {:?}", first, second);
+
+    Ok((filename.to_owned(), first, second))
 }
 
 #[cfg(test)]
@@ -60,8 +66,9 @@ mod tests {
         let samples = TestSamples::try_new()?;
 
         assert_eq!(vec!
-            [("sample.txt".to_owned(), 421),
-             ("sample2.txt".to_owned(), 1)],
+            [("sample.txt".to_owned(), Some(421), None),
+             ("sample2.txt".to_owned(), None, Some(1)),
+             ("both.txt".to_owned(), Some(3), Some(4))],
             samples.samples);
 
         Ok(())
@@ -72,12 +79,12 @@ mod tests {
 
         let samples = TestSamples::try_new()?;
 
-        let (input, result) = samples.get_sample(0)?;
+        let (input, result1, _) = samples.get_sample(0)?;
 
 
         let input_text = input.read_all()?;
 
-        assert_eq!(result, 421);
+        assert_eq!(result1, Some(421));
         assert_eq!("Here there be tigers!\n", input_text);
 
         Ok(())

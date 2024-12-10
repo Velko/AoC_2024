@@ -102,32 +102,32 @@ mod tests {
     use super::*;
     use aoc_tools::TestSamples;
 
-    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, u64)> {
+    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;
-        let (input, expected) = samples.get_sample(index)?;
+        let (input, expected1, expected2) = samples.get_sample(index)?;
         let parsed = parse_input(input)?;
-        Ok((parsed, expected))
+        Ok((parsed, expected1, expected2))
     }
 
     #[rstest]
     #[case(load_sample(0)?)]
+    #[case(load_sample(1)?)]
     #[case(load_sample(2)?)]
-    #[case(load_sample(3)?)]
-    fn test_sample_p1(#[case] (parsed, expected): (ParsedInput, u64)) -> anyhow::Result<()> {
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
 
-        assert_eq!(expected, result1 as u64);
+        assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
     #[rstest]
-    #[case(load_sample(1)?)]
-    fn test_sample_p2(#[case] (parsed, expected): (ParsedInput, u64)) -> anyhow::Result<()> {
+    #[case(load_sample(0)?)]
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
 
-        assert_eq!(expected, result2 as u64);
+        assert_eq!(expected, Some(result2 as u64));
         Ok(())
     }
 }
