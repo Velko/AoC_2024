@@ -20,18 +20,15 @@ fn main() -> anyhow::Result<()> {
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let grid = input.read_grid()?;
 
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-
     let mut locations: Vec<(char, (usize, usize))> = Vec::new();
 
-    for (y, row) in grid.into_iter().enumerate() {
-        for (x, cell) in row.into_iter().enumerate() {
-            if cell != '.' {
-                locations.push((cell, (x, y)));
-            }
+    for (cell, (x, y)) in grid.enumerate() {
+        if *cell != '.' {
+            locations.push((*cell, (x, y)));
         }
     }
+
+    println!("{:?}", locations);
 
     let grouping = locations
         .into_iter()
@@ -47,7 +44,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         ))
         .collect();
 
-    Ok((loc_groups, (width, height)))
+    Ok((loc_groups, (grid.width(), grid.height())))
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {

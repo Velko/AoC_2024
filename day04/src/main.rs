@@ -1,4 +1,4 @@
-use aoc_tools::{InvalidInput, ResultExt, Neighbours2D};
+use aoc_tools::{Grid, InvalidInput, Neighbours2D};
 use std::collections::HashSet;
 
 fn main() -> anyhow::Result<()> {
@@ -14,44 +14,35 @@ fn main() -> anyhow::Result<()> {
 }
 
 
-fn find_words_1(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
-    let height = input.len();
-    let width = input.get(0).map_err_to_invalid_input("Empty input")?.len();
-
+fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
     let search = vec![Some('M'), Some('A'), Some('S')];
 
     let mut total = 0;
 
-    for y in 0..height {
-        for x in 0..width {
+    for (chr, (x, y)) in input.enumerate() {
+        if *chr == 'X' {
 
-            if get_char_xy(input, Some((x, y))) == Some('X') {
-
-                let neighbours: Vec<Vec<Option<char>>> =
-                    (1..4)
-                        .into_iter()
-                        .map(|distance|
-                                Neighbours2D::new_with_distance(x, y, width, height, distance)
-                                    .map(|xy| get_char_xy(input, xy))
-                                    .collect()
-                        )
-                        .collect();
+            let neighbours: Vec<Vec<Option<char>>> =
+                (1..4)
+                    .into_iter()
+                    .map(|distance|
+                            Neighbours2D::new_with_distance(x, y, input.width(), input.height(), distance)
+                                .map(|xy| get_char_xy(input, xy))
+                                .collect()
+                    )
+                    .collect();
 
 
-                let words = transpose(neighbours);
+            let words = transpose(neighbours);
 
-                total += words.into_iter().filter(|w| *w == search).count();
-            }
+            total += words.into_iter().filter(|w| *w == search).count();
         }
     }
 
     Ok(total)
 }
 
-fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
-    let height = input.len();
-    let width = input.get(0).map_err_to_invalid_input("Empty input")?.len();
-
+fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
     let corner_indices = HashSet::from([0, 2, 5, 7]);
 
     let search = vec![
@@ -63,31 +54,28 @@ fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
 
     let mut total = 0;
 
-    for y in 1..height-1 {
-        for x in 1..width-1 {
+    for (chr, (x, y)) in input.enumerate() {
+        if *chr == 'A' {
 
-            if get_char_xy(input, Some((x, y))) == Some('A') {
+            let block: Vec<_> = Neighbours2D::new(x, y, input.width(), input.height())
+                .map(|xy| get_char_xy(input, xy))
+                .collect();
 
-                let block: Vec<_> = Neighbours2D::new(x, y, width, height)
-                    .map(|xy| get_char_xy(input, xy))
+            // pick the corners
+            // 012
+            // 3 4
+            // 567
+
+            let cross: Vec<_> =
+                block
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(i, _)| corner_indices.contains(i))
+                    .map(|(_, v)| v)
                     .collect();
 
-                // pick the corners
-                // 012
-                // 3 4
-                // 567
-
-                let cross: Vec<_> =
-                    block
-                        .into_iter()
-                        .enumerate()
-                        .filter(|(i, _)| corner_indices.contains(i))
-                        .map(|(_, v)| v)
-                        .collect();
-
-                if search.contains(&cross) {
-                    total += 1;
-                }
+            if search.contains(&cross) {
+                total += 1;
             }
         }
     }
@@ -96,15 +84,8 @@ fn find_x_2(input: &Vec<Vec<char>>) -> Result<usize, InvalidInput> {
 }
 
 
-fn get_char_xy(input: &Vec<Vec<char>>, coords: Option<(usize, usize)>) -> Option<char> {
-    if let Some((x, y)) = coords {
-        Some(*input
-                .get(y)?
-                .get(x)?
-        )
-    } else {
-        None
-    }
+fn get_char_xy(input: &Grid, coords: Option<(usize, usize)>) -> Option<char> {
+    Some(input[coords?])
 }
 
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>>

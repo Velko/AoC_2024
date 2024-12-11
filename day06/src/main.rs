@@ -1,9 +1,7 @@
-use aoc_tools::{InvalidInput, NumExt};
+use aoc_tools::{Grid, InvalidInput, NumExt};
 use ndarray::{Array3, ShapeBuilder};
 use std::collections::HashSet;
 use rayon::prelude::*;
-
-type Grid = Vec<Vec<char>>;
 
 type ParsedInput = (Grid, (usize, usize));
 
@@ -23,9 +21,9 @@ fn main() -> anyhow::Result<()> {
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let grid = input.read_grid()?;
 
-    for (rownum, row) in grid.iter().enumerate() {
-        if let Some(colnum) = row.iter().position(|c| *c == '^') {
-            return Ok((grid, (colnum, rownum)));
+    for (c, pos) in grid.enumerate() {
+        if *c == '^' {
+            return Ok((grid, pos));
         }
     }
     Err(InvalidInput("Guard not found".to_owned()).into())
@@ -42,18 +40,15 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 fn walk_unobstructed(grid: &Grid, x: usize, y: usize) -> HashSet<(usize, usize)> {
     let mut visited: HashSet<(usize, usize)> = HashSet::new();
 
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-
     let mut guard = GuardState::new(x, y);
 
     visited.insert((x, y));
 
-    while let Some(new_pos) = guard.step(width, height) {
+    while let Some(new_pos) = guard.step(grid.width(), grid.height()) {
 
-        let cell_val = grid.get(new_pos.posy).unwrap().get(new_pos.posx).unwrap();
+        let cell_val = grid[(new_pos.posx, new_pos.posy)];
 
-        if *cell_val == '#' {
+        if cell_val == '#' {
             guard = guard.turn();
             continue;
         }
@@ -83,20 +78,18 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 }
 
 fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> usize {
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
 
-    let mut visited: Array3<bool> = Array3::from_elem((width, height, 4).f(), false);
+    let mut visited: Array3<bool> = Array3::from_elem((grid.width(), grid.height(), 4).f(), false);
 
     let mut guard = GuardState::new(x, y);
 
     *visited.get_mut(guard.as_index()).unwrap() = true;
 
-    while let Some(new_pos) = guard.step(width, height) {
+    while let Some(new_pos) = guard.step(grid.width(), grid.height()) {
 
-        let cell_val = grid.get(new_pos.posy).unwrap().get(new_pos.posx).unwrap();
+        let cell_val = grid[(new_pos.posx, new_pos.posy)];
 
-        if *cell_val == '#' || (new_pos.posx == obx && new_pos.posy == oby) {
+        if cell_val == '#' || (new_pos.posx == obx && new_pos.posy == oby) {
             guard = guard.turn();
             continue;
         }
