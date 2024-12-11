@@ -219,3 +219,19 @@ Part 2
 ------
 
 Funny enough, my incorrect version for Part 1 was actually a solution for Part 2.
+
+
+Day 11
+======
+
+Part 1
+------
+
+Seemed to be straightforward enough to just go for it. Build a new list by iterating the input according to the rules. Swap it into the input
+and repeat 25 times.
+
+Part 2
+------
+
+I sure tried to bruteforce it, but at around iteration 38 it became clear, that it won't work. Then I got an idea: the sequence of the pebbles
+does not matter, there's no need to build a long list. Every pebble produces exactly the same "descendants" so I just need to count them.
