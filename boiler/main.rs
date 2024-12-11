@@ -33,16 +33,16 @@ mod tests {
     use super::*;
     use aoc_tools::TestSamples;
 
-    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
+    fn load_sample(filename: &str) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;
-        let (input, expected1, expected2) = samples.get_sample(index)?;
+        let (input, expected1, expected2) = samples.get_sample(filename)?;
         let parsed = parse_input(input)?;
         Ok((parsed, expected1, expected2))
     }
 
     #[rstest]
-    #[case(load_sample(0)?)]
-    //#[case(load_sample(1)?)]
+    #[case(load_sample("sample.txt")?)]
+    //#[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
@@ -52,8 +52,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample(0)?)]
-    //#[case(load_sample(1)?)]
+    #[case(load_sample("sample.txt")?)]
+    //#[case(load_sample("input.txt")?)]
     #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 

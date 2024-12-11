@@ -1,4 +1,5 @@
 use std::{io::{self, BufRead}, fs::File};
+use std::collections::HashMap;
 use itertools::Itertools;
 use crate::IterMoreTools;
 use crate::ResultExt;
@@ -6,7 +7,7 @@ use crate::InvalidInput;
 use crate::Input;
 
 pub struct TestSamples {
-    samples: Vec<(String, Option<u64>, Option<u64>)>,
+    samples: HashMap<String, (Option<u64>, Option<u64>)>,
 }
 
 impl TestSamples {
@@ -23,21 +24,21 @@ impl TestSamples {
             rows
                 .into_iter()
                 .map(|l| parse_sample_line(l))
-                .try_collect_vec()?;
+                .try_collect_map()?;
         Ok(TestSamples {
             samples
         })
     }
 
-    pub fn get_sample(&self, index: usize) -> anyhow::Result<(Input, Option<u64>, Option<u64>)> {
+    pub fn get_sample(&self, filename: &str) -> anyhow::Result<(Input, Option<u64>, Option<u64>)> {
 
-        let (filename, exp_result1, exp_result2) = self.samples.get(index).map_err_to_invalid_input("Invalid sample index")?;
+        let (exp_result1, exp_result2) = self.samples.get(filename).map_err_to_invalid_input("Invalid sample index")?;
 
         Ok((crate::Input::from_filename(filename)?, *exp_result1, *exp_result2))
     }
 }
 
-fn parse_sample_line(s: String) -> Result<(String, Option<u64>, Option<u64>), InvalidInput> {
+fn parse_sample_line(s: String) -> Result<(String, (Option<u64>, Option<u64>)), InvalidInput> {
     let (filename, expected) = s
         .split('=')
         .map(|p| p.trim())
@@ -52,9 +53,7 @@ fn parse_sample_line(s: String) -> Result<(String, Option<u64>, Option<u64>), In
         .collect_tuple()
         .map_err_to_invalid_input(expected)?;
 
-    println!("{:?}, {:?}", first, second);
-
-    Ok((filename.to_owned(), first, second))
+    Ok((filename.to_owned(), (first, second)))
 }
 
 #[cfg(test)]
@@ -65,10 +64,10 @@ mod tests {
     fn test_load_samples() -> anyhow::Result<()> {
         let samples = TestSamples::try_new()?;
 
-        assert_eq!(vec!
-            [("sample.txt".to_owned(), Some(421), None),
-             ("sample2.txt".to_owned(), None, Some(1)),
-             ("both.txt".to_owned(), Some(3), Some(4))],
+        assert_eq!(HashMap::from(
+            [("sample.txt".to_owned(), (Some(421), None)),
+             ("sample2.txt".to_owned(), (None, Some(1))),
+             ("both.txt".to_owned(), (Some(3), Some(4)))]),
             samples.samples);
 
         Ok(())
@@ -79,7 +78,7 @@ mod tests {
 
         let samples = TestSamples::try_new()?;
 
-        let (input, result1, _) = samples.get_sample(0)?;
+        let (input, result1, _) = samples.get_sample("sample.txt")?;
 
 
         let input_text = input.read_all()?;
