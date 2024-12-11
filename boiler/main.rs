@@ -42,6 +42,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample(0)?)]
+    //#[case(load_sample(1)?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
@@ -52,6 +53,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample(0)?)]
+    //#[case(load_sample(1)?)]
     #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
