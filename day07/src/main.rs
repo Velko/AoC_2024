@@ -121,30 +121,30 @@ mod tests {
     use aoc_tools::TestSamples;
     use aoc_tools::ResultExt;
 
-    fn load_sample(index: usize) -> anyhow::Result<(ParsedInput, u64)> {
+    fn load_sample(filename: &str) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;
-        let (input, expected, _) = samples.get_sample(index)?;
+        let (input, expected1, expected2) = samples.get_sample(filename)?;
         let parsed = parse_input(input)?;
-        Ok((parsed, expected.map_err_to_invalid_input("Expected value missing")?))
+        Ok((parsed, expected1, expected2))
     }
 
     #[test]
     fn test_sample_p1() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(0)?;
+        let (parsed, expected, _) = load_sample("sample.txt")?;
 
         let result1 = calculate_p1(&parsed);
 
-        assert_eq!(expected, result1);
+        assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
     #[test]
     fn test_sample_p2_v2() -> anyhow::Result<()> {
-        let (parsed, expected) = load_sample(1)?;
+        let (parsed, _, expected) = load_sample("sample.txt")?;
 
         let result2 = calculate_p2_v2(&parsed);
 
-        assert_eq!(expected, result2);
+        assert_eq!(expected, Some(result2 as u64));
         Ok(())
     }
 }
