@@ -18,3 +18,6 @@ pub use samples::TestSamples;
 
 mod numext;
 pub use numext::NumExt;
+
+mod grid;
+pub use grid::Grid;

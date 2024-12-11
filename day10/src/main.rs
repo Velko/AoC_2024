@@ -1,7 +1,7 @@
-use aoc_tools::NumExt;
+use aoc_tools::{Grid, NumExt};
 use std::collections::HashSet;
 
-type ParsedInput = (Vec<Vec<char>>, Vec<(usize, usize)>, (usize, usize));
+type ParsedInput = (Grid, Vec<(usize, usize)>);
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -20,30 +20,25 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
     let grid = input.read_grid()?;
 
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-
     let mut starts: Vec<(usize, usize)> = Vec::new();
 
-    for (y, row) in grid.iter().enumerate() {
-        for (x, cell) in row.into_iter().enumerate() {
-            if *cell == '0' {
-                starts.push((x, y));
-            }
+    for (cell, (x, y)) in grid.enumerate() {
+        if *cell == '0' {
+            starts.push((x, y));
         }
     }
 
-    Ok((grid, starts, (width, height)))
+    Ok((grid, starts))
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
-    let (grid, starts, (width, height)) = input;
+    let (grid, starts) = input;
 
     let mut total = 0;
 
     for pos in starts.into_iter() {
         let mut reached: HashSet<(usize, usize)> = HashSet::new();
-        walk_path(&grid, *pos, *width, *height, '0', &mut reached);
+        walk_path(&grid, *pos, '0', &mut reached);
 
         total += reached.len()
     }
@@ -52,9 +47,9 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 }
 
 
-fn walk_path(grid: &Vec<Vec<char>>, (posx, posy): (usize, usize), width: usize, height: usize, current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
+fn walk_path(grid: &Grid, (posx, posy): (usize, usize), current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
 
-    if *grid.get(posy).unwrap().get(posx).unwrap() != current_step {
+    if grid[(posx, posy)] != current_step {
         return 0;
     }
 
@@ -67,17 +62,17 @@ fn walk_path(grid: &Vec<Vec<char>>, (posx, posy): (usize, usize), width: usize, 
 
     let next_step = (current_step as u8 + 1) as char;
 
-    if let Some(next_x) = posx.clamped_add_signed(1, width) {
-        score += walk_path(grid, (next_x, posy), width, height, next_step, reached);
+    if let Some(next_x) = posx.clamped_add_signed(1, grid.width()) {
+        score += walk_path(grid, (next_x, posy), next_step, reached);
     }
-    if let Some(next_x) = posx.clamped_add_signed(-1, width) {
-        score += walk_path(grid, (next_x, posy), width, height, next_step, reached);
+    if let Some(next_x) = posx.clamped_add_signed(-1, grid.width()) {
+        score += walk_path(grid, (next_x, posy), next_step, reached);
     }
-    if let Some(next_y) = posy.clamped_add_signed(1, height) {
-        score += walk_path(grid, (posx, next_y), width, height, next_step, reached);
+    if let Some(next_y) = posy.clamped_add_signed(1, grid.height()) {
+        score += walk_path(grid, (posx, next_y), next_step, reached);
     }
-    if let Some(next_y) = posy.clamped_add_signed(-1, height) {
-        score += walk_path(grid, (posx, next_y), width, height, next_step, reached);
+    if let Some(next_y) = posy.clamped_add_signed(-1, grid.height()) {
+        score += walk_path(grid, (posx, next_y), next_step, reached);
     }
 
     score
@@ -86,13 +81,13 @@ fn walk_path(grid: &Vec<Vec<char>>, (posx, posy): (usize, usize), width: usize, 
 
 
 fn calculate_p2(input: &ParsedInput) -> usize {
-    let (grid, starts, (width, height)) = input;
+    let (grid, starts) = input;
 
     let mut reached: HashSet<(usize, usize)> = HashSet::new();
 
     starts
         .into_iter()
-        .map(|pos| walk_path(&grid, *pos, *width, *height, '0', &mut reached))
+        .map(|pos| walk_path(&grid, *pos, '0', &mut reached))
         .sum()
 }
 

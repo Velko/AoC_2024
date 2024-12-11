@@ -1,5 +1,6 @@
 use core::fmt;
 use std::{env, io::{self, BufRead, Read}, fs::File};
+use crate::Grid;
 
 
 pub struct Input {
@@ -52,13 +53,10 @@ impl Input {
         Ok(contents)
     }
 
-    pub fn read_grid(&self) -> io::Result<Vec<Vec<char>>> {
-        let reader = self.open_file()?;
+    pub fn read_grid(&self) -> io::Result<Grid> {
+        let mut reader = self.open_file()?;
 
-        reader
-            .lines()
-            .map(|l| Ok(l?.chars().collect()))
-            .collect()
+        Grid::try_from_reader(&mut reader)
     }
 
     fn open_file(&self) -> io::Result<io::BufReader<File>> {
