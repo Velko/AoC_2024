@@ -1,4 +1,5 @@
 use aoc_tools::{IterMoreTools, ResultExt};
+use std::collections::HashMap;
 
 type ParsedInput = Vec<u64>;
 
@@ -64,8 +65,35 @@ fn split_pebble(p: u64) -> Option<(u64, u64)> {
     }
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> usize {
+
+    let mut pebbles: HashMap<u64, usize> = input
+        .into_iter()
+        .map(|p| (*p, 1))
+        .collect();
+
+    for _ in 0..75 {
+        let mut new_row: HashMap<u64, usize> = HashMap::new();
+
+        for (p, count) in pebbles.into_iter() {
+            if p == 0 {
+                *new_row.entry(1).or_insert(0) += count;
+            } else if let Some((np1, np2)) = split_pebble(p) {
+                *new_row.entry(np1).or_insert(0) += count;
+                *new_row.entry(np2).or_insert(0) += count;
+            } else {
+                let np = p * 2024;
+                *new_row.entry(np).or_insert(0) += count;
+            }
+        }
+
+        pebbles = new_row;
+    }
+
+    pebbles
+        .into_iter()
+        .map(|(_, count)|count)
+        .sum()
 }
 
 #[cfg(test)]
@@ -83,6 +111,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample(0)?)]
+    #[case(load_sample(1)?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
@@ -93,7 +122,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample(0)?)]
-    #[ignore]
+    #[case(load_sample(1)?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
