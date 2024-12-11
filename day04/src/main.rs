@@ -19,14 +19,14 @@ fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
 
     let mut total = 0;
 
-    for (chr, (x, y)) in input.enumerate() {
+    for (chr, pos) in input.enumerate() {
         if *chr == 'X' {
 
             let neighbours: Vec<Vec<Option<char>>> =
                 (1..4)
                     .into_iter()
                     .map(|distance|
-                            Neighbours2D::new_with_distance(x, y, input.width(), input.height(), distance)
+                            Neighbours2D::new_with_distance(pos, input.size(), distance)
                                 .map(|xy| get_char_xy(input, xy))
                                 .collect()
                     )
@@ -54,10 +54,10 @@ fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
 
     let mut total = 0;
 
-    for (chr, (x, y)) in input.enumerate() {
+    for (chr, pos) in input.enumerate() {
         if *chr == 'A' {
 
-            let block: Vec<_> = Neighbours2D::new(x, y, input.width(), input.height())
+            let block: Vec<_> = Neighbours2D::new(pos, input.size())
                 .map(|xy| get_char_xy(input, xy))
                 .collect();
 

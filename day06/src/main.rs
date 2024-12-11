@@ -44,7 +44,7 @@ fn walk_unobstructed(grid: &Grid, x: usize, y: usize) -> HashSet<(usize, usize)>
 
     visited.insert((x, y));
 
-    while let Some(new_pos) = guard.step(grid.width(), grid.height()) {
+    while let Some(new_pos) = guard.step(grid.size()) {
 
         let cell_val = grid[(new_pos.posx, new_pos.posy)];
 
@@ -79,13 +79,14 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
 fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> usize {
 
-    let mut visited: Array3<bool> = Array3::from_elem((grid.width(), grid.height(), 4).f(), false);
+    let (width, height) = grid.size();
+    let mut visited: Array3<bool> = Array3::from_elem((width, height, 4).f(), false);
 
     let mut guard = GuardState::new(x, y);
 
     *visited.get_mut(guard.as_index()).unwrap() = true;
 
-    while let Some(new_pos) = guard.step(grid.width(), grid.height()) {
+    while let Some(new_pos) = guard.step(grid.size()) {
 
         let cell_val = grid[(new_pos.posx, new_pos.posy)];
 
@@ -148,7 +149,7 @@ impl GuardState {
         }
     }
 
-    pub fn step(&self, width: usize, height: usize) -> Option<Self> {
+    pub fn step(&self, (width, height): (usize, usize)) -> Option<Self> {
         let newx = match self.dir {
             Direction::Right => self.posx.clamped_add_signed(1, width)?,
             Direction::Left => self.posx.clamped_add_signed(-1, width)?,

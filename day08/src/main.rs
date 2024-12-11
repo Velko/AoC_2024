@@ -44,7 +44,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         ))
         .collect();
 
-    Ok((loc_groups, (grid.width(), grid.height())))
+    Ok((loc_groups, grid.size()))
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {

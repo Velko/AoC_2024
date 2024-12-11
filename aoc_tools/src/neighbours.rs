@@ -14,11 +14,11 @@ impl Neighbours2D {
          ( 0, -1),          ( 0, 1),
          ( 1, -1), ( 1, 0), ( 1, 1)];
 
-    pub fn new(col: usize, row: usize, width: usize, height: usize) -> Self {
-        Self::new_with_distance(col, row, width, height, 1)
+    pub fn new(position: (usize, usize), size: (usize, usize)) -> Self {
+        Self::new_with_distance(position, size, 1)
     }
 
-    pub fn new_with_distance(col: usize, row: usize, width: usize, height: usize, distance: usize) -> Self {
+    pub fn new_with_distance((col, row): (usize, usize), (width, height): (usize, usize), distance: usize) -> Self {
         Self {
             col,
             row,
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_neighbours_0_0() {
-        let mut neigh = Neighbours2D::new(0, 0, 5, 5);
+        let mut neigh = Neighbours2D::new((0, 0), (5, 5));
 
         assert_eq!(Some(None), neigh.next());
         assert_eq!(Some(None), neigh.next());
@@ -72,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_neighbours_4_4() {
-        let mut neigh = Neighbours2D::new(4, 4, 5, 5);
+        let mut neigh = Neighbours2D::new((4, 4), (5, 5));
 
         assert_eq!(Some(Some((3, 3))), neigh.next());
         assert_eq!(Some(Some((4, 3))), neigh.next());
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_neighbours_2_2() {
-        let mut neigh = Neighbours2D::new(2, 2, 5, 5);
+        let mut neigh = Neighbours2D::new((2, 2), (5, 5));
 
         assert_eq!(Some(Some((1, 1))), neigh.next());
         assert_eq!(Some(Some((2, 1))), neigh.next());
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_neighbours_0_0_valid_only() {
-        let mut neigh = Neighbours2D::new(0, 0, 5, 5).filter_map(|n|n);
+        let mut neigh = Neighbours2D::new((0, 0), (5, 5)).filter_map(|n|n);
 
         assert_eq!(Some((1, 0)), neigh.next());
         assert_eq!(Some((0, 1)), neigh.next());

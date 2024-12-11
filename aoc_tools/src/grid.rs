@@ -65,6 +65,10 @@ impl Grid {
     pub fn height(&self) -> usize {
         self._height
     }
+
+    pub fn size(&self) -> (usize, usize) {
+        (self._width, self._height)
+    }
 }
 
 pub struct GridEnumerator<'a> {
@@ -107,8 +111,7 @@ mod tests {
     fn test_grid_empty() {
         let grid = Grid::new();
 
-        assert_eq!(0, grid.width());
-        assert_eq!(0, grid.height());
+        assert_eq!((0, 0), grid.size());
     }
 
     #[test]
@@ -119,7 +122,6 @@ mod tests {
 
         let grid = Grid::try_from_reader(&mut buffer).unwrap();
 
-        assert_eq!(3, grid.width());
-        assert_eq!(3, grid.height());
+        assert_eq!((3, 3), grid.size());
     }
 }
