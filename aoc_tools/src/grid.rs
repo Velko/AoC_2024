@@ -7,8 +7,8 @@ pub struct Grid {
 }
 
 impl Grid {
-    const MAX_WIDTH: usize = 256;
-    const MAX_HEIGHT: usize = 256;
+    pub const MAX_WIDTH: usize = 256;
+    pub const MAX_HEIGHT: usize = 256;
 
     pub fn new() -> Self {
         Grid {
@@ -25,7 +25,7 @@ impl Grid {
 
         for row in input.lines() {
             let mut col_idx = 0;
-            
+
             let mut row_content = [char::default(); Self::MAX_WIDTH];
             for c in row?.chars() {
                 row_content[col_idx] = c;
@@ -41,7 +41,7 @@ impl Grid {
             content.push(row_content);
         }
 
-        let _height = content.len(); 
+        let _height = content.len();
 
         Ok(Self {
             content: content.into_boxed_slice(),
