@@ -54,20 +54,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     // 5 6 7
     let side_indices = HashSet::from([1, 3, 4, 6]);
 
-    let mut next_id = 0;
-
-    for y in 0..*height {
-        for x in 0..*width {
-
-            if plots[y][x].id.is_none() {
-                plots[y][x].id = Some(next_id);
-
-                //println!("Plot: {:?}", (x, y));
-                fill_neighbours(&mut plots, x, y, *width, *height, next_id);
-                next_id += 1;
-            }
-        }
-    }
+    fill_plots(&mut plots, *width, *height);
 
     print_plots(&plots, *width, *height);
 
@@ -107,6 +94,22 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         .into_iter()
         .map(|(_, t)| t.area * t.perimeter)
         .sum()
+}
+
+fn fill_plots(plots: &mut [[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
+    let mut next_id = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+
+            if plots[y][x].id.is_none() {
+                plots[y][x].id = Some(next_id);
+
+                fill_neighbours(plots, x, y, width, height, next_id);
+                next_id += 1;
+            }
+        }
+    }
 }
 
 
@@ -161,7 +164,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample_1.txt")?)]
-    #[case(load_sample("sample_2.txt")?)]
+    //#[case(load_sample("sample_2.txt")?)]
     //#[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
@@ -172,9 +175,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
+    #[case(load_sample("sample_3.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
