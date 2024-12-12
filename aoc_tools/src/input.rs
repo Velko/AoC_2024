@@ -53,10 +53,10 @@ impl Input {
         Ok(contents)
     }
 
-    pub fn read_grid(&self) -> io::Result<Grid> {
+    pub fn read_grid(&self) -> io::Result<Grid<char>> {
         let mut reader = self.open_file()?;
 
-        Grid::try_from_reader(&mut reader)
+        Grid::<char>::try_from_reader(&mut reader)
     }
 
     fn open_file(&self) -> io::Result<io::BufReader<File>> {
