@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid};
+use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, NumExt};
 use std::collections::HashSet;
 use std::collections::HashMap;
 use aoc_tools::Neighbours2D;
@@ -38,12 +38,14 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 struct Plot {
     plant: char,
     id: Option<usize>,
+    sides: usize,
 }
 
 #[derive(Default, Debug)]
 struct Totals {
     area: usize,
     perimeter: usize,
+    sides: usize,
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
@@ -56,7 +58,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
     fill_plots(&mut plots, *width, *height);
 
-    print_plots(&plots, *width, *height);
+    //print_plots(&plots, *width, *height);
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
@@ -80,7 +82,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
                     }
                 }
 
-                println!("{:?} {} {:?}", (x, y), plot_id, total);
+                //println!("{:?} {} {:?}", (x, y), plot_id, total);
 
             } else {
                 panic!("Not filled");
@@ -88,7 +90,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         }
     }
 
-    println!("{:?}", totals);
+    //println!("{:?}", totals);
 
     totals
         .into_iter()
@@ -139,14 +141,145 @@ fn get_neighbours(x: usize, y: usize, width: usize, height: usize) -> impl Itera
 fn print_plots(plots: &[[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
     for y in 0..height {
         for x in 0..width {
-            print!("{:?}, ", plots[y][x]);
+            if plots[y][x].plant == 'E' {
+                print!("{:?}", plots[y][x].sides);
+            } else {
+                print!(".");
+            }
         }
         println!();
     }
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> usize {
+    let (plots, (width, height)) = input;
+    let mut plots = plots.clone();
+    // 0 1 2
+    // 3   4
+    // 5 6 7
+    //let side_indices = HashSet::from([1, 3, 4, 6]);
+
+    fill_plots(&mut plots, *width, *height);
+
+    //print_plots(&plots, *width, *height);
+
+    for y in 0..*height {
+        let mut current_id: Option<usize> = None;
+        for x in 0..*width {
+            let up = y.clamped_add_signed(-1, *height);
+            let mut is_border = true;
+            if let Some(up_y) = up {
+                if plots[up_y][x].id == plots[y][x].id {
+                    is_border = false;
+                }
+            }
+
+            if is_border && plots[y][x].id != current_id {
+                plots[y][x].sides += 1;
+                current_id = plots[y][x].id;
+            }
+
+            if (!is_border) {
+                current_id = None
+            }
+        }
+    }
+
+    for y in 0..*height {
+        let mut current_id: Option<usize> = None;
+        for x in 0..*width {
+            let down = y.clamped_add_signed(1, *height);
+            let mut is_border = true;
+            if let Some(down_y) = down {
+                if plots[down_y][x].id == plots[y][x].id {
+                    is_border = false;
+                }
+            }
+
+            if is_border && plots[y][x].id != current_id {
+                plots[y][x].sides += 1;
+                current_id = plots[y][x].id;
+            }
+
+            if (!is_border) {
+                current_id = None
+            }
+        }
+    }
+
+    for x in 0..*width {
+        let mut current_id: Option<usize> = None;
+        for y in 0..*height {
+            let left = x.clamped_add_signed(-1, *width);
+            let mut is_border = true;
+            if let Some(left_x) = left {
+                if plots[y][left_x].id == plots[y][x].id {
+                    is_border = false;
+                }
+            }
+
+            if is_border && plots[y][x].id != current_id {
+                plots[y][x].sides += 1;
+                current_id = plots[y][x].id;
+            }
+
+            if (!is_border) {
+                current_id = None
+            }
+        }
+    }
+
+
+    for x in 0..*width {
+        let mut current_id: Option<usize> = None;
+        for y in 0..*height {
+            let right = x.clamped_add_signed(1, *width);
+            let mut is_border = true;
+            if let Some(right_x) = right {
+                if plots[y][right_x].id == plots[y][x].id {
+                    is_border = false;
+                }
+            }
+
+            if is_border && plots[y][x].id != current_id {
+                plots[y][x].sides += 1;
+                current_id = plots[y][x].id;
+            }
+
+            if (!is_border) {
+                current_id = None
+            }
+        }
+    }
+
+
+    //println!("TtoD Left");
+    //print_plots(&plots, *width, *height);
+
+    let mut totals: HashMap<usize, Totals> = HashMap::new();
+
+    for y in 0..*height {
+        for x in 0..*width {
+            if let Some(plot_id) = plots[y][x].id {
+
+                let total = totals.entry(plot_id).or_default();
+
+                total.area += 1;
+                total.sides += plots[y][x].sides;
+            } else {
+                panic!("Not filled");
+            }
+        }
+    }
+
+
+    //println!("Totals: {:?}", totals);
+
+
+    totals
+        .into_iter()
+        .map(|(_, t)| t.area * t.sides)
+        .sum()
 }
 
 #[cfg(test)]
