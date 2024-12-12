@@ -235,3 +235,23 @@ Part 2
 
 I sure tried to bruteforce it, but at around iteration 38 it became clear, that it won't work. Then I got an idea: the sequence of the pebbles
 does not matter, there's no need to build a long list. Every pebble produces exactly the same "descendants" so I just need to count them.
+
+
+Day 12
+======
+
+Part 1
+------
+
+It all starts with flood-filling the regions. After that, calculating areas is straightforward. Getting the perimeter was a bit more complicated,
+but not by much. Just need to look around each plot.
+
+Part 2
+------
+
+While it did not seem so at a first glance, it was quite challenging to come up with an idea, how to calculate the number of sides.
+
+I ended up by scanning each row and marking if each plot begins a new side on the top edge. Then, the same on the bottom edge. Repeat that with
+scanning columns and checking their left and right edges. Implementing that _correctly_ was another challenge.
+
+I mainly focused on getting the E-shaped example right. That solved the whole thing.
