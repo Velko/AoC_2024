@@ -1,7 +1,7 @@
 use aoc_tools::{Grid, NumExt, Neighbours2D, NeighbourMap};
 use std::collections::HashMap;
 
-type ParsedInput = (Box<[[Plot; Grid::<char>::MAX_WIDTH]]>, (usize, usize));
+type ParsedInput = Grid<Plot>;
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -17,19 +17,12 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
-    let grid = input.read_grid()?;
+    let in_grid = input.read_grid()?;
 
-    let plv: Vec<[Plot; Grid::<char>::MAX_WIDTH]> = vec![[Plot::default(); Grid::<char>::MAX_WIDTH]; grid.height()];
 
-    let mut parsed = plv.into_boxed_slice();
+    let parsed = in_grid.map(|p| Plot { plant: p, id: None, sides: 0 });
 
-    for y in 0..grid.height() {
-        for x in 0..grid.width() {
-            parsed[y][x].plant = grid[(x, y)];
-        }
-    }
-
-    Ok((parsed, grid.size()))
+    Ok(parsed)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -47,25 +40,24 @@ struct Totals {
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
-    let (plots, (width, height)) = input;
-    let mut plots = plots.clone();
+    let mut plots = input.clone();
 
-    fill_plots(&mut plots, *width, *height);
+    fill_plots(&mut plots);
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
-    for y in 0..*height {
-        for x in 0..*width {
-            if let Some(plot_id) = plots[y][x].id {
+    for y in 0..plots.height() {
+        for x in 0..plots.width() {
+            if let Some(plot_id) = plots[(x, y)].id {
 
                 let total = totals.entry(plot_id).or_default();
 
                 total.area += 1;
 
-                let neigh = Neighbours2D::new((x, y), (*width, *height), NeighbourMap::Plus);
+                let neigh = Neighbours2D::new((x, y), plots.size(), NeighbourMap::Plus);
                 for n_pos in neigh {
                     if let Some((nx, ny)) = n_pos {
-                        if plots[ny][nx].id != Some(plot_id) {
+                        if plots[(nx, ny)].id != Some(plot_id) {
                             total.perimeter += 1;
                         }
                     } else {
@@ -84,30 +76,30 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         .sum()
 }
 
-fn fill_plots(plots: &mut [[Plot; Grid::<char>::MAX_WIDTH]], width: usize, height: usize) {
+fn fill_plots(plots: &mut Grid<Plot>) {
     let mut next_id = 0;
 
-    for y in 0..height {
-        for x in 0..width {
+    for y in 0..plots.height() {
+        for x in 0..plots.width() {
 
-            if plots[y][x].id.is_none() {
-                plots[y][x].id = Some(next_id);
+            if plots[(x, y)].id.is_none() {
+                plots[(x, y)].id = Some(next_id);
 
-                fill_neighbours(plots, x, y, width, height, next_id);
+                fill_neighbours(plots, x, y, next_id);
                 next_id += 1;
             }
         }
     }
 }
 
-fn fill_neighbours(plots: &mut [[Plot; Grid::<char>::MAX_WIDTH]], x: usize, y: usize, width: usize, height: usize, next_id: usize) {
-    let neigh = Neighbours2D::new((x, y), (width, height), NeighbourMap::Plus);
+fn fill_neighbours(plots: &mut Grid<Plot>, x: usize, y: usize, next_id: usize) {
+    let neigh = Neighbours2D::new((x, y), plots.size(), NeighbourMap::Plus);
 
     for n_pos in neigh {
         if let Some((nx, ny)) = n_pos {
-            if plots[ny][nx].plant == plots[y][x].plant && plots[ny][nx].id.is_none() {
-                plots[ny][nx].id = Some(next_id);
-                fill_neighbours(plots, nx, ny, width, height, next_id);
+            if plots[(nx, ny)].plant == plots[(x, y)].plant && plots[(nx, ny)].id.is_none() {
+                plots[(nx, ny)].id = Some(next_id);
+                fill_neighbours(plots, nx, ny, next_id);
             }
         }
     }
@@ -127,25 +119,24 @@ fn fill_neighbours(plots: &mut [[Plot; Grid::<char>::MAX_WIDTH]], x: usize, y: u
 // }
 
 fn calculate_p2(input: &ParsedInput) -> usize {
-    let (plots, (width, height)) = input;
-    let mut plots = plots.clone();
+    let mut plots = input.clone();
 
-    fill_plots(&mut plots, *width, *height);
+    fill_plots(&mut plots);
 
-    for y in 0..*height {
+    for y in 0..plots.height() {
         let mut current_id: Option<usize> = None;
-        for x in 0..*width {
-            let up = y.clamped_add_signed(-1, *height);
+        for x in 0..plots.width() {
+            let up = y.clamped_add_signed(-1, plots.height());
             let mut is_border = true;
             if let Some(up_y) = up {
-                if plots[up_y][x].id == plots[y][x].id {
+                if plots[(x, up_y)].id == plots[(x, y)].id {
                     is_border = false;
                 }
             }
 
-            if is_border && plots[y][x].id != current_id {
-                plots[y][x].sides += 1;
-                current_id = plots[y][x].id;
+            if is_border && plots[(x, y)].id != current_id {
+                plots[(x, y)].sides += 1;
+                current_id = plots[(x, y)].id;
             }
 
             if !is_border {
@@ -154,20 +145,20 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
     }
 
-    for y in 0..*height {
+    for y in 0..plots.height() {
         let mut current_id: Option<usize> = None;
-        for x in 0..*width {
-            let down = y.clamped_add_signed(1, *height);
+        for x in 0..plots.width() {
+            let down = y.clamped_add_signed(1, plots.height());
             let mut is_border = true;
             if let Some(down_y) = down {
-                if plots[down_y][x].id == plots[y][x].id {
+                if plots[(x, down_y)].id == plots[(x, y)].id {
                     is_border = false;
                 }
             }
 
-            if is_border && plots[y][x].id != current_id {
-                plots[y][x].sides += 1;
-                current_id = plots[y][x].id;
+            if is_border && plots[(x, y)].id != current_id {
+                plots[(x, y)].sides += 1;
+                current_id = plots[(x, y)].id;
             }
 
             if !is_border {
@@ -176,20 +167,20 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
     }
 
-    for x in 0..*width {
+    for x in 0..plots.width() {
         let mut current_id: Option<usize> = None;
-        for y in 0..*height {
-            let left = x.clamped_add_signed(-1, *width);
+        for y in 0..plots.height() {
+            let left = x.clamped_add_signed(-1, plots.width());
             let mut is_border = true;
             if let Some(left_x) = left {
-                if plots[y][left_x].id == plots[y][x].id {
+                if plots[(left_x, y)].id == plots[(x, y)].id {
                     is_border = false;
                 }
             }
 
-            if is_border && plots[y][x].id != current_id {
-                plots[y][x].sides += 1;
-                current_id = plots[y][x].id;
+            if is_border && plots[(x, y)].id != current_id {
+                plots[(x, y)].sides += 1;
+                current_id = plots[(x, y)].id;
             }
 
             if !is_border {
@@ -198,20 +189,20 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
     }
 
-    for x in 0..*width {
+    for x in 0..plots.width() {
         let mut current_id: Option<usize> = None;
-        for y in 0..*height {
-            let right = x.clamped_add_signed(1, *width);
+        for y in 0..plots.height() {
+            let right = x.clamped_add_signed(1, plots.width());
             let mut is_border = true;
             if let Some(right_x) = right {
-                if plots[y][right_x].id == plots[y][x].id {
+                if plots[(right_x, y)].id == plots[(x, y)].id {
                     is_border = false;
                 }
             }
 
-            if is_border && plots[y][x].id != current_id {
-                plots[y][x].sides += 1;
-                current_id = plots[y][x].id;
+            if is_border && plots[(x, y)].id != current_id {
+                plots[(x, y)].sides += 1;
+                current_id = plots[(x, y)].id;
             }
 
             if !is_border {
@@ -222,14 +213,14 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
-    for y in 0..*height {
-        for x in 0..*width {
-            if let Some(plot_id) = plots[y][x].id {
+    for y in 0..plots.height() {
+        for x in 0..plots.width() {
+            if let Some(plot_id) = plots[(x, y)].id {
 
                 let total = totals.entry(plot_id).or_default();
 
                 total.area += 1;
-                total.sides += plots[y][x].sides;
+                total.sides += plots[(x, y)].sides;
             } else {
                 panic!("Not filled");
             }
