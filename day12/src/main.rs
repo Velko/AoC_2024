@@ -1,5 +1,5 @@
-use aoc_tools::{Grid, NumExt, Neighbours2D};
-use std::collections::{HashSet, HashMap};
+use aoc_tools::{Grid, NumExt, Neighbours2D, NeighbourMap};
+use std::collections::HashMap;
 
 type ParsedInput = (Box<[[Plot; Grid::MAX_WIDTH]]>, (usize, usize));
 
@@ -62,7 +62,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
                 total.area += 1;
 
-                let neigh = get_neighbours(x, y, *width, *height);
+                let neigh = Neighbours2D::new((x, y), (*width, *height), NeighbourMap::Plus);
                 for n_pos in neigh {
                     if let Some((nx, ny)) = n_pos {
                         if plots[ny][nx].id != Some(plot_id) {
@@ -101,10 +101,9 @@ fn fill_plots(plots: &mut [[Plot; Grid::MAX_WIDTH]], width: usize, height: usize
 }
 
 fn fill_neighbours(plots: &mut [[Plot; Grid::MAX_WIDTH]], x: usize, y: usize, width: usize, height: usize, next_id: usize) {
-    let neigh = get_neighbours(x, y, width, height);
+    let neigh = Neighbours2D::new((x, y), (width, height), NeighbourMap::Plus);
 
     for n_pos in neigh {
-        //println!("Neigh: {:?}", n_pos);
         if let Some((nx, ny)) = n_pos {
             if plots[ny][nx].plant == plots[y][x].plant && plots[ny][nx].id.is_none() {
                 plots[ny][nx].id = Some(next_id);
@@ -112,15 +111,6 @@ fn fill_neighbours(plots: &mut [[Plot; Grid::MAX_WIDTH]], x: usize, y: usize, wi
             }
         }
     }
-}
-
-fn get_neighbours(x: usize, y: usize, width: usize, height: usize) -> impl Iterator<Item = Option<(usize, usize)>> {
-    let side_indices = HashSet::from([1, 3, 4, 6]);
-
-    Neighbours2D::new((x, y), (width, height))
-        .enumerate()
-        .filter(move |(i, _)| side_indices.contains(i))
-        .map(|(_, v)| v)
 }
 
 // fn print_plots(plots: &[[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {

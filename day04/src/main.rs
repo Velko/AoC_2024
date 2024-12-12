@@ -1,5 +1,4 @@
-use aoc_tools::{Grid, InvalidInput, Neighbours2D};
-use std::collections::HashSet;
+use aoc_tools::{Grid, InvalidInput, Neighbours2D, NeighbourMap};
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?.read_grid()?;
@@ -26,7 +25,7 @@ fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
                 (1..4)
                     .into_iter()
                     .map(|distance|
-                            Neighbours2D::new_with_distance(pos, input.size(), distance)
+                            Neighbours2D::new_with_distance(pos, input.size(), distance, NeighbourMap::All)
                                 .map(|xy| get_char_xy(input, xy))
                                 .collect()
                     )
@@ -43,8 +42,6 @@ fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
 }
 
 fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
-    let corner_indices = HashSet::from([0, 2, 5, 7]);
-
     let search = vec![
         vec![Some('M'), Some('S'), Some('M'), Some('S')],
         vec![Some('M'), Some('M'), Some('S'), Some('S')],
@@ -57,22 +54,9 @@ fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
     for (chr, pos) in input.enumerate() {
         if *chr == 'A' {
 
-            let block: Vec<_> = Neighbours2D::new(pos, input.size())
+            let cross: Vec<_> = Neighbours2D::new(pos, input.size(), NeighbourMap::X)
                 .map(|xy| get_char_xy(input, xy))
                 .collect();
-
-            // pick the corners
-            // 012
-            // 3 4
-            // 567
-
-            let cross: Vec<_> =
-                block
-                    .into_iter()
-                    .enumerate()
-                    .filter(|(i, _)| corner_indices.contains(i))
-                    .map(|(_, v)| v)
-                    .collect();
 
             if search.contains(&cross) {
                 total += 1;
