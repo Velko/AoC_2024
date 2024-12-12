@@ -1,7 +1,5 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, NumExt};
-use std::collections::HashSet;
-use std::collections::HashMap;
-use aoc_tools::Neighbours2D;
+use aoc_tools::{Grid, NumExt, Neighbours2D};
+use std::collections::{HashSet, HashMap};
 
 type ParsedInput = (Box<[[Plot; Grid::MAX_WIDTH]]>, (usize, usize));
 
@@ -51,14 +49,8 @@ struct Totals {
 fn calculate_p1(input: &ParsedInput) -> usize {
     let (plots, (width, height)) = input;
     let mut plots = plots.clone();
-    // 0 1 2
-    // 3   4
-    // 5 6 7
-    let side_indices = HashSet::from([1, 3, 4, 6]);
 
     fill_plots(&mut plots, *width, *height);
-
-    //print_plots(&plots, *width, *height);
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
@@ -71,7 +63,6 @@ fn calculate_p1(input: &ParsedInput) -> usize {
                 total.area += 1;
 
                 let neigh = get_neighbours(x, y, *width, *height);
-
                 for n_pos in neigh {
                     if let Some((nx, ny)) = n_pos {
                         if plots[ny][nx].id != Some(plot_id) {
@@ -81,16 +72,11 @@ fn calculate_p1(input: &ParsedInput) -> usize {
                         total.perimeter += 1;
                     }
                 }
-
-                //println!("{:?} {} {:?}", (x, y), plot_id, total);
-
             } else {
                 panic!("Not filled");
             }
         }
     }
-
-    //println!("{:?}", totals);
 
     totals
         .into_iter()
@@ -113,7 +99,6 @@ fn fill_plots(plots: &mut [[Plot; Grid::MAX_WIDTH]], width: usize, height: usize
         }
     }
 }
-
 
 fn fill_neighbours(plots: &mut [[Plot; Grid::MAX_WIDTH]], x: usize, y: usize, width: usize, height: usize, next_id: usize) {
     let neigh = get_neighbours(x, y, width, height);
@@ -138,30 +123,24 @@ fn get_neighbours(x: usize, y: usize, width: usize, height: usize) -> impl Itera
         .map(|(_, v)| v)
 }
 
-fn print_plots(plots: &[[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
-    for y in 0..height {
-        for x in 0..width {
-            if plots[y][x].plant == 'E' {
-                print!("{:?}", plots[y][x].sides);
-            } else {
-                print!(".");
-            }
-        }
-        println!();
-    }
-}
+// fn print_plots(plots: &[[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
+//     for y in 0..height {
+//         for x in 0..width {
+//             if plots[y][x].plant == 'E' {
+//                 print!("{:?}", plots[y][x].sides);
+//             } else {
+//                 print!(".");
+//             }
+//         }
+//         println!();
+//     }
+// }
 
 fn calculate_p2(input: &ParsedInput) -> usize {
     let (plots, (width, height)) = input;
     let mut plots = plots.clone();
-    // 0 1 2
-    // 3   4
-    // 5 6 7
-    //let side_indices = HashSet::from([1, 3, 4, 6]);
 
     fill_plots(&mut plots, *width, *height);
-
-    //print_plots(&plots, *width, *height);
 
     for y in 0..*height {
         let mut current_id: Option<usize> = None;
@@ -179,7 +158,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
                 current_id = plots[y][x].id;
             }
 
-            if (!is_border) {
+            if !is_border {
                 current_id = None
             }
         }
@@ -201,7 +180,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
                 current_id = plots[y][x].id;
             }
 
-            if (!is_border) {
+            if !is_border {
                 current_id = None
             }
         }
@@ -223,12 +202,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
                 current_id = plots[y][x].id;
             }
 
-            if (!is_border) {
+            if !is_border {
                 current_id = None
             }
         }
     }
-
 
     for x in 0..*width {
         let mut current_id: Option<usize> = None;
@@ -246,15 +224,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
                 current_id = plots[y][x].id;
             }
 
-            if (!is_border) {
+            if !is_border {
                 current_id = None
             }
         }
     }
-
-
-    //println!("TtoD Left");
-    //print_plots(&plots, *width, *height);
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
@@ -271,10 +245,6 @@ fn calculate_p2(input: &ParsedInput) -> usize {
             }
         }
     }
-
-
-    //println!("Totals: {:?}", totals);
-
 
     totals
         .into_iter()
@@ -297,8 +267,8 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample_1.txt")?)]
-    //#[case(load_sample("sample_2.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("sample_2.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
@@ -309,7 +279,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample_3.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
