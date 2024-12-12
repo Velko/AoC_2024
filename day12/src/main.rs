@@ -124,88 +124,23 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     for y in 0..plots.height() {
         let mut current_id: Option<usize> = None;
         for x in 0..plots.width() {
-            let up = y.clamped_add_signed(-1, plots.height());
-            let mut is_border = true;
-            if let Some(up_y) = up {
-                if plots[(x, up_y)].id == plots[(x, y)].id {
-                    is_border = false;
-                }
-            }
-
-            if is_border && plots[(x, y)].id != current_id {
-                plots[(x, y)].sides += 1;
-                current_id = plots[(x, y)].id;
-            }
-
-            if !is_border {
-                current_id = None
-            }
+            mark_plot_side(&mut plots, &mut current_id, (x, y), NeighbourMap::Top);
         }
-    }
-
-    for y in 0..plots.height() {
-        let mut current_id: Option<usize> = None;
+        current_id = None;
         for x in 0..plots.width() {
-            let down = y.clamped_add_signed(1, plots.height());
-            let mut is_border = true;
-            if let Some(down_y) = down {
-                if plots[(x, down_y)].id == plots[(x, y)].id {
-                    is_border = false;
-                }
-            }
-
-            if is_border && plots[(x, y)].id != current_id {
-                plots[(x, y)].sides += 1;
-                current_id = plots[(x, y)].id;
-            }
-
-            if !is_border {
-                current_id = None
-            }
+            mark_plot_side(&mut plots, &mut current_id, (x, y), NeighbourMap::Bottom);
         }
     }
 
     for x in 0..plots.width() {
         let mut current_id: Option<usize> = None;
         for y in 0..plots.height() {
-            let left = x.clamped_add_signed(-1, plots.width());
-            let mut is_border = true;
-            if let Some(left_x) = left {
-                if plots[(left_x, y)].id == plots[(x, y)].id {
-                    is_border = false;
-                }
-            }
-
-            if is_border && plots[(x, y)].id != current_id {
-                plots[(x, y)].sides += 1;
-                current_id = plots[(x, y)].id;
-            }
-
-            if !is_border {
-                current_id = None
-            }
+            mark_plot_side(&mut plots, &mut current_id, (x, y), NeighbourMap::Left);
         }
-    }
 
-    for x in 0..plots.width() {
-        let mut current_id: Option<usize> = None;
+        current_id = None;
         for y in 0..plots.height() {
-            let right = x.clamped_add_signed(1, plots.width());
-            let mut is_border = true;
-            if let Some(right_x) = right {
-                if plots[(right_x, y)].id == plots[(x, y)].id {
-                    is_border = false;
-                }
-            }
-
-            if is_border && plots[(x, y)].id != current_id {
-                plots[(x, y)].sides += 1;
-                current_id = plots[(x, y)].id;
-            }
-
-            if !is_border {
-                current_id = None
-            }
+            mark_plot_side(&mut plots, &mut current_id, (x, y), NeighbourMap::Right);
         }
     }
 
@@ -227,6 +162,25 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         .into_iter()
         .map(|(_, t)| t.area * t.sides)
         .sum()
+}
+
+fn mark_plot_side(plots: &mut Grid<Plot>, current_id: &mut Option<usize>, pos: (usize, usize), chk_side: NeighbourMap) {
+    let neigh = Neighbours2D::new(pos, plots.size(), chk_side);
+    let mut is_border = true;
+    if let Some(n_pos) = neigh.filter_map(|f|f).next() {
+        if plots[n_pos].id == plots[pos].id {
+            is_border = false;
+        }
+    }
+
+    if is_border && plots[pos].id != *current_id {
+        plots[pos].sides += 1;
+        *current_id = plots[pos].id;
+    }
+
+    if !is_border {
+        *current_id = None
+    }
 }
 
 #[cfg(test)]
