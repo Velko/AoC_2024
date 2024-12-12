@@ -46,27 +46,25 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
-    for y in 0..plots.height() {
-        for x in 0..plots.width() {
-            if let Some(plot_id) = plots[(x, y)].id {
+    for (plot, xy) in plots.enumerate() {
+        if let Some(plot_id) = plot.id {
 
-                let total = totals.entry(plot_id).or_default();
+            let total = totals.entry(plot_id).or_default();
 
-                total.area += 1;
+            total.area += 1;
 
-                let neigh = Neighbours2D::new((x, y), plots.size(), NeighbourMap::Plus);
-                for n_pos in neigh {
-                    if let Some((nx, ny)) = n_pos {
-                        if plots[(nx, ny)].id != Some(plot_id) {
-                            total.perimeter += 1;
-                        }
-                    } else {
+            let neigh = Neighbours2D::new(xy, plots.size(), NeighbourMap::Plus);
+            for n_pos in neigh {
+                if let Some(nxy) = n_pos {
+                    if plots[nxy].id != Some(plot_id) {
                         total.perimeter += 1;
                     }
+                } else {
+                    total.perimeter += 1;
                 }
-            } else {
-                panic!("Not filled");
             }
+        } else {
+            panic!("Not filled");
         }
     }
 
@@ -85,21 +83,21 @@ fn fill_plots(plots: &mut Grid<Plot>) {
             if plots[(x, y)].id.is_none() {
                 plots[(x, y)].id = Some(next_id);
 
-                fill_neighbours(plots, x, y, next_id);
+                fill_neighbours(plots, (x, y), next_id);
                 next_id += 1;
             }
         }
     }
 }
 
-fn fill_neighbours(plots: &mut Grid<Plot>, x: usize, y: usize, next_id: usize) {
-    let neigh = Neighbours2D::new((x, y), plots.size(), NeighbourMap::Plus);
+fn fill_neighbours(plots: &mut Grid<Plot>, xy: (usize, usize), next_id: usize) {
+    let neigh = Neighbours2D::new(xy, plots.size(), NeighbourMap::Plus);
 
     for n_pos in neigh {
-        if let Some((nx, ny)) = n_pos {
-            if plots[(nx, ny)].plant == plots[(x, y)].plant && plots[(nx, ny)].id.is_none() {
-                plots[(nx, ny)].id = Some(next_id);
-                fill_neighbours(plots, nx, ny, next_id);
+        if let Some(nxy) = n_pos {
+            if plots[nxy].plant == plots[xy].plant && plots[nxy].id.is_none() {
+                plots[nxy].id = Some(next_id);
+                fill_neighbours(plots, nxy, next_id);
             }
         }
     }
@@ -213,17 +211,15 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     let mut totals: HashMap<usize, Totals> = HashMap::new();
 
-    for y in 0..plots.height() {
-        for x in 0..plots.width() {
-            if let Some(plot_id) = plots[(x, y)].id {
+    for (plot, _) in plots.enumerate() {
+        if let Some(plot_id) = plot.id {
 
-                let total = totals.entry(plot_id).or_default();
+            let total = totals.entry(plot_id).or_default();
 
-                total.area += 1;
-                total.sides += plots[(x, y)].sides;
-            } else {
-                panic!("Not filled");
-            }
+            total.area += 1;
+            total.sides += plot.sides;
+        } else {
+            panic!("Not filled");
         }
     }
 
