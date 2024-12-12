@@ -1,5 +1,6 @@
-use std::{io::{self, BufRead}, ops::Index, default::Default};
+use std::{default::Default, io::{self, BufRead}, ops::{Index, IndexMut}};
 
+#[derive(Clone)]
 pub struct Grid<T>
     where T: Sized
 {
@@ -26,7 +27,6 @@ impl<T> Grid<T>
         }
     }
 
-
     pub fn enumerate(&self) -> GridEnumerator<T> {
         GridEnumerator {
             grid: self,
@@ -45,6 +45,29 @@ impl<T> Grid<T>
 
     pub fn size(&self) -> (usize, usize) {
         (self._width, self._height)
+    }
+
+    pub fn map<U, F>(&self, f: F) -> Grid<U>
+    where
+        U: Sized + Default + Copy,
+        F: Fn(T) -> U,
+    {
+        let mut content = Vec::with_capacity(self._height);
+
+        for row in self.content.iter() {
+            let mut row_content = [U::default(); GRID_MAX_WIDTH];
+            for (col, val) in row.iter().enumerate() {
+                row_content[col] = f(*val);
+            }
+
+            content.push(row_content);
+        }
+
+        Grid {
+            content: content.into_boxed_slice(),
+            _width: self._width,
+            _height: self._height,
+        }
     }
 }
 
@@ -113,6 +136,13 @@ impl<T> Index<(usize, usize)> for Grid<T> {
 
     fn index(&self, (col, row): (usize, usize)) -> &Self::Output {
         &self.content[row][col]
+    }
+}
+
+impl<T> IndexMut<(usize, usize)> for Grid<T> {
+
+    fn index_mut(&mut self, (col, row): (usize, usize)) -> &mut Self::Output {
+        &mut self.content[row][col]
     }
 }
 
