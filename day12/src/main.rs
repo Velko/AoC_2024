@@ -1,7 +1,7 @@
 use aoc_tools::{Grid, NumExt, Neighbours2D, NeighbourMap};
 use std::collections::HashMap;
 
-type ParsedInput = (Box<[[Plot; Grid::MAX_WIDTH]]>, (usize, usize));
+type ParsedInput = (Box<[[Plot; Grid::<char>::MAX_WIDTH]]>, (usize, usize));
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let grid = input.read_grid()?;
 
-    let plv: Vec<[Plot; Grid::MAX_WIDTH]> = vec![[Plot::default(); Grid::MAX_WIDTH]; grid.height()];
+    let plv: Vec<[Plot; Grid::<char>::MAX_WIDTH]> = vec![[Plot::default(); Grid::<char>::MAX_WIDTH]; grid.height()];
 
     let mut parsed = plv.into_boxed_slice();
 
@@ -84,7 +84,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         .sum()
 }
 
-fn fill_plots(plots: &mut [[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
+fn fill_plots(plots: &mut [[Plot; Grid::<char>::MAX_WIDTH]], width: usize, height: usize) {
     let mut next_id = 0;
 
     for y in 0..height {
@@ -100,7 +100,7 @@ fn fill_plots(plots: &mut [[Plot; Grid::MAX_WIDTH]], width: usize, height: usize
     }
 }
 
-fn fill_neighbours(plots: &mut [[Plot; Grid::MAX_WIDTH]], x: usize, y: usize, width: usize, height: usize, next_id: usize) {
+fn fill_neighbours(plots: &mut [[Plot; Grid::<char>::MAX_WIDTH]], x: usize, y: usize, width: usize, height: usize, next_id: usize) {
     let neigh = Neighbours2D::new((x, y), (width, height), NeighbourMap::Plus);
 
     for n_pos in neigh {
@@ -113,7 +113,7 @@ fn fill_neighbours(plots: &mut [[Plot; Grid::MAX_WIDTH]], x: usize, y: usize, wi
     }
 }
 
-// fn print_plots(plots: &[[Plot; Grid::MAX_WIDTH]], width: usize, height: usize) {
+// fn print_plots(plots: &[[Plot; Grid::<char>::MAX_WIDTH]], width: usize, height: usize) {
 //     for y in 0..height {
 //         for x in 0..width {
 //             if plots[y][x].plant == 'E' {

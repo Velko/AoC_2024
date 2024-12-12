@@ -3,7 +3,7 @@ use ndarray::{Array3, ShapeBuilder};
 use std::collections::HashSet;
 use rayon::prelude::*;
 
-type ParsedInput = (Grid, (usize, usize));
+type ParsedInput = (Grid<char>, (usize, usize));
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -37,7 +37,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     visited.len()
 }
 
-fn walk_unobstructed(grid: &Grid, x: usize, y: usize) -> HashSet<(usize, usize)> {
+fn walk_unobstructed(grid: &Grid<char>, x: usize, y: usize) -> HashSet<(usize, usize)> {
     let mut visited: HashSet<(usize, usize)> = HashSet::new();
 
     let mut guard = GuardState::new(x, y);
@@ -77,7 +77,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     obstacles
 }
 
-fn walk_detect_loop(grid: &Grid, x: usize, y: usize, obx: usize, oby: usize) -> usize {
+fn walk_detect_loop(grid: &Grid<char>, x: usize, y: usize, obx: usize, oby: usize) -> usize {
 
     let (width, height) = grid.size();
     let mut visited: Array3<bool> = Array3::from_elem((width, height, 4).f(), false);

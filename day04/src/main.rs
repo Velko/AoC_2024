@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
 }
 
 
-fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
+fn find_words_1(input: &Grid<char>) -> Result<usize, InvalidInput> {
     let search = vec![Some('M'), Some('A'), Some('S')];
 
     let mut total = 0;
@@ -41,7 +41,7 @@ fn find_words_1(input: &Grid) -> Result<usize, InvalidInput> {
     Ok(total)
 }
 
-fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
+fn find_x_2(input: &Grid<char>) -> Result<usize, InvalidInput> {
     let search = vec![
         vec![Some('M'), Some('S'), Some('M'), Some('S')],
         vec![Some('M'), Some('M'), Some('S'), Some('S')],
@@ -68,7 +68,7 @@ fn find_x_2(input: &Grid) -> Result<usize, InvalidInput> {
 }
 
 
-fn get_char_xy(input: &Grid, coords: Option<(usize, usize)>) -> Option<char> {
+fn get_char_xy(input: &Grid<char>, coords: Option<(usize, usize)>) -> Option<char> {
     Some(input[coords?])
 }
 

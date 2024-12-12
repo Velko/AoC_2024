@@ -1,7 +1,7 @@
 use aoc_tools::{Grid, NumExt};
 use std::collections::HashSet;
 
-type ParsedInput = (Grid, Vec<(usize, usize)>);
+type ParsedInput = (Grid<char>, Vec<(usize, usize)>);
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -47,7 +47,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 }
 
 
-fn walk_path(grid: &Grid, (posx, posy): (usize, usize), current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
+fn walk_path(grid: &Grid<char>, (posx, posy): (usize, usize), current_step: char, reached: &mut HashSet<(usize, usize)>) -> usize {
 
     if grid[(posx, posy)] != current_step {
         return 0;
