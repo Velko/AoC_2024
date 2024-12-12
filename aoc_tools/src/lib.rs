@@ -11,7 +11,7 @@ mod namereg;
 pub use namereg::NameRegistry;
 
 mod neighbours;
-pub use neighbours::Neighbours2D;
+pub use neighbours::{Neighbours2D, NeighbourMap};
 
 mod samples;
 pub use samples::TestSamples;
