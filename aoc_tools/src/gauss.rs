@@ -1,7 +1,9 @@
-pub fn gauss_eliminate<const NROWS: usize, const NCOLS: usize> (m: &mut [[f64; NCOLS]; NROWS]) -> bool {
+use num::Rational64;
+
+pub fn gauss_eliminate<const NROWS: usize, const NCOLS: usize> (m: &mut [[Rational64; NCOLS]; NROWS]) -> bool {
     for i in 0..NROWS {
         let d = m[i][i];
-        if d == 0.0 {
+        if d == Rational64::ZERO {
             return false;
         }
 
@@ -48,9 +50,9 @@ mod tests {
     #[test]
     fn test_solve_sample() {
 
-        let mut matrix: [[f64; 3]; 2] = [
-            [94.0, 22.0, 8400.0],
-            [34.0, 67.0, 5400.0],
+        let mut matrix: [[Rational64; 3]; 2] = [
+            [94.into(), 22.into(), 8400.into()],
+            [34.into(), 67.into(), 5400.into()],
         ];
 
         let success = gauss_eliminate(&mut matrix);
@@ -62,8 +64,8 @@ mod tests {
 
         assert!(success);
         assert_eq!(matrix, [
-            [1.0, 0.0, 80.0],
-            [0.0, 1.0, 40.0],
+            [1.into(), 0.into(), 80.into()],
+            [0.into(), 1.into(), 40.into()],
         ])
     }
 }

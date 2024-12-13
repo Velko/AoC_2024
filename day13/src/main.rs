@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::cmp;
 use aoc_tools::gauss_eliminate;
+use num::Rational64;
 
 #[derive(Debug)]
 struct Machine {
@@ -121,9 +122,9 @@ fn find_costs_2(machine: &Machine) -> usize {
     let (sbx, sby) = machine.speed_b;
     let (sax, say) = machine.speed_a;
 
-    let mut matrix: [[f64; 3]; 2] = [
-        [sax as f64, sbx as f64, (px + 10000000000000) as f64],
-        [say as f64, sby as f64, (py + 10000000000000) as f64],
+    let mut matrix: [[Rational64; 3]; 2] = [
+        [r(sax), r(sbx), r(px + 10000000000000)],
+        [r(say), r(sby), r(py + 10000000000000)],
     ];
 
     if gauss_eliminate(&mut matrix) {
@@ -137,17 +138,18 @@ fn find_costs_2(machine: &Machine) -> usize {
     0
 }
 
-fn check_round(n: f64) -> Option<usize> {
+fn check_round(n: Rational64) -> Option<usize> {
 
-    let r = n.round();
-
-    if (n - r).abs() < 0.001 {
-        Some(r as usize)
+    if n.is_integer() && n >= Rational64::ZERO {
+        Some(n.to_integer() as usize)
     } else {
         None
     }
 }
 
+fn r(n: usize) -> Rational64 {
+    (n as i64).into()
+}
 
 
 #[cfg(test)]
@@ -185,11 +187,11 @@ mod tests {
         Ok(())
     }
 
-    #[rstest]
-    #[case(14.9999847412109375, Some(15))]
-    #[case(3.0517578125e-5, Some(0))]
-    #[case(55.3940887451171875, None)]
-    fn test_check_round(#[case] num: f64, #[case] expected: Option<usize>) {
-        assert_eq!(expected, check_round(num));
-    }
+    // #[rstest]
+    // #[case(14.9999847412109375, Some(15))]
+    // #[case(3.0517578125e-5, Some(0))]
+    // #[case(55.3940887451171875, None)]
+    // fn test_check_round(#[case] num: f64, #[case] expected: Option<usize>) {
+    //     assert_eq!(expected, check_round(num));
+    // }
 }
