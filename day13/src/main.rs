@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::cmp;
+use aoc_tools::gauss_eliminate;
 
 #[derive(Debug)]
 struct Machine {
@@ -147,39 +148,6 @@ fn check_round(n: f64) -> Option<usize> {
     }
 }
 
-fn gauss_eliminate(m: &mut [[f64; 3]; 2]) -> bool {
-    let nrows = 2;
-    let ncols = 3;
-
-    for i in 0..nrows {
-        let d = m[i][i];
-        if d == 0.0 {
-            return false;
-        }
-
-        for c in i..ncols {
-            m[i][c] /= d;
-        }
-
-        for j in (i + 1)..nrows {
-            let mul = m[j][i];
-            for c in i..ncols {
-                m[j][c] -= m[i][c] * mul;
-            }
-        }
-    }
-
-    for i in (1..nrows).rev() {
-        for j in 0..i {
-            let mul = m[j][i];
-            for c in i..ncols {
-                m[j][c] -= m[i][c] * mul;
-            }
-        }
-    }
-
-    true
-}
 
 
 #[cfg(test)]
@@ -215,15 +183,6 @@ mod tests {
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
-    }
-
-    #[test]
-    fn test_rev_loop() {
-        let nrows = 3;
-
-        let l: Vec<_> = (1..nrows).rev().collect();
-
-        assert_eq!(l, vec![2, 1]);
     }
 
     #[rstest]

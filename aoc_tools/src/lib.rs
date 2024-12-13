@@ -21,3 +21,6 @@ pub use numext::NumExt;
 
 mod grid;
 pub use grid::Grid;
+
+mod gauss;
+pub use gauss::gauss_eliminate;
