@@ -255,3 +255,22 @@ I ended up by scanning each row and marking if each plot begins a new side on th
 scanning columns and checking their left and right edges. Implementing that _correctly_ was another challenge.
 
 I mainly focused on getting the E-shaped example right. That solved the whole thing.
+
+
+Day 13
+======
+
+Part 1
+------
+
+At first I got a little scare when red about the hexagonal tiles. Fortunately that did not show up in the puzzle. Phew!
+
+Quite an effort to parse the input. Then, for the solution I had to decide if I want to go the *proper* way or the lazy one. Opted for a lazy one
+with looping.
+
+Part 2
+------
+
+Ok, now it's time for the *proper* solution - using an equation system. Had to bring out the [Gauss eliminator](https://en.wikipedia.org/wiki/Gaussian_elimination)
+from [last year](https://adventofcode.com/2023/day/24). It took a bit to port from C to Rust. Then a little fight to check and convert floating point
+values back to integers.
