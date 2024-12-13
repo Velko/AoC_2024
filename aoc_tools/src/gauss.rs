@@ -1,9 +1,17 @@
-use num::Rational64;
+use std::cmp::PartialEq;
+use std::ops::{DivAssign, Mul, SubAssign};
 
-pub fn gauss_eliminate<const NROWS: usize, const NCOLS: usize> (m: &mut [[Rational64; NCOLS]; NROWS]) -> bool {
+pub fn gauss_eliminate<const NROWS: usize, const NCOLS: usize, T> (m: &mut [[T; NCOLS]; NROWS]) -> bool
+    where T: Copy 
+           + PartialEq
+           + Default
+           + DivAssign
+           + Mul<Output=T>
+           + SubAssign
+{
     for i in 0..NROWS {
         let d = m[i][i];
-        if d == Rational64::ZERO {
+        if d == T::default() {
             return false;
         }
 
@@ -35,6 +43,7 @@ pub fn gauss_eliminate<const NROWS: usize, const NCOLS: usize> (m: &mut [[Ration
 
 #[cfg(test)]
 mod tests {
+    use num::Rational64;
     use super::*;
 
 
