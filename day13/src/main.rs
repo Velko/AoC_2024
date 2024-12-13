@@ -1,6 +1,5 @@
 use regex::Regex;
 use std::cmp;
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 
 #[derive(Debug)]
 struct Machine {
@@ -95,8 +94,8 @@ fn find_costs(machine: &Machine) -> usize {
     let max_b = cmp::min(px / sbx, py / sby);
     let max_a = cmp::min(px / sax, py / say);
 
-    for a in 0..(max_a+1) {
-        for b in 0..(max_b+1) {
+    for a in 0..=max_a {
+        for b in 0..=max_b {
             let tx = a * sax + b * sbx;
             let ty = a * say + b * sby;
 
@@ -117,19 +116,14 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 }
 
 fn find_costs_2(machine: &Machine) -> usize {
-
-    let mut matrix: [[f64; 3]; 2] = [[0.0; 3]; 2];
-
     let (px, py) = machine.prize;
     let (sbx, sby) = machine.speed_b;
     let (sax, say) = machine.speed_a;
 
-    matrix[0][0] = sax as f64;
-    matrix[0][1] = sbx as f64;
-    matrix[0][2] = (px + 10000000000000) as f64;
-    matrix[1][0] = say as f64;
-    matrix[1][1] = sby as f64;
-    matrix[1][2] = (py + 10000000000000) as f64;
+    let mut matrix: [[f64; 3]; 2] = [
+        [sax as f64, sbx as f64, (px + 10000000000000) as f64],
+        [say as f64, sby as f64, (py + 10000000000000) as f64],
+    ];
 
     if gauss_eliminate(&mut matrix) {
         if let Some(a) = check_round(matrix[0][2]) {
@@ -152,8 +146,6 @@ fn check_round(n: f64) -> Option<usize> {
         None
     }
 }
-
-
 
 fn gauss_eliminate(m: &mut [[f64; 3]; 2]) -> bool {
     let nrows = 2;
@@ -186,7 +178,7 @@ fn gauss_eliminate(m: &mut [[f64; 3]; 2]) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 
