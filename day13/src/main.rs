@@ -101,7 +101,6 @@ fn find_costs(machine: &Machine) -> usize {
             let ty = a * say + b * sby;
 
             if tx == px && ty == py {
-                println!("{:?}, {:?}", a, b);
                 return a * 3 + b;
             }
         }
@@ -110,9 +109,86 @@ fn find_costs(machine: &Machine) -> usize {
     0
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
+fn calculate_p2(input: &ParsedInput) -> usize {
+    input
+        .into_iter()
+        .map(|m| find_costs_2(m))
+        .sum()
+}
+
+fn find_costs_2(machine: &Machine) -> usize {
+
+    let mut matrix: [[f64; 3]; 2] = [[0.0; 3]; 2];
+
+    let (px, py) = machine.prize;
+    let (sbx, sby) = machine.speed_b;
+    let (sax, say) = machine.speed_a;
+
+    matrix[0][0] = sax as f64;
+    matrix[0][1] = sbx as f64;
+    matrix[0][2] = (px + 10000000000000) as f64;
+    matrix[1][0] = say as f64;
+    matrix[1][1] = sby as f64;
+    matrix[1][2] = (py + 10000000000000) as f64;
+
+    if gauss_eliminate(&mut matrix) {
+        if let Some(a) = check_round(matrix[0][2]) {
+            if let Some(b) = check_round(matrix[1][2]) {
+                return a * 3 + b;
+            }
+        }
+    }
+
     0
 }
+
+fn check_round(n: f64) -> Option<usize> {
+
+    let r = n.round();
+
+    if (n - r).abs() < 0.001 {
+        Some(r as usize)
+    } else {
+        None
+    }
+}
+
+
+
+fn gauss_eliminate(m: &mut [[f64; 3]; 2]) -> bool {
+    let nrows = 2;
+    let ncols = 3;
+
+    for i in 0..nrows {
+        let d = m[i][i];
+        if d == 0.0 {
+            return false;
+        }
+
+        for c in i..ncols {
+            m[i][c] /= d;
+        }
+
+        for j in (i + 1)..nrows {
+            let mul = m[j][i];
+            for c in i..ncols {
+                m[j][c] -= m[i][c] * mul;
+            }
+        }
+    }
+
+    for i in (1..nrows).rev() {
+        for j in 0..i {
+            let mul = m[j][i];
+            for c in i..ncols {
+                m[j][c] -= m[i][c] * mul;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -129,7 +205,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed);
@@ -140,13 +216,29 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
+    }
+
+    #[test]
+    fn test_rev_loop() {
+        let nrows = 3;
+
+        let l: Vec<_> = (1..nrows).rev().collect();
+
+        assert_eq!(l, vec![2, 1]);
+    }
+
+    #[rstest]
+    #[case(14.9999847412109375, Some(15))]
+    #[case(3.0517578125e-5, Some(0))]
+    #[case(55.3940887451171875, None)]
+    fn test_check_round(#[case] num: f64, #[case] expected: Option<usize>) {
+        assert_eq!(expected, check_round(num));
     }
 }
