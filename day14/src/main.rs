@@ -1,9 +1,12 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use std::collections::{HashMap, HashSet};
+
+use aoc_tools::{Grid, InvalidInput, IterMoreTools, ResultExt};
 use itertools::Itertools;
 use regex::Regex;
 
 #[derive(Debug)]
 struct Robot {
+    id: usize,
     px: i32,
     py: i32,
     vx: i32,
@@ -19,7 +22,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = calculate_p1(&parsed, 101, 103);
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2(&parsed, 101, 103);
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -32,9 +35,11 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let parsed =
         input.read_lines()?
         .into_iter()
-        .map(|line|{
+        .enumerate()
+        .map(|(id, line)|{
                 let (_, [px, py, vx, vy]) = robot_rx.captures(&line).unwrap().extract();
                 Robot {
+                    id,
                     px: px.parse().unwrap(),
                     py: py.parse().unwrap(),
                     vx: vx.parse().unwrap(),
@@ -76,8 +81,38 @@ fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
     q1 * q2 * q3 * q4
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput, width: i32, height: i32) -> u64 {
+
+
+    let mut map: HashMap<(i32, i32), HashSet<usize>> = HashMap::new();
+
+    // for y in 0..height {
+    //     for x in 0..width {
+    //         map.insert((x, y), HashSet::new());
+    //     }
+    // }
+
+    for robot in input.iter() {
+        let mut t_x = robot.px;
+        let mut t_y = robot.py;
+        for _ in 0..usize::MAX {
+            let me = map.entry((t_x, t_y)).or_insert(HashSet::new());
+            if me.contains(&robot.id) {
+                break;
+            }
+
+            me.insert(robot.id);
+
+            t_x = (t_x + width + robot.vx) % width;
+            t_y = (t_y + height + robot.vy) % height;
+        }
+    }
+
+    println!("{:?}", map.len());
+    println!("{:?}", map.iter().filter(|(_, c)|c.len() < input.len()).count());
+    
+
+    344
 }
 
 #[cfg(test)]
@@ -106,12 +141,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?, 11, 7)]
+    //#[case(load_sample("sample.txt")?, 11, 7)]
     #[case(load_sample("input.txt")?, 101, 103)]
-    #[ignore]
+    //#[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2(&parsed, width, height);
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
