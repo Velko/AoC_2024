@@ -304,3 +304,6 @@ Thinking back - the fact that map height and width were a prime numbers should h
 Ok, how about I just step through it step by step and look how many robots occupy adjacent cells? When they form a picture, that number should stay out.
 
 Hey, there's one larger number! Let's write a code to print out the map at that moment of time. What's that? A tree? Eureka!
+
+It appears that I was overthinking it, but I did not expect the resulting number to be that low. I was expecting that to be in several billions, not
+around 6500.
