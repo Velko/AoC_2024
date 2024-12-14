@@ -1,10 +1,7 @@
-use std::collections::{HashMap, HashSet};
-
-use aoc_tools::{Grid, InvalidInput, IterMoreTools, ResultExt};
-use itertools::Itertools;
+use itertools::{Itertools};
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Robot {
     id: usize,
     px: i32,
@@ -60,8 +57,7 @@ fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
     let mut q4 = 0;
 
     for robot in input.into_iter() {
-        let target_x = (((robot.px + robot.vx * time) % width) + width) % width;
-        let target_y = (((robot.py + robot.vy * time) % height) + height) % height;
+        let (target_x, target_y) = robot.position_after(time, width, height);
 
         if target_x < width / 2 {
             if target_y < height / 2 {
@@ -81,39 +77,83 @@ fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
     q1 * q2 * q3 * q4
 }
 
-fn calculate_p2(input: &ParsedInput, width: i32, height: i32) -> u64 {
+impl Robot {
+    fn position_after(&self, time: i32, width: i32, height: i32) -> (i32, i32) {
+        (
+            (((self.px + self.vx * time) % width) + width) % width,
+            (((self.py + self.vy * time) % height) + height) % height,
+        )
+    }
+}
 
+fn is_next_to((p1x, p1y): (i32, i32), (p2x, p2y): (i32, i32)) -> bool {
+    let dx = (p2x - p1x).abs();
+    let dy = (p2y - p1y).abs();
 
-    let mut map: HashMap<(i32, i32), HashSet<usize>> = HashMap::new();
+    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
+}
 
-    // for y in 0..height {
-    //     for x in 0..width {
-    //         map.insert((x, y), HashSet::new());
-    //     }
-    // }
+fn calculate_p2(input: &ParsedInput, width: i32, height: i32) -> i32 {
+    for time in 0..(width * height) {
+        let mut nmatches = 0;
+        let pairs = input.iter().tuple_combinations::<(_, _)>();
+        for (r1, r2) in pairs {
+            let loc1 = r1.position_after(time, width, height);
+            let loc2 = r2.position_after(time, width, height);
 
-    for robot in input.iter() {
-        let mut t_x = robot.px;
-        let mut t_y = robot.py;
-        for _ in 0..usize::MAX {
-            let me = map.entry((t_x, t_y)).or_insert(HashSet::new());
-            if me.contains(&robot.id) {
-                break;
+            if is_next_to(loc1, loc2) {
+                nmatches += 1;
             }
+        }
 
-            me.insert(robot.id);
-
-            t_x = (t_x + width + robot.vx) % width;
-            t_y = (t_y + height + robot.vy) % height;
+        if nmatches > input.len() {
+            print_map_after(input, time, width, height);
+            return time;
         }
     }
 
-    println!("{:?}", map.len());
-    println!("{:?}", map.iter().filter(|(_, c)|c.len() < input.len()).count());
-    
-
-    344
+    0
 }
+
+// fn cycle_length(robot: &Robot, width: i32, height: i32) -> usize {
+//     let mut r1px = robot.px;
+//     let mut r1py = robot.py;
+
+//     for t in 1..usize::MAX {
+        
+//         r1px = (r1px + width + robot.vx) % width;
+//         r1py = (r1py + height + robot.vy) % height;
+
+//         if r1px == robot.px && r1py == robot.py {
+//             return t;
+//         }
+//     }
+
+//     usize::MAX
+// }
+
+fn print_map_after(robots: &ParsedInput, time: i32, width: i32, height: i32) {
+    let mut map: Vec<Vec<char>> = 
+        (0..height)
+            .into_iter()
+            .map(|_| {
+                (0..width)
+                    .map(|_| '.')
+                    .collect()
+            })
+            .collect();
+
+    for robot in robots.iter() {
+        let (x, y) = robot.position_after(time, width, height);
+        *map.get_mut(y as usize).unwrap().get_mut(x as usize).unwrap() = '#';
+    }
+
+    for row in map.iter() {
+        let line: String = row.into_iter().collect();
+        println!("{}", line);
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -141,8 +181,8 @@ mod tests {
     }
 
     #[rstest]
-    //#[case(load_sample("sample.txt")?, 11, 7)]
-    #[case(load_sample("input.txt")?, 101, 103)]
+    #[case(load_sample("sample.txt")?, 11, 7)]
+    //#[case(load_sample("input.txt")?, 101, 103)]
     //#[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
