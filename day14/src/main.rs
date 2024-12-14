@@ -91,16 +91,19 @@ impl Robot {
 
 fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
     for time in 0..(width * height) {
-        let positions: HashSet<(usize, usize)> = input
-            .iter()
-            .map(|r|r.position_after(time, width, height))
-            .collect();
+        let mut positions: Grid<bool> = Grid::new(false, width, height);
+        
+        for robot in input.iter() {
+            positions[robot.position_after(time, width, height)] = true;
+        }
 
         let mut nmatches = 0;
-        for pos in positions.iter() {
-            for neigh in Neighbours2D::new(*pos, (width as usize, height as usize), aoc_tools::NeighbourMap::Plus).filter_map(|f|f) {
-                if positions.contains(&neigh) {
-                    nmatches += 1;
+        for (v, pos) in positions.enumerate() {
+            if *v {
+                for neigh in Neighbours2D::new(pos, (width as usize, height as usize), aoc_tools::NeighbourMap::Plus).filter_map(|f|f) {
+                    if positions[neigh] {
+                        nmatches += 1;
+                    }
                 }
             }
         }
