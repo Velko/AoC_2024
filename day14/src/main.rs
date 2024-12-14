@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use aoc_tools::Neighbours2D;
+use aoc_tools::{Grid, Neighbours2D};
 use itertools::{Itertools};
 use regex::Regex;
 
@@ -132,25 +132,14 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
 // }
 
 fn print_map_after(robots: &ParsedInput, time: usize, width: usize, height: usize) {
-    let mut map: Vec<Vec<char>> = 
-        (0..height)
-            .into_iter()
-            .map(|_| {
-                (0..width)
-                    .map(|_| '.')
-                    .collect()
-            })
-            .collect();
+    let mut map: Grid<char> = Grid::new('.', width, height);
 
     for robot in robots.iter() {
-        let (x, y) = robot.position_after(time, width, height);
-        *map.get_mut(y as usize).unwrap().get_mut(x as usize).unwrap() = '#';
+        let pos = robot.position_after(time, width, height);
+        map[pos] = '#';
     }
 
-    for row in map.iter() {
-        let line: String = row.into_iter().collect();
-        println!("{}", line);
-    }
+    map.print();
 }
 
 

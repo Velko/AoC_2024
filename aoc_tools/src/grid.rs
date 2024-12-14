@@ -1,4 +1,4 @@
-use std::{default::Default, io::{self, BufRead}, ops::{Index, IndexMut}};
+use std::{default::Default, fmt::Display, io::{self, BufRead}, ops::{Index, IndexMut}};
 
 #[derive(Clone)]
 pub struct Grid<T>
@@ -14,16 +14,16 @@ const GRID_MAX_HEIGHT: usize = 256;
 
 
 impl<T> Grid<T>
-    where T: Sized + Default + Copy
+    where T: Sized + Default + Copy + Display
 {
     pub const MAX_WIDTH: usize = GRID_MAX_WIDTH;
     pub const MAX_HEIGHT: usize = GRID_MAX_HEIGHT;
 
-    pub fn new() -> Self {
+    pub fn new(value: T, width: usize, height: usize) -> Self {
         Grid {
-            content: vec![[T::default(); GRID_MAX_WIDTH]; GRID_MAX_HEIGHT].into_boxed_slice(),
-            _width: 0,
-            _height: 0,
+            content: vec![[value; GRID_MAX_WIDTH]; GRID_MAX_HEIGHT].into_boxed_slice(),
+            _width: width,
+            _height: height,
         }
     }
 
@@ -67,6 +67,17 @@ impl<T> Grid<T>
             content: content.into_boxed_slice(),
             _width: self._width,
             _height: self._height,
+        }
+    }
+
+    pub fn print(&self) {
+        for row in self.content.iter().take(self._height) {
+            let line: String = row
+                .into_iter()
+                .take(self._width)
+                .map(|v|v.to_string())
+                .collect();
+            println!("{}", line);
         }
     }
 }
@@ -151,10 +162,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_grid_empty() {
-        let grid = Grid::<char>::new();
+    fn test_grid_default_val() {
+        let grid = Grid::<char>::new('.', 10, 10);
 
-        assert_eq!((0, 0), grid.size());
+        assert_eq!((10, 10), grid.size());
     }
 
     #[test]
