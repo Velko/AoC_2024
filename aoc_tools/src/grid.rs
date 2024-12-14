@@ -14,7 +14,7 @@ const GRID_MAX_HEIGHT: usize = 256;
 
 
 impl<T> Grid<T>
-    where T: Sized + Default + Copy + Display
+    where T: Sized + Default + Copy
 {
     pub const MAX_WIDTH: usize = GRID_MAX_WIDTH;
     pub const MAX_HEIGHT: usize = GRID_MAX_HEIGHT;
@@ -70,6 +70,11 @@ impl<T> Grid<T>
         }
     }
 
+}
+
+impl<T> Grid<T>
+    where T: Display
+{
     pub fn print(&self) {
         for row in self.content.iter().take(self._height) {
             let line: String = row
