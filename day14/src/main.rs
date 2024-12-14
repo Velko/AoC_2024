@@ -3,7 +3,6 @@ use regex::Regex;
 
 #[derive(Debug, Clone)]
 struct Robot {
-    id: usize,
     px: i32,
     py: i32,
     vx: i32,
@@ -32,11 +31,9 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let parsed =
         input.read_lines()?
         .into_iter()
-        .enumerate()
-        .map(|(id, line)|{
+        .map(|line|{
                 let (_, [px, py, vx, vy]) = robot_rx.captures(&line).unwrap().extract();
                 Robot {
-                    id,
                     px: px.parse().unwrap(),
                     py: py.parse().unwrap(),
                     vx: vx.parse().unwrap(),
@@ -171,7 +168,6 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?, 11, 7)]
     #[case(load_sample("input.txt")?, 101, 103)]
-    //#[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed, width, height);
@@ -181,9 +177,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?, 11, 7)]
-    //#[case(load_sample("input.txt")?, 101, 103)]
-    //#[ignore]
+    #[case(load_sample("input.txt")?, 101, 103)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed, width, height);
