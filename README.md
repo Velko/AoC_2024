@@ -296,7 +296,7 @@ Thinking of it more - it is not necessarily to know what image has to be formed,
 My next thought: Ok, maybe robots travel only over some of the lines. Then there might be a cell that is only visited by small number (ideally - 
 just single) robot, while others are more popular. Then I could solve similarly to a Sudoku puzzle. Nope. Every robot visits every cell.
 
-What's next? Surely robots return to their initial positions. What is their cycle length? Probably will need to calculate some least common denominator
+What's next? Surely robots return to their initial positions. What is their cycle length? Probably will need to calculate some Least Common Multiple
 or something. Nope. All robots return to their starting positions after visiting every position on a map once.
 
 Thinking back - the fact that map height and width were a prime numbers should have been a clue.
