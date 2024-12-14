@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+
+use aoc_tools::Neighbours2D;
 use itertools::{Itertools};
 use regex::Regex;
 
@@ -45,7 +48,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(parsed)
 }
 
-fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
+fn calculate_p1(input: &ParsedInput, width: usize, height: usize) -> u64 {
     let time = 100;
 
     let mut q1 = 0;
@@ -75,31 +78,30 @@ fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
 }
 
 impl Robot {
-    fn position_after(&self, time: i32, width: i32, height: i32) -> (i32, i32) {
+    fn position_after(&self, time: usize, width: usize, height: usize) -> (usize, usize) {
+        let width = width as i32;
+        let height = height as i32;
+        let time = time as i32;
         (
-            (((self.px + self.vx * time) % width) + width) % width,
-            (((self.py + self.vy * time) % height) + height) % height,
+            ((((self.px + self.vx * time) % width) + width) % width) as usize,
+            ((((self.py + self.vy * time) % height) + height) % height) as usize,
         )
     }
 }
 
-fn is_next_to((p1x, p1y): (i32, i32), (p2x, p2y): (i32, i32)) -> bool {
-    let dx = (p2x - p1x).abs();
-    let dy = (p2y - p1y).abs();
-
-    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
-}
-
-fn calculate_p2(input: &ParsedInput, width: i32, height: i32) -> i32 {
+fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
     for time in 0..(width * height) {
-        let mut nmatches = 0;
-        let pairs = input.iter().tuple_combinations::<(_, _)>();
-        for (r1, r2) in pairs {
-            let loc1 = r1.position_after(time, width, height);
-            let loc2 = r2.position_after(time, width, height);
+        let positions: HashSet<(usize, usize)> = input
+            .iter()
+            .map(|r|r.position_after(time, width, height))
+            .collect();
 
-            if is_next_to(loc1, loc2) {
-                nmatches += 1;
+        let mut nmatches = 0;
+        for pos in positions.iter() {
+            for neigh in Neighbours2D::new(*pos, (width as usize, height as usize), aoc_tools::NeighbourMap::Plus).filter_map(|f|f) {
+                if positions.contains(&neigh) {
+                    nmatches += 1;
+                }
             }
         }
 
@@ -129,7 +131,7 @@ fn calculate_p2(input: &ParsedInput, width: i32, height: i32) -> i32 {
 //     usize::MAX
 // }
 
-fn print_map_after(robots: &ParsedInput, time: i32, width: i32, height: i32) {
+fn print_map_after(robots: &ParsedInput, time: usize, width: usize, height: usize) {
     let mut map: Vec<Vec<char>> = 
         (0..height)
             .into_iter()
@@ -168,7 +170,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?, 11, 7)]
     #[case(load_sample("input.txt")?, 101, 103)]
-    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] width: usize, #[case] height: usize) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed, width, height);
 
@@ -178,7 +180,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("input.txt")?, 101, 103)]
-    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: usize, #[case] height: usize) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed, width, height);
 
