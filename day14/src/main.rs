@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use aoc_tools::{Grid, Neighbours2D};
 use itertools::{Itertools};
 use regex::Regex;
@@ -134,13 +132,32 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
 //     usize::MAX
 // }
 
+
+#[derive(Default, Clone, Copy)]
+struct FormattedCell(char);
+
+impl std::fmt::Display for FormattedCell {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ", self.0)
+    }
+}
+
+
 fn print_map_after(robots: &ParsedInput, time: usize, width: usize, height: usize) {
-    let mut map: Grid<char> = Grid::new('.', width, height);
+    // output the grid in BPM format
+    // it consists of "magic" P1
+    // then size of the image
+    // and finally a grid of 1 and 0 (separated by spaces)
+
+    let mut map: Grid<FormattedCell> = Grid::new(FormattedCell('0'), width, height);
 
     for robot in robots.iter() {
         let pos = robot.position_after(time, width, height);
-        map[pos] = '#';
+        map[pos] = FormattedCell('1');
     }
+
+    println!("P1");
+    println!("{} {}", width, height);
 
     map.print();
 }
