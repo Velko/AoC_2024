@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed);
+    let result1 = calculate_p1(&parsed, 101, 103);
     println!("Result p1: {}", result1);
 
     let result2 = calculate_p2(&parsed);
@@ -46,16 +46,8 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(parsed)
 }
 
-fn calculate_p1(input: &ParsedInput) -> u64 {
-    //println!("{:?}", input);
-
+fn calculate_p1(input: &ParsedInput, width: i32, height: i32) -> u64 {
     let time = 100;
-//    let width = 11;
-//    let height = 7;
-
-    let width = 101;
-    let height = 103;
-
 
     let mut q1 = 0;
     let mut q2 = 0;
@@ -102,21 +94,22 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
+    #[case(load_sample("sample.txt")?, 11, 7)]
+    #[case(load_sample("input.txt")?, 101, 103)]
     //#[case(load_sample("input.txt")?)]
-    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
-        let result1 = calculate_p1(&parsed);
+        let result1 = calculate_p1(&parsed, width, height);
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("sample.txt")?, 11, 7)]
+    #[case(load_sample("input.txt")?, 101, 103)]
     #[ignore]
-    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: i32, #[case] height: i32) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
 
