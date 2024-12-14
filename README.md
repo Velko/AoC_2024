@@ -274,3 +274,33 @@ Part 2
 Ok, now it's time for the *proper* solution - using an equation system. Had to bring out the [Gauss eliminator](https://en.wikipedia.org/wiki/Gaussian_elimination)
 from [last year](https://adventofcode.com/2023/day/24). It took a bit to port from C to Rust. Then a little fight to check and convert floating point
 values back to integers.
+
+Day 14
+======
+
+Part 1
+------
+
+Seemed to be simple enough. As the robots wrapped around the map (instead of bouncing off the edges), there was no need to go step by step. Just
+multiply and take the modulo.
+
+
+Part 2
+------
+
+My first reaction was: Dafuq? I even stated to look for clues elsewhere - like: there was a Christmas tree on AoC 2015 calendar? Should I try to
+produce that? And I thought that each puzzle is self-contained.
+
+Thinking of it more - it is not necessarily to know what image has to be formed, as long as it matches some criteria it should be fine.
+
+My next thought: Ok, maybe robots travel only over some of the lines. Then there might be a cell that is only visited by small number (ideally - 
+just single) robot, while others are more popular. Then I could solve similarly to a Sudoku puzzle. Nope. Every robot visits every cell.
+
+What's next? Surely robots return to their initial positions. What is their cycle length? Probably will need to calculate some least common denominator
+or something. Nope. All robots return to their starting positions after visiting every position on a map once.
+
+Thinking back - the fact that map height and width were a prime numbers should have been a clue.
+
+Ok, how about I just step through it step by step and look how many robots occupy adjacent cells? When they form a picture, that number should stay out.
+
+Hey, there's one larger number! Let's write a code to print out the map at that moment of time. What's that? A tree? Eureka!
