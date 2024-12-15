@@ -1,6 +1,6 @@
 use std::{self, collections::HashSet, io::{self, BufRead}};
 
-use aoc_tools::{Grid, InvalidInput, IterMoreTools, NeighbourMap, Neighbours2D, ResultExt};
+use aoc_tools::{Grid, NeighbourMap, Neighbours2D};
 
 type ParsedInput = (Grid<char>, String);
 
@@ -36,15 +36,12 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let commands: io::Result<String> = 
         commands_srs.collect();
 
-
-
     Ok((grid, commands?))
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
     let (grid, commands) = input;
     let mut grid = grid.clone();
-
 
     let mut start: Option<(usize, usize)> = None;
 
@@ -56,7 +53,6 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     }
 
     grid[start.unwrap()] = '.';
-
 
     let mut rpos = start.unwrap();
 
@@ -79,19 +75,11 @@ fn calculate_p1(input: &ParsedInput) -> usize {
             }
         }
 
-        //print!("{:?}->", points);
-
         if points.is_empty() {
             continue; // at the wall already
         }
 
-        // for p in points.iter() {
-        //     print!("{}", grid[*p]);
-        // }
-
         let first_empty = points.iter().position(|s| grid[*s] == '.');
-        //println!("{:?}", first_empty);
-
 
         if let Some(p_empty) = first_empty {
             grid[*points.get(p_empty).unwrap()] = 'O';
@@ -102,8 +90,6 @@ fn calculate_p1(input: &ParsedInput) -> usize {
             continue; // no spaces between robot and wall
         }
     }
-
-    //grid.print();
 
     grid
         .enumerate()
@@ -158,11 +144,6 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
     }
 
-    grid.print();
-
-    println!("{:?}", start);
-    println!("{:?}", all_boxes);
-
     let mut rpos = start.unwrap();
 
     for cmd in commands.chars() {
@@ -189,8 +170,6 @@ fn calculate_p2(input: &ParsedInput) -> usize {
             _ => panic!("Something unexpected on the map"),
         }
     }
-
-    grid.print();
 
     grid
         .enumerate()
