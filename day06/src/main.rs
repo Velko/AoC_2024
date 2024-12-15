@@ -1,4 +1,4 @@
-use aoc_tools::{Grid, InvalidInput, NumExt};
+use aoc_tools::{Direction, Grid, InvalidInput, NumExt, Rotation};
 use ndarray::{Array3, ShapeBuilder};
 use std::collections::HashSet;
 use rayon::prelude::*;
@@ -106,26 +106,6 @@ fn walk_detect_loop(grid: &Grid<char>, x: usize, y: usize, obx: usize, oby: usiz
     0
 }
 
-#[derive(Clone, Copy)]
-enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
-impl Direction {
-    pub fn turn(&self) -> Direction {
-        match self {
-            Self::Up => Self::Right,
-            Self::Right => Self::Down,
-            Self::Down => Self::Left,
-            Self::Left => Self::Up,
-        }
-    }
-}
-
-
 struct GuardState {
     posx: usize,
     posy: usize,
@@ -145,7 +125,7 @@ impl GuardState {
         Self {
             posx: self.posx,
             posy: self.posy,
-            dir: self.dir.turn(),
+            dir: self.dir.turn(Rotation::Clockwise),
         }
     }
 
@@ -180,7 +160,6 @@ impl GuardState {
 mod tests {
     use super::*;
     use aoc_tools::TestSamples;
-    use aoc_tools::ResultExt;
 
     fn load_sample(filename: &str) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;

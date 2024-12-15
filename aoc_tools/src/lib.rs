@@ -24,3 +24,6 @@ pub use grid::Grid;
 
 mod gauss;
 pub use gauss::gauss_eliminate;
+
+mod direction;
+pub use direction::{Direction, Rotation};
