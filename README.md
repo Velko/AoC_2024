@@ -307,3 +307,22 @@ Hey, there's one larger number! Let's write a code to print out the map at that 
 
 It appears that I was overthinking it, but I did not expect the resulting number to be that low. I was expecting that to be in several billions, not
 around 6500.
+
+
+Day 15
+======
+
+Part 1
+------
+
+This is almost [Sokoban](https://en.wikipedia.org/wiki/Sokoban), with the difference that multiple boxes can be moved.
+
+Wasn't that hard, with the exception that I had a lot of external distractions this time. Probably the hardest part was that all my parsing routines
+was not designed to read multi-part inputs.
+
+
+Part 2
+------
+
+I'm getting [Tetris/Jenga](https://adventofcode.com/2023/day/22) vibes here. Solved it in similar way: by having a list of boxes and their projection
+on the map. Collect all the movable boxes recursively and move them in one go, or bail out if wall was encountered.
