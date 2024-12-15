@@ -1,5 +1,6 @@
-use std::{default::Default, fmt::{Display, Result}, io::{self, BufRead}, ops::{Index, IndexMut}};
-use std::io::Lines;
+use std::{default::Default, fmt::Display, io::{self, BufRead}, ops::{Index, IndexMut}};
+
+use crate::Point;
 
 #[derive(Clone)]
 pub struct Grid<T>
@@ -168,6 +169,22 @@ impl<T> IndexMut<(usize, usize)> for Grid<T> {
         &mut self.content[row][col]
     }
 }
+
+impl<T> Index<Point> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, point: Point) -> &Self::Output {
+        &self.content[point.y][point.x]
+    }
+}
+
+impl<T> IndexMut<Point> for Grid<T> {
+
+    fn index_mut(&mut self, point: Point) -> &mut Self::Output {
+        &mut self.content[point.y][point.x]
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
 use std::{self, collections::HashSet, io::{self, BufRead}};
 
-use aoc_tools::{Grid, NeighbourMap, Neighbours2D};
+use aoc_tools::{Direction, Grid, Point};
 
 type ParsedInput = (Grid<char>, String);
 
@@ -43,11 +43,11 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     let (grid, commands) = input;
     let mut grid = grid.clone();
 
-    let mut start: Option<(usize, usize)> = None;
+    let mut start: Option<Point> = None;
 
     for (c, pos) in grid.enumerate() {
         if *c == '@' {
-            start = Some(pos);
+            start = Some(pos.into());
             break;
         }
     }
@@ -59,10 +59,10 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     for cmd in commands.chars() {
         let dir = command_to_direction(cmd);
 
-        let mut points: Vec<(usize, usize)> = Vec::new();
+        let mut points: Vec<Point> = Vec::new();
 
         for dist in 1..usize::MAX {
-            let np = Neighbours2D::new_with_distance(rpos, grid.size(), dist, dir).filter_map(|f|f).next();
+            let np = Point::from(rpos).advance_with_distance(dir, grid.size(), dist);
 
             if let Some(point) = np {
                 if grid[point] != '#' {
@@ -98,12 +98,12 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         .sum()
 }
 
-fn command_to_direction(cmd: char) -> NeighbourMap {
+fn command_to_direction(cmd: char) -> Direction {
     match cmd {
-        '^' => NeighbourMap::Top,
-        '>' => NeighbourMap::Right,
-        'v' => NeighbourMap::Bottom,
-        '<' => NeighbourMap::Left,
+        '^' => Direction::Up,
+        '>' => Direction::Right,
+        'v' => Direction::Down,
+        '<' => Direction::Left,
         _ => panic!("Unexpected command")
     }
 }
@@ -178,11 +178,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         .sum()
 }
 
-fn move_to(pos: (usize, usize), bounds: (usize, usize), dir: NeighbourMap) -> (usize, usize) {
-    Neighbours2D::new(pos, bounds, dir).filter_map(|f|f).next().unwrap()
+fn move_to(pos: (usize, usize), bounds: (usize, usize), dir: Direction) -> (usize, usize) {
+    Point::from(pos).advance(dir, bounds).unwrap().into()
 }
 
-fn collect_boxes(boxes_to_move: &mut HashSet<WhBox>, pos: (usize, usize), dir: NeighbourMap, all_boxes: &[WhBox], grid: &Grid<char>) -> bool {
+fn collect_boxes(boxes_to_move: &mut HashSet<WhBox>, pos: (usize, usize), dir: Direction, all_boxes: &[WhBox], grid: &Grid<char>) -> bool {
 
     let b_to_m = all_boxes.iter().find(|p|p.is_located_here(pos)).unwrap();  // we have already checked in grid if something is here
 
@@ -217,7 +217,7 @@ fn collect_boxes(boxes_to_move: &mut HashSet<WhBox>, pos: (usize, usize), dir: N
     true
 }
 
-fn move_boxes(boxes_to_move: &HashSet<WhBox>, dir: NeighbourMap, all_boxes: &mut [WhBox], grid: &mut Grid<char>) {
+fn move_boxes(boxes_to_move: &HashSet<WhBox>, dir: Direction, all_boxes: &mut [WhBox], grid: &mut Grid<char>) {
 
     // erase old boxes
     for b_to_m in boxes_to_move.iter() {

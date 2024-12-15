@@ -27,3 +27,6 @@ pub use gauss::gauss_eliminate;
 
 mod direction;
 pub use direction::{Direction, Rotation};
+
+mod point;
+pub use point::Point;
