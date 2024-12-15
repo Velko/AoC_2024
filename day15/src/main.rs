@@ -1,4 +1,4 @@
-use std::{self, io::{self, BufRead}};
+use std::{self, collections::HashSet, io::{self, BufRead}};
 
 use aoc_tools::{Grid, InvalidInput, IterMoreTools, NeighbourMap, Neighbours2D, ResultExt};
 
@@ -55,26 +55,13 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         }
     }
 
-    //println!("{:?}", start);
-
-
     grid[start.unwrap()] = '.';
-
-
-    // grid.print();
-    // println!("{}", commands);
 
 
     let mut rpos = start.unwrap();
 
     for cmd in commands.chars() {
-        let dir = match cmd {
-            '^' => NeighbourMap::Top,
-            '>' => NeighbourMap::Right,
-            'v' => NeighbourMap::Bottom,
-            '<' => NeighbourMap::Left,
-            _ => panic!("Unexpected command")
-        };
+        let dir = command_to_direction(cmd);
 
         let mut points: Vec<(usize, usize)> = Vec::new();
 
@@ -125,9 +112,151 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         .sum()
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn command_to_direction(cmd: char) -> NeighbourMap {
+    match cmd {
+        '^' => NeighbourMap::Top,
+        '>' => NeighbourMap::Right,
+        'v' => NeighbourMap::Bottom,
+        '<' => NeighbourMap::Left,
+        _ => panic!("Unexpected command")
+    }
 }
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+struct WhBox([(usize, usize); 2]);
+
+impl WhBox {
+    fn is_located_here(&self, pos: (usize, usize)) -> bool {
+        self.0[0] == pos || self.0[1] == pos
+    }
+}
+
+
+fn calculate_p2(input: &ParsedInput) -> usize {
+
+    let (orig_grid, commands) = input;
+    let mut grid: Grid<char>  = Grid::new('.', orig_grid.width() * 2, orig_grid.height());
+
+    let mut all_boxes: Vec<WhBox> = Vec::new();
+    let mut start: Option<(usize, usize)> = None;
+
+    for (c, (x, y)) in orig_grid.enumerate() {
+        match c {
+            '#' => {
+                grid[(x * 2, y)] = '#';
+                grid[(x * 2 + 1, y)] = '#';
+            },
+            'O' => {
+                grid[(x * 2, y)] = '[';
+                grid[(x * 2 + 1, y)] = ']';
+                all_boxes.push(WhBox([(x * 2, y), (x * 2 + 1, y)]));
+            },
+            '@' => {
+                start = Some((x * 2, y));
+            }
+            _ => {},
+        }
+    }
+
+    grid.print();
+
+    println!("{:?}", start);
+    println!("{:?}", all_boxes);
+
+    let mut rpos = start.unwrap();
+
+    for cmd in commands.chars() {
+        let dir = command_to_direction(cmd);
+
+        let new_pos = move_to(rpos, grid.size(), dir);
+
+        match grid[new_pos] {
+            '[' | ']' => {
+                // a box, collect boxes in a way and decide if can move
+                let mut boxes_to_move: HashSet<WhBox> = HashSet::new();
+                if collect_boxes(&mut boxes_to_move, new_pos, dir, &all_boxes, &grid) {
+                    move_boxes(&boxes_to_move, dir, &mut all_boxes, &mut grid);
+                    rpos = new_pos;
+                }
+            },
+            '.' => {
+                // free space, just move
+                rpos = new_pos;
+            },
+            '#' => {
+                // wall, don't move
+            },
+            _ => panic!("Something unexpected on the map"),
+        }
+    }
+
+    grid.print();
+
+    grid
+        .enumerate()
+        .filter(|(o, _)| **o == '[')
+        .map(|(_, (x, y))| y * 100 + x)
+        .sum()
+}
+
+fn move_to(pos: (usize, usize), bounds: (usize, usize), dir: NeighbourMap) -> (usize, usize) {
+    Neighbours2D::new(pos, bounds, dir).filter_map(|f|f).next().unwrap()
+}
+
+fn collect_boxes(boxes_to_move: &mut HashSet<WhBox>, pos: (usize, usize), dir: NeighbourMap, all_boxes: &[WhBox], grid: &Grid<char>) -> bool {
+
+    let b_to_m = all_boxes.iter().find(|p|p.is_located_here(pos)).unwrap();  // we have already checked in grid if something is here
+
+    let inserted = boxes_to_move.insert(*b_to_m);
+
+    if inserted {
+        for box_pos in b_to_m.0.iter() {
+            let new_pos1 = move_to(*box_pos, grid.size(), dir);
+
+            match grid[new_pos1] {
+                '#' => {
+                    // a wall, abandon whole thing
+                    return false;
+                },
+                '.' => {
+                    // free space, good to go
+                },
+                '[' | ']' => {
+                    // another box
+                    let can_move = collect_boxes(boxes_to_move, new_pos1, dir, all_boxes, grid);
+                    if !can_move {
+                        // another box down the line can not move
+                        return false;
+                    }
+                },
+                _ => panic!("Something unexpected on the map"),
+            }
+        }
+    }
+
+    // got this far without early returns, wer're good to go
+    true
+}
+
+fn move_boxes(boxes_to_move: &HashSet<WhBox>, dir: NeighbourMap, all_boxes: &mut [WhBox], grid: &mut Grid<char>) {
+
+    // erase old boxes
+    for b_to_m in boxes_to_move.iter() {
+        grid[b_to_m.0[0]] = '.';
+        grid[b_to_m.0[1]] = '.';
+    }
+
+    for old_box in boxes_to_move.iter() {
+        let new_box = all_boxes.iter_mut().find(|p|*p == old_box).unwrap();
+
+        new_box.0[0] = move_to(old_box.0[0], grid.size(), dir);
+        new_box.0[1] = move_to(old_box.0[1], grid.size(), dir);
+
+        grid[new_box.0[0]] = '[';
+        grid[new_box.0[1]] = ']';
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -155,8 +284,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
