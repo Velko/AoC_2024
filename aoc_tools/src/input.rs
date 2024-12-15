@@ -59,7 +59,7 @@ impl Input {
         Grid::<char>::try_from_reader(&mut reader)
     }
 
-    fn open_file(&self) -> io::Result<io::BufReader<File>> {
+    pub fn open_file(&self) -> io::Result<io::BufReader<File>> {
         let input = File::open(&self.filename)?;
         Ok(io::BufReader::new(input))
     }

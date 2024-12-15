@@ -1,4 +1,5 @@
-use std::{default::Default, fmt::Display, io::{self, BufRead}, ops::{Index, IndexMut}};
+use std::{default::Default, fmt::{Display, Result}, io::{self, BufRead}, ops::{Index, IndexMut}};
+use std::io::Lines;
 
 #[derive(Clone)]
 pub struct Grid<T>
@@ -91,10 +92,16 @@ impl Grid<char> {
     pub fn try_from_reader<U>(input: U) -> io::Result<Self>
         where U: BufRead
     {
+        Self::try_from_lines(input.lines())
+    }
+
+    pub fn try_from_lines<I>(lines: I) -> io::Result<Self>
+        where I: Iterator<Item=io::Result<String>>
+    {
         let mut content = Vec::with_capacity(Self::MAX_HEIGHT);
         let mut _width = 0;
 
-        for row in input.lines() {
+        for row in lines {
             let mut col_idx = 0;
 
             let mut row_content = [char::default(); Self::MAX_WIDTH];
