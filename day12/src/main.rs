@@ -1,4 +1,4 @@
-use aoc_tools::{Grid, NumExt, Neighbours2D, NeighbourMap};
+use aoc_tools::{Grid, Neighbours2D, NeighbourMap};
 use std::collections::HashMap;
 
 type ParsedInput = Grid<Plot>;
@@ -53,7 +53,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
             total.area += 1;
 
-            let neigh = Neighbours2D::new(xy, plots.size(), NeighbourMap::Plus);
+            let neigh = Neighbours2D::new(xy.into(), plots.size(), NeighbourMap::Plus);
             for n_pos in neigh {
                 if let Some(nxy) = n_pos {
                     if plots[nxy].id != Some(plot_id) {

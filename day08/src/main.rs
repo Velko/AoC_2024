@@ -1,8 +1,8 @@
-use aoc_tools::{NumExt};
+use aoc_tools::{NumExt, Point};
 use itertools::Itertools;
 use std::collections::HashSet;
 
-type ParsedInput = (Vec<(char, Vec<(usize, usize)>)>, (usize, usize));
+type ParsedInput = (Vec<(char, Vec<Point>)>, (usize, usize));
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -20,11 +20,11 @@ fn main() -> anyhow::Result<()> {
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let grid = input.read_grid()?;
 
-    let mut locations: Vec<(char, (usize, usize))> = Vec::new();
+    let mut locations: Vec<(char, Point)> = Vec::new();
 
-    for (cell, (x, y)) in grid.enumerate() {
+    for (cell, pos) in grid.enumerate() {
         if *cell != '.' {
-            locations.push((*cell, (x, y)));
+            locations.push((*cell, pos));
         }
     }
 
@@ -40,7 +40,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         .map(|(key, val)| (key,
             val
                 .map(|(_, v)| v)
-                .collect::<Vec<(usize, usize)>>()
+                .collect::<Vec<Point>>()
         ))
         .collect();
 
@@ -50,20 +50,20 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(input: &ParsedInput) -> usize {
     let (loc_groups, (width, height)) = input;
 
-    let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
+    let mut antinodes: HashSet<Point> = HashSet::new();
 
     for (_, loc) in loc_groups.into_iter() {
         let pairs = loc.into_iter().tuple_combinations::<(_, _)>();
-        for ((ax, ay), (bx, by)) in pairs {
+        for (a, b) in pairs {
 
-            let diffx = *bx as isize - *ax as isize;
-            let diffy = *by as isize - *ay as isize;
+            let diffx = b.x as isize - a.x as isize;
+            let diffy = b.y as isize - a.y as isize;
 
-            if let Some(anta) = calc_ant(*ax, *ay, -diffx, -diffy, *width, *height) {
+            if let Some(anta) = calc_ant(a, -diffx, -diffy, *width, *height) {
                 antinodes.insert(anta);
             }
 
-            if let Some(antb) = calc_ant(*bx, *by, diffx, diffy, *width, *height) {
+            if let Some(antb) = calc_ant(b, diffx, diffy, *width, *height) {
                 antinodes.insert(antb);
             }
         }
@@ -72,33 +72,33 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     antinodes.len()
 }
 
-fn calc_ant(x: usize, y: usize, dx: isize, dy: isize, width: usize, height: usize) -> Option<(usize, usize)> {
-    let antx = x.clamped_add_signed(dx, width)?;
-    let anty = y.clamped_add_signed(dy, height)?;
+fn calc_ant(t: &Point, dx: isize, dy: isize, width: usize, height: usize) -> Option<Point> {
+    let antx = t.x.clamped_add_signed(dx, width)?;
+    let anty = t.y.clamped_add_signed(dy, height)?;
 
-    Some((antx, anty))
+    Some((antx, anty).into())
 }
 
 
 fn calculate_p2(input: &ParsedInput) -> usize {
     let (loc_groups, (width, height)) = input;
 
-    let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
+    let mut antinodes: HashSet<Point> = HashSet::new();
 
     for (_, loc) in loc_groups.into_iter() {
         let pairs = loc.into_iter().tuple_combinations::<(_, _)>();
-        for ((ax, ay), (bx, by)) in pairs {
-            let diffx = *bx as isize - *ax as isize;
-            let diffy = *by as isize - *ay as isize;
+        for (a, b) in pairs {
+            let diffx = b.x as isize - a.x as isize;
+            let diffy = b.y as isize - a.y as isize;
 
             let mut multiplier = 0;
-            while let Some(anta) = calc_ant(*ax, *ay, -diffx * multiplier, -diffy * multiplier, *width, *height) {
+            while let Some(anta) = calc_ant(a, -diffx * multiplier, -diffy * multiplier, *width, *height) {
                 antinodes.insert(anta);
                 multiplier += 1;
             }
 
             multiplier = 0;
-            while let Some(antb) = calc_ant(*bx, *by, diffx * multiplier, diffy * multiplier, *width, *height) {
+            while let Some(antb) = calc_ant(b, diffx * multiplier, diffy * multiplier, *width, *height) {
                 antinodes.insert(antb);
                 multiplier += 1;
             }
@@ -112,7 +112,6 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 mod tests {
     use super::*;
     use aoc_tools::TestSamples;
-    use aoc_tools::ResultExt;
 
     fn load_sample(filename: &str) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;

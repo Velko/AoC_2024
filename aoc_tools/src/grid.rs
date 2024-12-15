@@ -138,11 +138,11 @@ pub struct GridEnumerator<'a, T> {
 }
 
 impl<'a, T> Iterator for GridEnumerator<'a, T> {
-    type Item = (&'a T, (usize, usize));
+    type Item = (&'a T, Point);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.row < self.grid._height {
-            let item = (&self.grid.content[self.row][self.col], (self.col, self.row));
+            let item = (&self.grid.content[self.row][self.col], Point {x: self.col, y: self.row });
             self.col += 1;
             if self.col >= self.grid._width {
                 self.col = 0;

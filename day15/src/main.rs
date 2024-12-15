@@ -94,7 +94,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     grid
         .enumerate()
         .filter(|(o, _)| **o == 'O')
-        .map(|(_, (x, y))| y * 100 + x)
+        .map(|(_, Point {x, y})| y * 100 + x)
         .sum()
 }
 
@@ -126,7 +126,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     let mut all_boxes: Vec<WhBox> = Vec::new();
     let mut start: Option<(usize, usize)> = None;
 
-    for (c, (x, y)) in orig_grid.enumerate() {
+    for (c, Point {x, y}) in orig_grid.enumerate() {
         match c {
             '#' => {
                 grid[(x * 2, y)] = '#';
@@ -174,7 +174,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     grid
         .enumerate()
         .filter(|(o, _)| **o == '[')
-        .map(|(_, (x, y))| y * 100 + x)
+        .map(|(_, Point { x, y })| y * 100 + x)
         .sum()
 }
 

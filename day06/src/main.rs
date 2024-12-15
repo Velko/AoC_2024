@@ -1,9 +1,9 @@
-use aoc_tools::{Direction, Grid, InvalidInput, NumExt, Rotation};
+use aoc_tools::{Direction, Grid, InvalidInput, Point, Rotation};
 use ndarray::{Array3, ShapeBuilder};
 use std::collections::HashSet;
 use rayon::prelude::*;
 
-type ParsedInput = (Grid<char>, (usize, usize));
+type ParsedInput = (Grid<char>, Point);
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -30,23 +30,23 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
-    let (grid, (x, y)) = input;
+    let (grid, pos) = input;
 
-    let visited = walk_unobstructed(&grid, *x, *y);
+    let visited = walk_unobstructed(&grid, pos);
 
     visited.len()
 }
 
-fn walk_unobstructed(grid: &Grid<char>, x: usize, y: usize) -> HashSet<(usize, usize)> {
-    let mut visited: HashSet<(usize, usize)> = HashSet::new();
+fn walk_unobstructed(grid: &Grid<char>, pos: &Point) -> HashSet<Point> {
+    let mut visited: HashSet<Point> = HashSet::new();
 
-    let mut guard = GuardState::new(x, y);
+    let mut guard = GuardState::new(*pos);
 
-    visited.insert((x, y));
+    visited.insert(*pos);
 
     while let Some(new_pos) = guard.step(grid.size()) {
 
-        let cell_val = grid[(new_pos.posx, new_pos.posy)];
+        let cell_val = grid[new_pos.pos];
 
         if cell_val == '#' {
             guard = guard.turn();
@@ -55,7 +55,7 @@ fn walk_unobstructed(grid: &Grid<char>, x: usize, y: usize) -> HashSet<(usize, u
 
         guard = new_pos;
 
-        visited.insert((guard.posx, guard.posy));
+        visited.insert(guard.pos);
 
     }
 
@@ -63,34 +63,34 @@ fn walk_unobstructed(grid: &Grid<char>, x: usize, y: usize) -> HashSet<(usize, u
 }
 
 fn calculate_p2(input: &ParsedInput) -> usize {
-    let (grid, (x, y)) = input;
+    let (grid, pos) = input;
 
-    let mut base_path = walk_unobstructed(&grid, *x, *y);
+    let mut base_path = walk_unobstructed(&grid, pos);
 
-    base_path.remove(&(*x, *y));
+    base_path.remove(pos);
 
     let obstacles = base_path
         .par_iter()
-        .map(|(obx, oby)|walk_detect_loop(&grid, *x, *y, *obx, *oby))
+        .map(|ob|walk_detect_loop(&grid, *pos, *ob))
         .sum();
 
     obstacles
 }
 
-fn walk_detect_loop(grid: &Grid<char>, x: usize, y: usize, obx: usize, oby: usize) -> usize {
+fn walk_detect_loop(grid: &Grid<char>, pos: Point, ob: Point) -> usize {
 
     let (width, height) = grid.size();
     let mut visited: Array3<bool> = Array3::from_elem((width, height, 4).f(), false);
 
-    let mut guard = GuardState::new(x, y);
+    let mut guard = GuardState::new(pos);
 
     *visited.get_mut(guard.as_index()).unwrap() = true;
 
     while let Some(new_pos) = guard.step(grid.size()) {
 
-        let cell_val = grid[(new_pos.posx, new_pos.posy)];
+        let cell_val = grid[new_pos.pos];
 
-        if cell_val == '#' || (new_pos.posx == obx && new_pos.posy == oby) {
+        if cell_val == '#' || (new_pos.pos == ob) {
             guard = guard.turn();
             continue;
         }
@@ -107,50 +107,34 @@ fn walk_detect_loop(grid: &Grid<char>, x: usize, y: usize, obx: usize, oby: usiz
 }
 
 struct GuardState {
-    posx: usize,
-    posy: usize,
+    pos: Point,
     dir: Direction,
 }
 
 impl GuardState {
-    pub fn new(x: usize, y: usize) -> Self {
+    pub fn new(pos: Point) -> Self {
         Self {
-            posx: x,
-            posy: y,
+            pos,
             dir: Direction::Up,
         }
     }
 
     pub fn turn(&self) -> GuardState {
         Self {
-            posx: self.posx,
-            posy: self.posy,
+            pos: self.pos,
             dir: self.dir.turn(Rotation::Clockwise),
         }
     }
 
-    pub fn step(&self, (width, height): (usize, usize)) -> Option<Self> {
-        let newx = match self.dir {
-            Direction::Right => self.posx.clamped_add_signed(1, width)?,
-            Direction::Left => self.posx.clamped_add_signed(-1, width)?,
-            _ => self.posx,
-        };
-
-        let newy = match self.dir {
-            Direction::Down => self.posy.clamped_add_signed(1, height)?,
-            Direction::Up => self.posy.clamped_add_signed(-1, height)?,
-            _ => self.posy,
-        };
-
+    pub fn step(&self, bounds: (usize, usize)) -> Option<Self> {
         Some(Self {
-            posx: newx,
-            posy: newy,
+            pos: self.pos.advance(self.dir, bounds)?,
             dir: self.dir,
         })
     }
 
     pub fn as_index(&self) -> (usize, usize, usize) {
-        (self.posx, self.posy, self.dir as usize)
+        (self.pos.x, self.pos.y, self.dir as usize)
     }
 }
 
@@ -182,7 +166,7 @@ mod tests {
     fn test_locate_start() -> anyhow::Result<()> {
         let ((_, position), _, _) = load_sample("sample.txt")?;
 
-        assert_eq!((4, 6), position);
+        assert_eq!(Point { x: 4, y: 6}, position);
         Ok(())
     }
 

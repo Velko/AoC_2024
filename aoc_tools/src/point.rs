@@ -2,10 +2,10 @@ use std::usize;
 
 use crate::{Direction, NumExt};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 pub struct Point {
-    pub (crate) x: usize,
-    pub (crate) y: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 impl Point {
