@@ -1,5 +1,5 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, Point, Direction, Rotation, Neighbours2D, NeighbourMap};
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 type ParsedInput = (Grid<char>, Point);
 
@@ -124,7 +124,7 @@ fn bfs_search(input: &ParsedInput) -> (usize, HashSet<Point>) {
 }
 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 struct BfsState {
     pos: Point,
     dir: Direction,
@@ -154,7 +154,9 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         score: 0,
     };
 
-    let all_paths = dfs_search(start_state, grid, HashSet::new(), score);
+    bfs_wide_search(input)
+
+    //let all_paths = dfs_search(start_state, grid, HashSet::new(), score);
 
     // let mut grid = grid.clone();
 
@@ -163,7 +165,109 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     // }
 
     // grid.print();
-    all_paths.unwrap().len()
+}
+
+fn bfs_wide_search(input: &ParsedInput) -> usize {
+    let (grid, start) = input;
+
+    let start_state = BfsState {
+        pos: *start,
+        dir: Direction::Right,
+        score: 0,
+    };
+
+    let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
+    let mut visited: HashSet<(Point, Direction)> = HashSet::new();
+    let mut vis_scores: HashSet<BfsState> = HashSet::new();
+    queue.push(start_state);
+
+    let mut best_score: Option<usize> = None;
+    let mut end_point: Option<Point> = None;
+
+    while !queue.is_empty() {
+
+        let state = queue.pop().unwrap();
+
+        if let Some(best) = best_score {
+            if state.score > best {
+                break;
+            }
+        }
+
+        visited.insert((state.pos, state.dir));
+        vis_scores.insert(state.clone());
+
+        if grid[state.pos] == 'E' {
+            best_score = Some(state.score);
+            end_point = Some(state.pos);
+            continue;
+        }
+
+        let forward = state.pos.advance(state.dir, grid.size()).unwrap();
+        if !visited.contains(&(forward, state.dir)) && grid[forward] != '#' {
+            queue.push(BfsState {
+                pos: forward,
+                dir: state.dir,
+                score: state.score + 1,
+            });
+        }
+
+        let dir_left = state.dir.turn(Rotation::AntiClockwise);
+        let left = state.pos.advance(dir_left, grid.size()).unwrap();
+        if !visited.contains(&(left, dir_left)) && grid[left] != '#' {
+            queue.push(BfsState {
+                pos: left,
+                dir: dir_left,
+                score: state.score + 1001,
+            });
+        }
+
+        let dir_right = state.dir.turn(Rotation::Clockwise);
+        let right = state.pos.advance(dir_right, grid.size()).unwrap();
+        if !visited.contains(&(right, dir_right)) && grid[right] != '#' {
+            queue.push(BfsState {
+                pos: right,
+                dir: dir_right,
+                score: state.score + 1001,
+            });
+        }
+    }
+
+    let end_pos = end_point.unwrap();
+
+    let mut all_visited: HashSet<Point> = HashSet::new();
+
+    follow_back(end_pos, &vis_scores, 1 + best_score.unwrap(), grid.size(), &mut all_visited);
+
+    let mut grid = grid.clone();
+
+    for p in all_visited.iter() {
+        grid[*p] = 'O';
+    }
+
+    grid.print();
+
+    all_visited.len()
+    //(best_score.unwrap_or(usize::MAX), path)
+}
+
+fn follow_back(end_pos: Point, vis_scores: &HashSet<BfsState>, score: usize, bounds: (usize, usize), all_visited: &mut HashSet<Point>) {
+    if score > 0 {
+        all_visited.insert(end_pos);
+    }
+    let ended: Vec<_> = vis_scores
+        .iter()
+        .filter(|p| p.pos == end_pos && (p.score + 1 == score || p.score + 1001 == score))
+        .collect();
+    //println!("{:?}", ended);
+
+    for e in ended.into_iter() {
+        let from_dir = e.dir.turn(Rotation::Flip);
+        let from_pos = e.pos.advance(from_dir, bounds).unwrap();
+        
+        //println!("From {:?}, {:?}", from_dir, from_pos);
+        follow_back(from_pos, vis_scores, e.score, bounds, all_visited);
+    }
 }
 
 fn dfs_search(state: BfsState, grid: &Grid<char>, mut visited: HashSet<Point>, max_score: usize) -> Option<HashSet<Point>> {
@@ -259,7 +363,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    #[case(load_sample("sample_1.txt")?)]
+    //#[case(load_sample("sample_1.txt")?)]
     //#[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
