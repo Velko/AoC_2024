@@ -32,9 +32,14 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 }
 
 fn calculate_p1(input: &ParsedInput) -> usize {
-    let (grid, start) = input;
+    let (score, _) = bfs_search(input);
 
-    grid.print();
+    score
+}
+
+
+fn bfs_search(input: &ParsedInput) -> (usize, HashSet<Point>) {
+    let (grid, start) = input;
 
     let start_state = BfsState {
         pos: *start,
@@ -52,7 +57,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         visited.insert(state.pos);
 
         if grid[state.pos] == 'E' {
-            return state.score;
+            return (state.score, visited);
         }
 
         let forward = state.pos.advance(state.dir, grid.size()).unwrap();
@@ -85,8 +90,9 @@ fn calculate_p1(input: &ParsedInput) -> usize {
         }
     }
 
-    usize::MAX
+    (usize::MAX, visited)
 }
+
 
 #[derive(Debug, PartialEq, Eq)]
 struct BfsState {
@@ -127,6 +133,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
+    #[case(load_sample("sample_1.txt")?)]
     //#[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
@@ -138,6 +145,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
+    #[case(load_sample("sample_1.txt")?)]
     //#[case(load_sample("input.txt")?)]
     #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
