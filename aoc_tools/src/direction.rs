@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Direction {
     Up,
     Right,
@@ -10,6 +10,7 @@ pub enum Direction {
 pub enum Rotation {
     Clockwise,
     AntiClockwise,
+    Flip,
 }
 
 impl Direction {
@@ -28,6 +29,13 @@ impl Direction {
                     Self::Left => Self::Down,
                     Self::Down => Self::Right,
                     Self::Right => Self::Up,
+                },
+            Rotation::Flip =>
+                match self {
+                    Self::Up => Self::Down,
+                    Self::Left => Self::Right,
+                    Self::Down => Self::Up,
+                    Self::Right => Self::Left,
                 },
         }
     }
