@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, Point, Direction, Rotation};
+use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, Point, Direction, Rotation, Neighbours2D, NeighbourMap};
 use std::collections::{BinaryHeap, HashSet};
 
 type ParsedInput = (Grid<char>, Point);
@@ -49,15 +49,22 @@ fn bfs_search(input: &ParsedInput) -> (usize, HashSet<Point>) {
 
     let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
     let mut visited: HashSet<Point> = HashSet::new();
+    let mut vis_scores: Vec<(Point, usize)> = Vec::new();
     queue.push(start_state);
+
+    let mut best_score: Option<usize> = None;
+    let mut end_point: Option<Point> = None;
 
     while !queue.is_empty() {
 
         let state = queue.pop().unwrap();
         visited.insert(state.pos);
+        vis_scores.push((state.pos, state.score));
 
         if grid[state.pos] == 'E' {
-            return (state.score, visited);
+            best_score = Some(state.score);
+            end_point = Some(state.pos);
+            break;
         }
 
         let forward = state.pos.advance(state.dir, grid.size()).unwrap();
@@ -90,7 +97,30 @@ fn bfs_search(input: &ParsedInput) -> (usize, HashSet<Point>) {
         }
     }
 
-    (usize::MAX, visited)
+
+    let mut path: HashSet<Point> = HashSet::new();
+
+    let mut tail = (end_point.unwrap(), best_score.unwrap());
+
+    while tail.0 != *start {
+
+        path.insert(tail.0);
+
+        let neigh = Neighbours2D::new(tail.0.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
+
+        for n in neigh {
+            println!("{:?}", n);
+            if let Some(prev) = vis_scores.iter().filter(|(p, s)| *p == n.into() && (s + 1 == tail.1 || s + 1001 == tail.1)).next() {
+                tail = *prev;
+            }
+        }
+    }
+
+    path.insert(*start);
+
+
+
+    (best_score.unwrap_or(usize::MAX), path)
 }
 
 
@@ -114,8 +144,18 @@ impl PartialOrd for BfsState {
 }
 
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> usize {
+    let (score, visited) = bfs_search(input);
+    let (grid, _) = input;
+
+    let mut grid = grid.clone();
+
+    for p in visited {
+        grid[p] = 'O';
+    }
+
+    grid.print();
+    score
 }
 
 #[cfg(test)]
@@ -145,9 +185,8 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    #[case(load_sample("sample_1.txt")?)]
+    //#[case(load_sample("sample_1.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
