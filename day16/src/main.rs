@@ -121,11 +121,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
     let mut visited: HashSet<(Point, Direction)> = HashSet::new();
-    let mut vis_scores: HashSet<BfsState> = HashSet::new();
+    let mut visited_states: Vec<BfsState> = Vec::new();
     queue.push(start_state);
 
     let mut best_score: Option<usize> = None;
-    let mut end_point: Option<Point> = None;
+    let mut end_pos: Option<Point> = None;
 
     while !queue.is_empty() {
 
@@ -138,11 +138,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
 
         visited.insert((state.pos, state.dir));
-        vis_scores.insert(state.clone());
+        visited_states.push(state.clone());
 
         if grid[state.pos] == 'E' {
             best_score = Some(state.score);
-            end_point = Some(state.pos);
+            end_pos = Some(state.pos);
             continue;
         }
 
@@ -176,18 +176,23 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         }
     }
 
-    let end_pos = end_point.unwrap();
+    let mut traceback: HashSet<Point> = HashSet::new();
 
-    let mut all_visited: HashSet<Point> = HashSet::new();
+    visited_states = visited_states
+        .into_iter()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
 
-    follow_back(end_pos, &vis_scores, 1 + best_score.unwrap(), grid.size(), &mut all_visited);
+    // a "pseudo" + 1 score to make the follow_back() pick up the end cell on the first step
+    follow_back(end_pos.unwrap(), &visited_states, 1 + best_score.unwrap(), grid.size(), &mut traceback);
 
-    all_visited.len()
+    traceback.len()
 }
 
-fn follow_back(end_pos: Point, vis_scores: &HashSet<BfsState>, score: usize, bounds: (usize, usize), all_visited: &mut HashSet<Point>) {
+fn follow_back(end_pos: Point, vis_scores: &Vec<BfsState>, score: usize, bounds: (usize, usize), traceback: &mut HashSet<Point>) {
     if score > 0 {
-        all_visited.insert(end_pos);
+        traceback.insert(end_pos);
     }
     let ended = vis_scores
         .iter()
@@ -197,7 +202,7 @@ fn follow_back(end_pos: Point, vis_scores: &HashSet<BfsState>, score: usize, bou
         let from_dir = e.dir.turn(Rotation::Flip);
         let from_pos = e.pos.advance(from_dir, bounds).unwrap();
         
-        follow_back(from_pos, vis_scores, e.score, bounds, all_visited);
+        follow_back(from_pos, vis_scores, e.score, bounds, traceback);
     }
 }
 
