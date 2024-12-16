@@ -326,3 +326,25 @@ Part 2
 
 I'm getting [Tetris/Jenga](https://adventofcode.com/2023/day/22) vibes here. Solved it in similar way: by having a list of boxes and their projection
 on the map. Collect all the movable boxes recursively and move them in one go, or bail out if wall was encountered.
+
+
+Day 16
+======
+
+Part 1
+------
+
+This doesn't look too hard - just a standard BFS search. Ok, I got a tiny mistake, because turning and then moving costs 1001 in total, instead of 1000.
+
+
+Part 2
+------
+
+And here we go, a hard one! After few unsuccessful attempts to modify my BFS for the first part, I tried to implement it as a basic recursive DFS. Worked
+right for the sample, but was too slow for the real thing. What was I even hoping for?!
+
+I ended up modifying by BFS to add a direction to the visited state and loop it until the nodes I visit start to appear further than the shortest found path
+to the target. Collecting all the visited states, complete with the distances.
+
+This way I got a list of all visited cells that can be reached with the "best" cost. Then I started to recursively search backwards within this list until
+I get to the starting point. Collect all cells visited on the way, their number is the answer.
