@@ -44,21 +44,21 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'day10'",
+            "name": "Debug unit tests in executable 'day17'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=day10",
-                    "--package=day10"
+                    "--bin=day17",
+                    "--package=day17"
                 ],
                 "filter": {
-                    "name": "day10",
+                    "name": "day17",
                     "kind": "bin"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}/day10"
+            "cwd": "${workspaceFolder}/day17"
         }
     ]
 }
