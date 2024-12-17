@@ -1,5 +1,4 @@
 use regex::Regex;
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 
 type ParsedInput = Computer;
 
@@ -68,17 +67,32 @@ struct Computer {
     progmem: Vec<u8>,
 }
 
-#[repr(u8)]
 #[derive(Debug)]
 enum Instruction {
-    Adv = 0,
-    Bxl = 1,
-    Bst = 2,
-    Jnz = 3,
-    Bxc = 4,
-    Out = 5,
-    Bdv = 6,
-    Cdv = 7,
+    Adv,
+    Bxl,
+    Bst,
+    Jnz,
+    Bxc,
+    Out,
+    Bdv,
+    Cdv,
+}
+
+impl From<u8> for Instruction {
+    fn from(u: u8) -> Self {
+        match u {
+            0 => Self::Adv,
+            1 => Self::Bxl,
+            2 => Self::Bst,
+            3 => Self::Jnz,
+            4 => Self::Bxc,
+            5 => Self::Out,
+            6 => Self::Bdv,
+            7 => Self::Cdv,
+            _ => panic!("Invalid instruction"),
+        }
+    }
 }
 
 #[repr(u8)]
@@ -91,7 +105,7 @@ enum Combo {
 }
 
 impl From<u64> for Combo {
-    fn from(u : u64) -> Self {
+    fn from(u: u64) -> Self {
         match u {
             0|1|2|3 => Self::Const(u as u8),
             4 => Self::A,
@@ -116,7 +130,6 @@ impl Computer {
             Combo::A => self.a,
             Combo::B => self.b,
             Combo::C => self.c,
-           _ => panic!("Invalid combo arg"),
         }
     }
 
@@ -188,7 +201,6 @@ fn run_program(computer: &mut Computer) -> Vec<u8> {
                     computer.c = computer.a >> computer.combo(c_val);
                     //println!("C = A >> {:?}; / {} \t{}", c_val, computer.combo(c_val), computer.c);
                 },
-                _ => panic!("Invalid opcode"),
             }
 
             computer.pc += 2;
@@ -200,20 +212,7 @@ fn run_program(computer: &mut Computer) -> Vec<u8> {
     output
 }
 
-
-fn vec_to_str(v: &[u8]) -> String {
-    v
-        .into_iter()
-        .map(|d|d.to_string())
-        .collect()
-}
-
-
 fn calculate_p2(input: &ParsedInput) -> u64 {
-
-    let mut computer = input.clone();
-
-    let orig_prog = vec_to_str(&input.progmem);
 
     let result = search_n_digits(input, 0, input.progmem.len()-1);
 
@@ -232,15 +231,17 @@ fn search_n_digits(input: &ParsedInput, mut search_a: u64, n: usize) -> Option<u
         let res = run_program(&mut computer);
 
         if res == &input.progmem[n..] {
-            println!("{:o}", i);
-            println!("{:?}", &input.progmem[n..]);
 
             if n == 0 {
+                // a solution at the deepest level - got our answer
                 return Some(search_a | i);
             }
 
+            // dive deeper
             let inner_res = search_n_digits(input, search_a | i, n - 1);
 
+            // and exit if the deeper level produced an answer
+            // if not, try another digit
             if inner_res.is_some() {
                 return inner_res;
             }
@@ -266,7 +267,10 @@ mod tests {
     }
 
     fn res2num(res: &[u8]) -> u64 {
-        vec_to_str(res)
+        res
+            .into_iter()
+            .map(|d|d.to_string())
+            .collect::<String>()
             .parse()
             .unwrap()
     }
@@ -283,9 +287,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    #[case(load_sample("sample_1.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
