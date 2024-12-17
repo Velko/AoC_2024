@@ -85,15 +85,20 @@ impl Computer {
            _ => panic!("Invalid combo arg"),
         }
     }
+
+    fn reset(&mut self, orig: &Computer) {
+        self.a = orig.a;
+        self.b = orig.b;
+        self.c = orig.c;
+        self.pc = 0;
+    }
 }
 
 fn calculate_p1(input: &ParsedInput) -> Vec<u8> {
-    run_program(input)
+    run_program(&mut input.clone())
 }
 
-fn run_program(computer: &Computer) -> Vec<u8> {
-    let mut computer = computer.clone();
-
+fn run_program(computer: &mut Computer) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
 
     loop {
@@ -149,8 +154,39 @@ fn run_program(computer: &Computer) -> Vec<u8> {
 }
 
 
+fn vec_to_str(v: &[u8]) -> String {
+    v
+        .into_iter()
+        .map(|d|d.to_string())
+        .collect()
+}
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
+
+fn calculate_p2(input: &ParsedInput) -> u32 {
+
+    let mut computer = input.clone();
+
+    let orig_prog = vec_to_str(&input.progmem);
+
+    for n in 0..u32::MAX {
+
+        println!("{}", n);
+        computer.reset(input);
+        computer.a = n;
+
+        let res = run_program(&mut computer);
+
+
+        //let res_str = vec_to_str(&res);
+
+        //println!("{:?}\n{:?}", res_str, orig_prog);
+
+        if res == input.progmem {
+            println!("{:?}", res);
+            return n;
+        }
+    }
+
     0
 }
 
@@ -168,10 +204,7 @@ mod tests {
     }
 
     fn res2num(res: &[u8]) -> u64 {
-        res
-            .into_iter()
-            .map(|d|d.to_string())
-            .collect::<String>()
+        vec_to_str(res)
             .parse()
             .unwrap()
     }
