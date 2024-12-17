@@ -360,7 +360,7 @@ Day 17
 Part 1
 ------
 
-This is my kind of exercise! I like custom processors!
+This is my kind of exercise! I [love custom processors](https://github.com/Velko/8-bit-CPU)!
 
 Funny enough, I struggled with input parsing: could not come up with a regex, that splits the program part in one go. Gave up and parsed the string old-fashined way.
 
@@ -374,7 +374,7 @@ input.
 
 It appears that I have to more or less get the idea on what that program is doing. Improved the interpreter to print out the instructions it is executing.
 
-Ok, so it is a loop, where it takes 3 lowest bits from A, calculates some "mumbo-jumbo" from it and few more bits. Outputs the result, discards those 3 bits and continue until
+Ok, so it is a loop, where it takes 3 lowest bits from A, calculates some "mumbo-jumbo" from it and _few more bits_. Outputs the result, discards those 3 bits and continue until
 register A becomes 0.
 
 Without understanding the "mumbo-jumbo" I can not really tell what is needed to get the desired output...
