@@ -16,8 +16,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
-    let reg_re = Regex::new(r"Register (.): (\d+)").unwrap();
-    //let prog_re = Regex::new(r"(?<=Program: )\d+(?=,|\b)").unwrap();
+    let reg_re = Regex::new(r"Register\s+(.)\s*:\s*(\d+)").unwrap();
+    let prog_re = Regex::new(r"Program:\s*([0-7,\s]+)").unwrap();
 
     let text = input.read_lines()?;
 
@@ -39,21 +39,14 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
             }
         }
 
-        if line.starts_with("Program: ") {
+        if let Some((_, [prog])) = prog_re.captures(&line).map(|c|c.extract()) {
             computer.progmem =
-                (&line[9..])
-                .split(',')
-                .map(|p|p.parse().unwrap())
-                .collect();
-
+                prog
+                    .split(',')
+                    .map(|p|p.trim().parse().unwrap())
+                    .collect();
         }
-
-        // if let Some(prog_m) = prog_re.captures(&line) {
-        //
-        // }
     }
-
-//    println!("{:?}", computer);
 
     Ok(computer)
 }
