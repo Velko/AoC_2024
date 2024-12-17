@@ -61,27 +61,61 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
 #[derive(Debug, Clone)]
 struct Computer {
-    a: u32,
-    b: u32,
-    c: u32,
+    a: u64,
+    b: u64,
+    c: u64,
     pc: usize,
     progmem: Vec<u8>,
 }
 
+#[repr(u8)]
+#[derive(Debug)]
+enum Instruction {
+    Adv = 0,
+    Bxl = 1,
+    Bst = 2,
+    Jnz = 3,
+    Bxc = 4,
+    Out = 5,
+    Bdv = 6,
+    Cdv = 7,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+enum Combo {
+    Const(u8),
+    A,
+    B,
+    C,
+}
+
+impl From<u64> for Combo {
+    fn from(u : u64) -> Self {
+        match u {
+            0|1|2|3 => Self::Const(u as u8),
+            4 => Self::A,
+            5 => Self::B,
+            6 => Self::C,
+            _ => panic!("Invalid combo arg"),
+        }
+    }
+}
+
 impl Computer {
-    fn fetch(&self) -> Option<(u8, u32)> {
+    fn fetch(&self) -> Option<(Instruction, u64)> {
         Some((
-            *self.progmem.get(self.pc)?,
-            *self.progmem.get(self.pc + 1)? as u32,
+            unsafe { std::mem::transmute(*self.progmem.get(self.pc)?) },
+            *self.progmem.get(self.pc + 1)? as u64,
         ))
     }
 
-    fn combo(&self, arg: u32) -> u32 {
+    fn combo(&self, arg: Combo) -> u64 {
         match arg {
-            0|1|2|3 => arg,
-            4 => self.a,
-            5 => self.b,
-            6 => self.c,
+            Combo::Const(val) => val as u64,
+            Combo::A => self.a,
+            Combo::B => self.b,
+            Combo::C => self.c,
            _ => panic!("Invalid combo arg"),
         }
     }
@@ -104,42 +138,55 @@ fn run_program(computer: &mut Computer) -> Vec<u8> {
     loop {
 
         if let Some((opcode, arg)) = computer.fetch() {
-
+            //println!("{:?} {}", opcode, arg);
             match opcode {
-                0 => {
+                Instruction::Adv => {
                     // adv
-                    computer.a /= 1 << computer.combo(arg);
+                    let c_val = arg.into();
+                    computer.a >>= computer.combo(c_val);
+                    //println!("A >>= {:?}\t{}", c_val, computer.a);
                 },
-                1 => {
+                Instruction::Bxl => {
                     // bxl
                     computer.b ^= arg;
+                    //println!("B ^= {:?}\t{}", arg, computer.b);
                 },
-                2 => {
+                Instruction::Bst => {
                     // bst
-                    computer.b = computer.combo(arg) % 8;
+                    let c_val = arg.into();
+                    computer.b = computer.combo(c_val) % 8;
+                    //println!("B = {:?} % 8\t{}", c_val, computer.b);
                 },
-                3 => {
+                Instruction::Jnz => {
                     // jnz
                     if computer.a != 0 {
                         computer.pc = arg as usize;
+                        //println!("Jnz {}\n", arg);
                         continue;
                     }
                 },
-                4 => {
+                Instruction::Bxc => {
                     // bxc
                     computer.b ^= computer.c;
+                    //println!("B ^= C\t{}", computer.b);
                 },
-                5 => {
+                Instruction::Out => {
                     // out
-                    output.push((computer.combo(arg) % 8) as u8);
+                    let c_val = arg.into();
+                    output.push((computer.combo(c_val) % 8) as u8);
+                    //println!("Out {:?} % 8\t{}", c_val, (computer.combo(c_val) % 8));
                 },
-                6 => {
+                Instruction::Bdv => {
                     // bdv
-                    computer.b = computer.a / (1 << computer.combo(arg));
+                    let c_val = arg.into();
+                    computer.b = computer.a >> computer.combo(c_val);
+                    //println!("B = A >> {:?}\t{}", c_val, computer.b);
                 },
-                7 => {
+                Instruction::Cdv => {
                     // cdv
-                    computer.c = computer.a / (1 << computer.combo(arg));
+                    let c_val = arg.into();
+                    computer.c = computer.a >> computer.combo(c_val);
+                    //println!("C = A >> {:?}; / {} \t{}", c_val, computer.combo(c_val), computer.c);
                 },
                 _ => panic!("Invalid opcode"),
             }
@@ -162,33 +209,48 @@ fn vec_to_str(v: &[u8]) -> String {
 }
 
 
-fn calculate_p2(input: &ParsedInput) -> u32 {
+fn calculate_p2(input: &ParsedInput) -> u64 {
 
     let mut computer = input.clone();
 
     let orig_prog = vec_to_str(&input.progmem);
 
-    for n in 0..u32::MAX {
+    let result = search_n_digits(input, 0, input.progmem.len()-1);
 
-        println!("{}", n);
+    result.unwrap()
+}
+
+fn search_n_digits(input: &ParsedInput, mut search_a: u64, n: usize) -> Option<u64> {
+
+    let mut computer = input.clone();
+    search_a <<= 3;
+
+    for i in 0..8 {
         computer.reset(input);
-        computer.a = n;
+        computer.a = search_a | i;
 
         let res = run_program(&mut computer);
 
+        if res == &input.progmem[n..] {
+            println!("{:o}", i);
+            println!("{:?}", &input.progmem[n..]);
 
-        //let res_str = vec_to_str(&res);
+            if n == 0 {
+                return Some(search_a | i);
+            }
 
-        //println!("{:?}\n{:?}", res_str, orig_prog);
+            let inner_res = search_n_digits(input, search_a | i, n - 1);
 
-        if res == input.progmem {
-            println!("{:?}", res);
-            return n;
+            if inner_res.is_some() {
+                return inner_res;
+            }
         }
     }
 
-    0
+    None
 }
+
+
 
 #[cfg(test)]
 mod tests {
