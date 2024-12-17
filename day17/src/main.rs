@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     let parsed = parse_input(input)?;
 
     let result1 = calculate_p1(&parsed);
-    println!("Result p1: {}", result1);
+    println!("Result p1: {:?}", result1);
 
     let result2 = calculate_p2(&parsed);
     println!("Result p2: {}", result2);
@@ -39,7 +39,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
                 _ => panic!("Unexpected register"),
             }
         }
-                           //123456789
+
         if line.starts_with("Program: ") {
             computer.progmem =
                 (&line[9..])
@@ -87,9 +87,14 @@ impl Computer {
     }
 }
 
-fn calculate_p1(input: &ParsedInput) -> u64 {
+fn calculate_p1(input: &ParsedInput) -> Vec<u8> {
+    run_program(input)
+}
 
-    let mut computer = input.clone();
+fn run_program(computer: &Computer) -> Vec<u8> {
+    let mut computer = computer.clone();
+
+    let mut output: Vec<u8> = Vec::new();
 
     loop {
 
@@ -121,7 +126,7 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
                 },
                 5 => {
                     // out
-                    print!("{},", computer.combo(arg) % 8)
+                    output.push((computer.combo(arg) % 8) as u8);
                 },
                 6 => {
                     // bdv
@@ -140,10 +145,7 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
         }
     }
 
-    println!();
-
-    //Wrong: 5,4,1,2,7,1,5,5,1,
-    1
+    output
 }
 
 
@@ -165,12 +167,21 @@ mod tests {
         Ok((parsed, expected1, expected2))
     }
 
+    fn res2num(res: &[u8]) -> u64 {
+        res
+            .into_iter()
+            .map(|d|d.to_string())
+            .collect::<String>()
+            .parse()
+            .unwrap()
+    }
+
     #[rstest]
-    //#[case(load_sample("sample.txt")?)]
+    #[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
-        let result1 = calculate_p1(&parsed);
+        let result1 = res2num(&calculate_p1(&parsed));
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
