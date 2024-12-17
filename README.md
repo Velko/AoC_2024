@@ -8,6 +8,10 @@ This time giving a try to [Rust](https://www.rust-lang.org/) programming languag
 Had been practicing a bit during the year on exercises from 2015, so I got some helper functions ready. On the other
 hand, Rust is not my everyday language, so my skills in it is a bit _rusty_ (not sure if pun intended).
 
+
+**SPOILER ALERT: Do not scroll down and read the rest of the README if you do not want to see spoilers**
+
+
 Day 1
 =====
 
