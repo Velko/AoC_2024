@@ -293,7 +293,7 @@ produce that? And I thought that each puzzle is self-contained.
 
 Thinking of it more - it is not necessarily to know what image has to be formed, as long as it matches some criteria it should be fine.
 
-My next thought: Ok, maybe robots travel only over some of the lines. Then there might be a cell that is only visited by small number (ideally - 
+My next thought: Ok, maybe robots travel only over some of the lines. Then there might be a cell that is only visited by small number (ideally -
 just single) robot, while others are more popular. Then I could solve similarly to a Sudoku puzzle. Nope. Every robot visits every cell.
 
 What's next? Surely robots return to their initial positions. What is their cycle length? Probably will need to calculate some Least Common Multiple
@@ -348,3 +348,31 @@ to the target. Collecting all the visited states, complete with the distances.
 
 This way I got a list of all visited cells that can be reached with the "best" cost. Then I started to recursively search backwards within this list until
 I get to the starting point. Collect all cells visited on the way, their number is the answer.
+
+
+Day 17
+======
+
+Part 1
+------
+
+This is my kind of exercise! I like custom processors!
+
+Funny enough, I struggled with input parsing: could not come up with a regex, that splits the program part in one go. Gave up and parsed the string old-fashined way.
+
+Implementing the CPU from the description was quite straightforward, with exception that I messed up one instruction.
+
+Part 2
+------
+
+Now what? Sure, I tried out the brute-force to check if the example really behaves as expected, but wasn't crazy enough to believe that would work with the real
+input.
+
+It appears that I have to more or less get the idea on what that program is doing. Improved the interpreter to print out the instructions it is executing.
+
+Ok, so it is a loop, where it takes 3 lowest bits from A, calculates some "mumbo-jumbo" from it and few more bits. Outputs the result, discards those 3 bits and continue until
+register A becomes 0.
+
+Without understanding the "mumbo-jumbo" I can not really tell what is needed to get the desired output...
+
+Hey, what if I start from the end? The "few more" bits then should be all zeros. Then I can walk back to the beginning, with those "few more" already calculated. Bingo!
