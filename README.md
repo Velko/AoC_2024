@@ -313,6 +313,15 @@ It appears that I was overthinking it, but I did not expect the resulting number
 around 6500.
 
 
+Later I learned that it is quite easy to generate an image in BPM format. Here's another idea for solution:
+
+* generate a huge 10201x10609 ( 101<sup>2</sup>x103<sup>2</sup> ) image, where every possible state is arranged in a 101x103 grid. (I tried another way around for a square, but found subsequent calculations too confusing)
+* open the file in a image viewer/editor that allows zooming and shows cursor position. The tree stands out almost immediately.
+* note the approximate coordinates of the tree.
+* divide x by 101, to get column and y by 103 to get row
+* row * 101 + column is the answer
+
+
 Day 15
 ======
 

@@ -16,6 +16,8 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
+    //draw_picture_p2(&parsed, 101, 103);
+
     let result1 = calculate_p1(&parsed, 101, 103);
     println!("Result p1: {}", result1);
 
@@ -113,6 +115,51 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
     }
 
     0
+}
+
+fn draw_picture_p2(input: &ParsedInput, width: usize, height: usize) {
+
+    /* Generate a huge 10201x10609 image (101^2 x 103^2), where every possible
+       101x103 image is arranged in 101x103 grid.
+
+       Open the image in a viewer that allows to zoom in and shows current coordinates.
+
+       Then:
+            col = x / 101
+            row = y / 103
+            answer = row * 101 + col
+     */
+
+    let mut picture: Vec<Vec<FormattedCell>> = 
+        (0..(height * height))
+            .into_iter()
+            .map(|_| vec![FormattedCell('0'); width * width])
+            .collect();
+    for row in 0..height {
+        for col in 0..width {
+            let time = col + row * width;
+
+            for robot in input.iter() {
+                let (rx, ry) = robot.position_after(time, width, height);
+
+                let px = col * width + rx;
+                let py = row * height + ry;
+
+                *picture.get_mut(py).unwrap().get_mut(px).unwrap() = FormattedCell('1');
+            }
+        }
+    }
+
+    println!("P1");
+    println!("{} {}", width * width, height * height);
+
+    for row in picture.into_iter() {
+        let line: String = row
+                .into_iter()
+                .map(|v|v.to_string())
+                .collect();
+            println!("{}", line);
+    }
 }
 
 // fn cycle_length(robot: &Robot, width: i32, height: i32) -> usize {
