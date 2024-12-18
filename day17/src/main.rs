@@ -1,4 +1,5 @@
 use regex::Regex;
+use itertools::Itertools;
 
 type ParsedInput = Computer;
 
@@ -22,19 +23,21 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let text = input.read_lines()?;
 
     let mut computer = Computer {
-        a: 0,
-        b: 0,
-        c: 0,
-        pc: 0,
+        registers: Registers {
+            a: 0,
+            b: 0,
+            c: 0,
+            pc: 0,
+        },
         progmem: Vec::new(),
     };
 
     for line in text.into_iter() {
         if let Some((_, [reg_m, val])) = reg_re.captures(&line).map(|c|c.extract()) {
             match reg_m {
-                "A" => computer.a = val.parse().unwrap(),
-                "B" => computer.b = val.parse().unwrap(),
-                "C" => computer.b = val.parse().unwrap(),
+                "A" => computer.registers.a = val.parse().unwrap(),
+                "B" => computer.registers.b = val.parse().unwrap(),
+                "C" => computer.registers.c = val.parse().unwrap(),
                 _ => panic!("Unexpected register"),
             }
         }
@@ -51,44 +54,52 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(computer)
 }
 
+type RegVal = u64;
+
 #[derive(Debug, Clone)]
 struct Computer {
-    a: u64,
-    b: u64,
-    c: u64,
-    pc: usize,
+    registers: Registers,
     progmem: Vec<u8>,
 }
 
-#[derive(Debug)]
-enum Instruction {
-    Adv,
-    Bxl,
-    Bst,
-    Jnz,
-    Bxc,
-    Out,
-    Bdv,
-    Cdv,
+
+#[derive(Debug, Clone)]
+struct Registers {
+    a: RegVal,
+    b: RegVal,
+    c: RegVal,
+    pc: usize,
 }
 
-impl From<u8> for Instruction {
-    fn from(u: u8) -> Self {
-        match u {
-            0 => Self::Adv,
-            1 => Self::Bxl,
-            2 => Self::Bst,
-            3 => Self::Jnz,
+
+#[derive(Debug)]
+enum Instruction {
+    Adv(Combo),
+    Bxl(u8),
+    Bst(Combo),
+    Jnz(u8),
+    Bxc,
+    Out(Combo),
+    Bdv(Combo),
+    Cdv(Combo),
+}
+
+impl From<&[u8]> for Instruction {
+    fn from(ibytes: &[u8]) -> Self {
+        match ibytes[0] {
+            0 => Self::Adv(Combo::from(ibytes[1])),
+            1 => Self::Bxl(ibytes[1]),
+            2 => Self::Bst(Combo::from(ibytes[1])),
+            3 => Self::Jnz(ibytes[1]),
             4 => Self::Bxc,
-            5 => Self::Out,
-            6 => Self::Bdv,
-            7 => Self::Cdv,
+            5 => Self::Out(Combo::from(ibytes[1])),
+            6 => Self::Bdv(Combo::from(ibytes[1])),
+            7 => Self::Cdv(Combo::from(ibytes[1])),
             _ => panic!("Invalid instruction"),
         }
     }
 }
 
-#[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 enum Combo {
     Const(u8),
@@ -97,10 +108,10 @@ enum Combo {
     C,
 }
 
-impl From<u64> for Combo {
-    fn from(u: u64) -> Self {
+impl From<u8> for Combo {
+    fn from(u: u8) -> Self {
         match u {
-            0|1|2|3 => Self::Const(u as u8),
+            0|1|2|3 => Self::Const(u),
             4 => Self::A,
             5 => Self::B,
             6 => Self::C,
@@ -109,119 +120,100 @@ impl From<u64> for Combo {
     }
 }
 
-impl Computer {
-    fn fetch(&self) -> Option<(Instruction, u64)> {
-        Some((
-            unsafe { std::mem::transmute(*self.progmem.get(self.pc)?) },
-            *self.progmem.get(self.pc + 1)? as u64,
-        ))
-    }
-
-    fn combo(&self, arg: Combo) -> u64 {
+impl Registers {
+    fn get_combo(&self, arg: Combo) -> RegVal {
         match arg {
-            Combo::Const(val) => val as u64,
+            Combo::Const(val) => val as RegVal,
             Combo::A => self.a,
             Combo::B => self.b,
             Combo::C => self.c,
         }
     }
-
-    fn reset(&mut self, orig: &Computer) {
-        self.a = orig.a;
-        self.b = orig.b;
-        self.c = orig.c;
-        self.pc = 0;
-    }
 }
 
 fn calculate_p1(input: &ParsedInput) -> Vec<u8> {
-    run_program(&mut input.clone())
+
+    let program = input.progmem
+        .as_slice()
+        .chunks_exact(2)
+        .map(Instruction::from)
+        .collect_vec();
+
+    run_program(&mut input.registers.clone(), &program)
 }
 
-fn run_program(computer: &mut Computer) -> Vec<u8> {
+fn run_program(registers: &mut Registers, program: &[Instruction]) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
 
-    loop {
+    while registers.pc < program.len() {
 
-        if let Some((opcode, arg)) = computer.fetch() {
-            //println!("{:?} {}", opcode, arg);
-            match opcode {
-                Instruction::Adv => {
-                    // adv
-                    let c_val = arg.into();
-                    computer.a >>= computer.combo(c_val);
-                    //println!("A >>= {:?}\t{}", c_val, computer.a);
-                },
-                Instruction::Bxl => {
-                    // bxl
-                    computer.b ^= arg;
-                    //println!("B ^= {:?}\t{}", arg, computer.b);
-                },
-                Instruction::Bst => {
-                    // bst
-                    let c_val = arg.into();
-                    computer.b = computer.combo(c_val) % 8;
-                    //println!("B = {:?} % 8\t{}", c_val, computer.b);
-                },
-                Instruction::Jnz => {
-                    // jnz
-                    if computer.a != 0 {
-                        computer.pc = arg as usize;
-                        //println!("Jnz {}\n", arg);
-                        continue;
-                    }
-                },
-                Instruction::Bxc => {
-                    // bxc
-                    computer.b ^= computer.c;
-                    //println!("B ^= C\t{}", computer.b);
-                },
-                Instruction::Out => {
-                    // out
-                    let c_val = arg.into();
-                    output.push((computer.combo(c_val) % 8) as u8);
-                    //println!("Out {:?} % 8\t{}", c_val, (computer.combo(c_val) % 8));
-                },
-                Instruction::Bdv => {
-                    // bdv
-                    let c_val = arg.into();
-                    computer.b = computer.a >> computer.combo(c_val);
-                    //println!("B = A >> {:?}\t{}", c_val, computer.b);
-                },
-                Instruction::Cdv => {
-                    // cdv
-                    let c_val = arg.into();
-                    computer.c = computer.a >> computer.combo(c_val);
-                    //println!("C = A >> {:?}; / {} \t{}", c_val, computer.combo(c_val), computer.c);
-                },
-            }
-
-            computer.pc += 2;
-        } else {
-            break
+        match program[registers.pc] {
+            Instruction::Adv(c_val) => {
+                registers.a >>= registers.get_combo(c_val);
+                //println!("A >>= {:?}\t{}", c_val, computer.a);
+            },
+            Instruction::Bxl(arg) => {
+                registers.b ^= arg as RegVal;
+                //println!("B ^= {:?}\t{}", arg, computer.b);
+            },
+            Instruction::Bst(c_val) => {
+                registers.b = registers.get_combo(c_val) % 8;
+                //println!("B = {:?} % 8\t{}", c_val, computer.b);
+            },
+            Instruction::Jnz(arg) => {
+                // jnz
+                if registers.a != 0 {
+                    registers.pc = (arg / 2) as usize; //divide by 2, because program is decoded
+                    //println!("Jnz {}\n", arg);
+                    continue;
+                }
+            },
+            Instruction::Bxc => {
+                registers.b ^= registers.c;
+                //println!("B ^= C\t{}", computer.b);
+            },
+            Instruction::Out(c_val) => {
+                output.push((registers.get_combo(c_val) % 8) as u8);
+                //println!("Out {:?} % 8\t{}", c_val, (computer.combo(c_val) % 8));
+            },
+            Instruction::Bdv(c_val) => {
+                registers.b = registers.a >> registers.get_combo(c_val);
+                //println!("B = A >> {:?}\t{}", c_val, computer.b);
+            },
+            Instruction::Cdv(c_val) => {
+                registers.c = registers.a >> registers.get_combo(c_val);
+                //println!("C = A >> {:?}; / {} \t{}", c_val, computer.combo(c_val), computer.c);
+            },
         }
+
+        registers.pc += 1;
     }
 
     output
 }
 
-fn calculate_p2(input: &ParsedInput) -> u64 {
+fn calculate_p2(input: &ParsedInput) -> RegVal {
 
-    let result = search_n_digits(input, 0, input.progmem.len()-1);
+    let program = input.progmem
+        .as_slice()
+        .chunks_exact(2)
+        .map(Instruction::from)
+        .collect_vec();
+
+    let result = search_n_digits(input, &program, 0, input.progmem.len()-1);
 
     result.unwrap()
 }
 
-fn search_n_digits(input: &ParsedInput, mut search_a: u64, n: usize) -> Option<u64> {
+fn search_n_digits(input: &ParsedInput, program: &[Instruction], mut search_a: RegVal, n: usize) -> Option<RegVal> {
 
-    let mut computer = input.clone();
     search_a <<= 3;
 
     for i in 0..8 {
-        computer.reset(input);
-        computer.a = search_a | i;
+        let mut registers = input.registers.clone();
+        registers.a = search_a | i;
 
-        let res = run_program(&mut computer);
+        let res = run_program(&mut registers, program);
 
         if res == &input.progmem[n..] {
 
@@ -231,7 +223,7 @@ fn search_n_digits(input: &ParsedInput, mut search_a: u64, n: usize) -> Option<u
             }
 
             // dive deeper
-            let inner_res = search_n_digits(input, search_a | i, n - 1);
+            let inner_res = search_n_digits(input, program, search_a | i, n - 1);
 
             // and exit if the deeper level produced an answer
             // if not, try another digit
