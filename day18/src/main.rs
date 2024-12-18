@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = calculate_p1(&parsed, 70, 70, 1024);
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2(&parsed, 70, 70);
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -37,6 +37,11 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 }
 
 fn calculate_p1(input: &ParsedInput, width: usize, height: usize, nbytes: usize) -> usize {
+    traverse_grid(input, width, height, nbytes).unwrap()
+}
+
+fn traverse_grid(input: &ParsedInput, width: usize, height: usize, nbytes: usize) -> Option<usize> {
+
     let mut grid: Grid<char> = Grid::new('.', width+1, height+1);
 
     for p in input.into_iter().take(nbytes) {
@@ -62,7 +67,7 @@ fn calculate_p1(input: &ParsedInput, width: usize, height: usize, nbytes: usize)
         let state = queue.pop().unwrap();
         visited.insert(state.pos);
 
-        println!("V: {} H:{}", visited.len(), queue.len());
+        //println!("V: {} H:{}", visited.len(), queue.len());
 
         if state.pos == (width, height).into() {
             best_score = Some(state.score);
@@ -84,7 +89,7 @@ fn calculate_p1(input: &ParsedInput, width: usize, height: usize, nbytes: usize)
         }
     }
 
-    best_score.unwrap()
+    best_score
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -105,8 +110,30 @@ impl PartialOrd for BfsState {
     }
 }
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> u64 {
+
+    let mut lo = 0;
+    let mut hi = input.len();
+
+    while (lo < hi)
+    {
+        let i = (lo + hi) / 2;
+
+        let steps = traverse_grid(input, width, height, i);
+
+        if steps.is_some() {
+            lo = i + 1;
+        } else {
+            hi = i;
+        }
+    }
+
+    println!("{} {} ", lo, hi);
+
+    println!("{:?}", input.get(lo - 1).unwrap());
+
+
+    8080
 }
 
 #[cfg(test)]
@@ -136,10 +163,9 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2(&parsed, 6, 6);
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
