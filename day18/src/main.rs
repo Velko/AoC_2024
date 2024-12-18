@@ -1,4 +1,3 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 use aoc_tools::{Point, Grid, Neighbours2D, NeighbourMap};
 use std::collections::{HashSet, BinaryHeap};
 
@@ -31,8 +30,6 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         points.push((x, y).into());
     }
 
-    //println!("{:?}", points);
-
     Ok(points)
 }
 
@@ -47,8 +44,6 @@ fn traverse_grid(input: &ParsedInput, width: usize, height: usize, nbytes: usize
     for p in input.into_iter().take(nbytes) {
         grid[*p] = '#';
     }
-
-    grid.print();
 
     let start_state = BfsState {
         pos: (0, 0).into(),
@@ -66,8 +61,6 @@ fn traverse_grid(input: &ParsedInput, width: usize, height: usize, nbytes: usize
 
         let state = queue.pop().unwrap();
         visited.insert(state.pos);
-
-        //println!("V: {} H:{}", visited.len(), queue.len());
 
         if state.pos == (width, height).into() {
             best_score = Some(state.score);
@@ -110,13 +103,12 @@ impl PartialOrd for BfsState {
     }
 }
 
-fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> u64 {
+fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> String {
 
     let mut lo = 0;
     let mut hi = input.len();
 
-    while (lo < hi)
-    {
+    while lo < hi {
         let i = (lo + hi) / 2;
 
         let steps = traverse_grid(input, width, height, i);
@@ -128,12 +120,9 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> u64 {
         }
     }
 
-    println!("{} {} ", lo, hi);
+    let answer = input.get(lo - 1).unwrap();
 
-    println!("{:?}", input.get(lo - 1).unwrap());
-
-
-    8080
+    format!("{},{}", answer.x, answer.y)
 }
 
 #[cfg(test)]
@@ -149,23 +138,32 @@ mod tests {
         Ok((parsed, expected1, expected2))
     }
 
-    #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    fn encode_coordinates(s: &str) -> u64 {
+        s
+            .chars()
+            .filter(|c|c.is_digit(10))
+            .collect::<String>()
+            .parse()
+            .unwrap()
+    }
 
-        let result1 = calculate_p1(&parsed, 6, 6, 12);
+    #[rstest]
+    #[case(load_sample("sample.txt")?, 6, 12)]
+    #[case(load_sample("input.txt")?, 70, 1024)]
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] size: usize, #[case] nbytes: usize) -> anyhow::Result<()> {
+
+        let result1 = calculate_p1(&parsed, size, size, nbytes);
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    #[case(load_sample("sample.txt")?, 6)]
+    #[case(load_sample("input.txt")?, 70)]
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] size: usize) -> anyhow::Result<()> {
 
-        let result2 = calculate_p2(&parsed, 6, 6);
+        let result2 = encode_coordinates(&calculate_p2(&parsed, size, size));
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
