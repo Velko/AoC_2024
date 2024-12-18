@@ -360,11 +360,14 @@ Day 17
 Part 1
 ------
 
-This is my kind of exercise! I [love custom processors](https://github.com/Velko/8-bit-CPU)!
+This is my kind of exercise! I love [custom processors](https://github.com/Velko/8-bit-CPU)!
 
 Funny enough, I struggled with input parsing: could not come up with a regex, that splits the program part in one go. Gave up and parsed the string old-fashined way.
 
 Implementing the CPU from the description was quite straightforward, with exception that I messed up one instruction.
+
+My testing infrastructure, however, broke down. It was designed to check for a single numeric value, not a string. Luckily, none of the outputs started with zeros,
+so I could simply convert it into a number, by concatenating all the digits.
 
 Part 2
 ------
@@ -380,3 +383,23 @@ register A becomes 0.
 Without understanding the "mumbo-jumbo" I can not really tell what is needed to get the desired output...
 
 Hey, what if I start from the end? The "few more" bits then should be all zeros. Then I can walk back to the beginning, with those "few more" already calculated. Bingo!
+
+Day 18
+======
+
+Part 1
+------
+
+The puzzle looked too easy - basically the same as 2 days ago, only now one has to build the grid, and there's no turning costs.
+
+Implemented it, left out the direction from state as it is not important anymore. It runs perfectly on sample data, but the real input takes too long. So there was a catch!
+
+As the grid was somewhat sparsely populated, the queue of future cells grew in an enormous rate, compared to consumption from it. It appears, however, that we're pushing
+same cells over and over again on the queue. What about some deduplication?
+
+
+Part 2
+------
+
+Seeing the description of Part 1, I was afraid that there's something crazy to come. Not this time! I think it would have been sufficient with a simple loop, but I felt
+fancy today and implemented a binary search.
