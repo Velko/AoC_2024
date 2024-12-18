@@ -271,6 +271,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
+    #[case(load_sample("challenging.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = res2num(&calculate_p1(&parsed));
@@ -282,6 +283,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample_1.txt")?)]
     #[case(load_sample("input.txt")?)]
+    #[case(load_sample("challenging.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
