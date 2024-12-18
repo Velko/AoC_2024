@@ -1,4 +1,4 @@
-use aoc_tools::{Point, Grid, Neighbours2D, NeighbourMap};
+use aoc_tools::{ResultExt, Point, Grid, Neighbours2D, NeighbourMap};
 use std::collections::{HashSet, BinaryHeap};
 
 type ParsedInput = Vec<Point>;
@@ -22,12 +22,12 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let mut points: Vec<Point> = Vec::new();
 
     for line in lines.into_iter() {
-        let mut p = line.split(',');
+        let (x, y) = line.split_once(',').map_err_to_invalid_input(&line)?;
 
-        let x: usize = p.next().expect("X").parse().unwrap();
-        let y: usize = p.next().expect("Y").parse().unwrap();
-
-        points.push((x, y).into());
+        points.push((
+            x.parse().map_err_to_invalid_input(x)?,
+            y.parse().map_err_to_invalid_input(x)?,
+        ).into());
     }
 
     Ok(points)
