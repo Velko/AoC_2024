@@ -56,12 +56,10 @@ fn count_possible_designs(design: &str, depth: usize, towels: &[String], memo: &
     let mut n_arrangements = 0;
 
     for towel in towels.iter() {
-        if towel.len() < design.len() {
-            if *towel == design[..towel.len()] {
+        if design.starts_with(towel) {
+            if towel.len() < design.len() {
                 n_arrangements += count_possible_designs(&design[towel.len()..], depth + towel.len(), towels, memo);
-            }
-        } else {
-            if *towel == design {
+            } else {
                 n_arrangements += 1;
             }
         }
