@@ -1,4 +1,4 @@
-use aoc_tools::{Grid, Neighbours2D};
+use aoc_tools::{Grid, IterMoreTools, Neighbours2D, ResultExt};
 use itertools::{Itertools};
 use regex::Regex;
 
@@ -31,21 +31,21 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
     let robot_rx = Regex::new(r"p=(\d+),(\d+) v=(\-?\d+),(\-?\d+)").unwrap();
 
-    let parsed =
-        input.read_lines()?
-        .into_iter()
-        .map(|line|{
-                let (_, [px, py, vx, vy]) = robot_rx.captures(&line).unwrap().extract();
-                Robot {
-                    px: px.parse().unwrap(),
-                    py: py.parse().unwrap(),
-                    vx: vx.parse().unwrap(),
-                    vy: vy.parse().unwrap(),
-                }
-        })
-        .collect_vec();
+    input.read_lines()?
+    .into_iter()
+    .map(|line|{
+            let (_, [px, py, vx, vy]) = robot_rx.captures(&line)
+                .map_err_to_invalid_input(&line)?
+                .extract();
+            Ok(Robot {
+                px: px.parse().map_err_to_invalid_input(px)?,
+                py: py.parse().map_err_to_invalid_input(py)?,
+                vx: vx.parse().map_err_to_invalid_input(vx)?,
+                vy: vy.parse().map_err_to_invalid_input(vy)?,
+            })
+    })
+    .try_collect_vec()
 
-    Ok(parsed)
 }
 
 fn calculate_p1(input: &ParsedInput, width: usize, height: usize) -> u64 {

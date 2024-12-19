@@ -1,6 +1,6 @@
 use regex::Regex;
 use std::cmp;
-use aoc_tools::gauss_eliminate;
+use aoc_tools::{gauss_eliminate, ResultExt};
 use num::Rational64;
 
 #[derive(Debug)]
@@ -39,30 +39,35 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     for (i, line) in lines.into_iter().enumerate() {
         match i % 4 {
             0 => {
-                let (_, [b, x, y]) = button_rx.captures(&line).unwrap().extract();
+                let (_, [b, x, y]) = button_rx.captures(&line)
+                    .map_err_to_invalid_input(&line)?
+                    .extract();
                 assert_eq!("A", b);
                 speed_a = Some((
-                    x.parse::<usize>().unwrap(),
-                    y.parse::<usize>().unwrap(),
+                    x.parse::<usize>().map_err_to_invalid_input(x)?,
+                    y.parse::<usize>().map_err_to_invalid_input(y)?,
                 ))
             },
             1 => {
-                let (_, [b, x, y]) = button_rx.captures(&line).unwrap().extract();
+                let (_, [b, x, y]) = button_rx.captures(&line)
+                    .map_err_to_invalid_input(&line)?
+                    .extract();
                 assert_eq!("B", b);
                 speed_b = Some((
-                    x.parse::<usize>().unwrap(),
-                    y.parse::<usize>().unwrap(),
+                    x.parse::<usize>().map_err_to_invalid_input(x)?,
+                    y.parse::<usize>().map_err_to_invalid_input(y)?,
                 ))
             },
             2 => {
-                let (_, [x, y]) = prize_rx.captures(&line).unwrap().extract();
-
+                let (_, [x, y]) = prize_rx.captures(&line)
+                    .map_err_to_invalid_input(&line)?
+                    .extract();
                 parsed.push( Machine {
                     speed_a: speed_a.unwrap(),
                     speed_b: speed_b.unwrap(),
                     prize: (
-                        x.parse::<usize>().unwrap(),
-                        y.parse::<usize>().unwrap(),
+                        x.parse::<usize>().map_err_to_invalid_input(x)?,
+                        y.parse::<usize>().map_err_to_invalid_input(y)?,
                     ),
                 });
 

@@ -57,9 +57,8 @@ fn traverse_grid(input: &ParsedInput, width: usize, height: usize, nbytes: usize
 
     let mut best_score: Option<usize> = None;
 
-    while !queue.is_empty() {
+    while let Some(state) = queue.pop() {
 
-        let state = queue.pop().unwrap();
         visited.insert(state.pos);
 
         if state.pos == (width, height).into() {

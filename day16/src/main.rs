@@ -1,4 +1,4 @@
-use aoc_tools::{Grid, Point, Direction, Rotation};
+use aoc_tools::{Direction, Grid, Point, ResultExt, Rotation};
 use std::collections::{BinaryHeap, HashSet};
 
 type ParsedInput = (Grid<char>, Point);
@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     let parsed = parse_input(input)?;
 
     let result1 = calculate_p1(&parsed);
-    println!("Result p1: {}", result1);
+    println!("Result p1: {}", result1.unwrap());
 
     let result2 = calculate_p2(&parsed);
     println!("Result p2: {}", result2);
@@ -24,14 +24,14 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         .filter(|(c, _)| **c == 'S')
         .map(|(_, p)| p)
         .next()
-        .unwrap();
+        .map_err_to_invalid_input("Start not found")?;
 
     grid[start] = '.';
 
     Ok((grid, start))
 }
 
-fn calculate_p1(input: &ParsedInput) -> usize {
+fn calculate_p1(input: &ParsedInput) -> Option<usize> {
     let (grid, start) = input;
 
     let start_state = BfsState {
@@ -46,9 +46,8 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
     let mut best_score: Option<usize> = None;
 
-    while !queue.is_empty() {
+    while let Some(state) = queue.pop() {
 
-        let state = queue.pop().unwrap();
         visited.insert(state.pos);
 
         if grid[state.pos] == 'E' {
@@ -56,37 +55,40 @@ fn calculate_p1(input: &ParsedInput) -> usize {
             break;
         }
 
-        let forward = state.pos.advance(state.dir, grid.size()).unwrap();
-        if !visited.contains(&forward) && grid[forward] != '#' {
-            queue.push(BfsState {
-                pos: forward,
-                dir: state.dir,
-                score: state.score + 1,
-            });
+        if let Some(forward) = state.pos.advance(state.dir, grid.size()) {
+            if !visited.contains(&forward) && grid[forward] != '#' {
+                queue.push(BfsState {
+                    pos: forward,
+                    dir: state.dir,
+                    score: state.score + 1,
+                });
+            }
         }
 
         let dir_left = state.dir.turn(Rotation::AntiClockwise);
-        let left = state.pos.advance(dir_left, grid.size()).unwrap();
-        if !visited.contains(&left) && grid[left] != '#' {
-            queue.push(BfsState {
-                pos: left,
-                dir: dir_left,
-                score: state.score + 1001,
-            });
+        if let Some(left) = state.pos.advance(dir_left, grid.size()) {
+            if !visited.contains(&left) && grid[left] != '#' {
+                queue.push(BfsState {
+                    pos: left,
+                    dir: dir_left,
+                    score: state.score + 1001,
+                });
+            }
         }
 
         let dir_right = state.dir.turn(Rotation::Clockwise);
-        let right = state.pos.advance(dir_right, grid.size()).unwrap();
-        if !visited.contains(&right) && grid[right] != '#' {
-            queue.push(BfsState {
-                pos: right,
-                dir: dir_right,
-                score: state.score + 1001,
-            });
+        if let Some(right) = state.pos.advance(dir_right, grid.size()) {
+            if !visited.contains(&right) && grid[right] != '#' {
+                queue.push(BfsState {
+                    pos: right,
+                    dir: dir_right,
+                    score: state.score + 1001,
+                });
+            }
         }
     }
 
-    best_score.unwrap()
+    best_score
 }
 
 
@@ -127,9 +129,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     let mut best_score: Option<usize> = None;
     let mut end_pos: Option<Point> = None;
 
-    while !queue.is_empty() {
-
-        let state = queue.pop().unwrap();
+    while let Some(state) = queue.pop() {
 
         if let Some(best) = best_score {
             if state.score > best {
@@ -146,33 +146,36 @@ fn calculate_p2(input: &ParsedInput) -> usize {
             continue;
         }
 
-        let forward = state.pos.advance(state.dir, grid.size()).unwrap();
-        if !visited.contains(&(forward, state.dir)) && grid[forward] != '#' {
-            queue.push(BfsState {
-                pos: forward,
-                dir: state.dir,
-                score: state.score + 1,
-            });
+        if let Some(forward) = state.pos.advance(state.dir, grid.size()) {
+            if !visited.contains(&(forward, state.dir)) && grid[forward] != '#' {
+                queue.push(BfsState {
+                    pos: forward,
+                    dir: state.dir,
+                    score: state.score + 1,
+                });
+            }
         }
 
         let dir_left = state.dir.turn(Rotation::AntiClockwise);
-        let left = state.pos.advance(dir_left, grid.size()).unwrap();
-        if !visited.contains(&(left, dir_left)) && grid[left] != '#' {
-            queue.push(BfsState {
-                pos: left,
-                dir: dir_left,
-                score: state.score + 1001,
-            });
+        if let Some(left) = state.pos.advance(dir_left, grid.size()) {
+            if !visited.contains(&(left, dir_left)) && grid[left] != '#' {
+                queue.push(BfsState {
+                    pos: left,
+                    dir: dir_left,
+                    score: state.score + 1001,
+                });
+            }
         }
 
         let dir_right = state.dir.turn(Rotation::Clockwise);
-        let right = state.pos.advance(dir_right, grid.size()).unwrap();
-        if !visited.contains(&(right, dir_right)) && grid[right] != '#' {
-            queue.push(BfsState {
-                pos: right,
-                dir: dir_right,
-                score: state.score + 1001,
-            });
+        if let Some(right) = state.pos.advance(dir_right, grid.size()) {
+            if !visited.contains(&(right, dir_right)) && grid[right] != '#' {
+                queue.push(BfsState {
+                    pos: right,
+                    dir: dir_right,
+                    score: state.score + 1001,
+                });
+            }
         }
     }
 
@@ -227,7 +230,7 @@ mod tests {
 
         let result1 = calculate_p1(&parsed);
 
-        assert_eq!(expected, Some(result1 as u64));
+        assert_eq!(expected, result1.map(|r| r as u64));
         Ok(())
     }
 

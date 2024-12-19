@@ -1,3 +1,4 @@
+use aoc_tools::{IterMoreTools, ResultExt};
 use regex::Regex;
 use itertools::Itertools;
 
@@ -35,9 +36,9 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     for line in text.into_iter() {
         if let Some((_, [reg_m, val])) = reg_re.captures(&line).map(|c|c.extract()) {
             match reg_m {
-                "A" => computer.registers.a = val.parse().unwrap(),
-                "B" => computer.registers.b = val.parse().unwrap(),
-                "C" => computer.registers.c = val.parse().unwrap(),
+                "A" => computer.registers.a = val.parse().map_err_to_invalid_input(reg_m)?,
+                "B" => computer.registers.b = val.parse().map_err_to_invalid_input(reg_m)?,
+                "C" => computer.registers.c = val.parse().map_err_to_invalid_input(reg_m)?,
                 _ => panic!("Unexpected register"),
             }
         }
@@ -46,8 +47,8 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
             computer.progmem =
                 prog
                     .split(',')
-                    .map(|p|p.trim().parse().unwrap())
-                    .collect();
+                    .map(|p|p.trim().parse().map_err_to_invalid_input(p))
+                    .try_collect_vec()?;
         }
     }
 
