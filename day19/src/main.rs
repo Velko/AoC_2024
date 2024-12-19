@@ -34,7 +34,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
     designs
         .into_iter()
-        .filter(|design| count_possible_designs(design, "", &towels, &mut HashMap::new())> 0)
+        .filter(|design| count_possible_designs(design, 0, &towels, &mut HashMap::new())> 0)
         .count()
 }
 
@@ -43,37 +43,31 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     designs
         .into_iter()
-        .map(|design| count_possible_designs(design, "", towels, &mut HashMap::new()))
+        .map(|design| count_possible_designs(design, 0, towels, &mut HashMap::new()))
         .sum()
 }
 
-fn count_possible_designs(design: &str, base_str: &str, towels: &[String], memo: &mut HashMap<String, usize>) -> usize {
+fn count_possible_designs(design: &str, depth: usize, towels: &[String], memo: &mut HashMap<usize, usize>) -> usize {
 
-    if let Some(result) = memo.get(base_str) {
+    if let Some(result) = memo.get(&depth) {
         return *result;
     }
 
     let mut n_arrangements = 0;
 
-    let mut check_des = String::with_capacity(design.len() * 2);
-    check_des.push_str(base_str);
-
     for towel in towels.iter() {
-        check_des.push_str(towel);
-
-        if check_des.len() < design.len() {
-            if check_des == design[..check_des.len()] {
-                n_arrangements += count_possible_designs(design, &check_des, towels, memo);
+        if towel.len() < design.len() {
+            if *towel == design[..towel.len()] {
+                n_arrangements += count_possible_designs(&design[towel.len()..], depth + towel.len(), towels, memo);
             }
         } else {
-            if check_des == design {
+            if *towel == design {
                 n_arrangements += 1;
             }
         }
-        check_des.truncate(base_str.len())
     }
 
-    memo.insert(base_str.to_owned(), n_arrangements);
+    memo.insert(depth, n_arrangements);
     n_arrangements
 }
 
