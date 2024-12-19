@@ -412,3 +412,19 @@ Part 2
 
 Seeing the description of Part 1, I was afraid that there's something crazy to come. Not this time! I think it would have been sufficient with a simple loop, but I felt
 fancy today and implemented a binary search.
+
+
+Day 19
+======
+
+Part 1
+------
+
+Got little scared on hot springs, that was a puzzle from last year, where I spent lots of time. With some anticipation for what's to come,
+wrote the "matcher" in a recursive way. A little debugging was involved, but got my result pretty quickly.
+
+Part 2
+------
+
+Changed the return type from bool to integer and counted the number of arrangements instead. Obviously that worked fine for example, but was too
+slow for the real input. Since this was a recursive solution, adding memoization was not complicated.
