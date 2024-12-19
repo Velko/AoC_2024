@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use rayon::prelude::*;
 
 type ParsedInput = (Vec<String>, Vec<String>);
 
@@ -33,7 +34,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
     let (towels, designs) = input;
 
     designs
-        .into_iter()
+        .into_par_iter()
         .filter(|design| count_possible_designs(design, 0, &towels, &mut HashMap::new())> 0)
         .count()
 }
@@ -42,7 +43,7 @@ fn calculate_p2(input: &ParsedInput) -> usize {
     let (towels, designs) = input;
 
     designs
-        .into_iter()
+        .into_par_iter()
         .map(|design| count_possible_designs(design, 0, towels, &mut HashMap::new()))
         .sum()
 }
