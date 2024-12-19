@@ -1,4 +1,5 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use std::collections::HashMap;
 
 type ParsedInput = (Vec<String>, Vec<String>);
 
@@ -31,53 +32,59 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
 fn calculate_p1(input: &ParsedInput) -> usize {
     let (towels, designs) = input;
-    println!("{:?}", towels);
-    println!("{:?}", designs);
-
-    let towel_it = towels.clone().into_iter();
+    //println!("{:?}", towels);
+    //println!("{:?}", designs);
 
     designs
         .into_iter()
 //        .skip(1)
 //        .take(1)
-        .filter(|design| can_build_design(design, "", towel_it.clone()))
+        .filter(|design| can_build_design(design, "", &towels, &mut HashMap::new())> 0)
         .count()
 }
 
-fn can_build_design<I, S>(design: &str, base_str: &str, towels: I) -> bool
-    where I: Iterator<Item = S> + Clone,
-        S: AsRef<str> + std::fmt::Display
+fn can_build_design(design: &str, base_str: &str, towels: &[String], memo: &mut HashMap<String, usize>) -> usize {
 
-{
-    //println!("\nBase: {} ? '{}'", design, base_str);
-    let tow_i = towels.clone();
+    if memo.contains_key(base_str) {
+        return *memo.get(base_str).unwrap();
+    }
 
-    for towel in towels {
+    let mut n_arrangements = 0;
+    //println!("{}", design);
+
+    for towel in towels.iter() {
         let check_des = format!("{}{}", base_str, towel);
         //println!("Checking: {}", check_des);
         if check_des.len() < design.len() {
             if check_des == design[..check_des.len()] {
                 //println!("Level");
-                let inner_res = can_build_design(design, &check_des, tow_i.clone());
+                n_arrangements += can_build_design(design, &check_des, towels, memo);
 
-                if inner_res {
-                    return true;
-                }
             }
         } else {
             //println!("Final: {:?}", check_des == design);
             if check_des == design {
-                return true;
+                n_arrangements += 1;
             }
         }
     }
-    false
+
+    memo.insert(base_str.to_owned(), n_arrangements);
+    n_arrangements
 }
 
 
 
-fn calculate_p2(_input: &ParsedInput) -> u64 {
-    0
+fn calculate_p2(input: &ParsedInput) -> usize {
+    let (towels, designs) = input;
+
+    designs
+        .into_iter()
+//        .skip(1)
+//        .take(1)
+        .map(|design| can_build_design(design, "", towels, &mut HashMap::new()))
+        .sum()
+
 }
 
 #[cfg(test)]
@@ -107,7 +114,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    //#[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed);
