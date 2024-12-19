@@ -49,14 +49,17 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
 fn can_build_design(design: &str, base_str: &str, towels: &[String], memo: &mut HashMap<String, usize>) -> usize {
 
-    if memo.contains_key(base_str) {
-        return *memo.get(base_str).unwrap();
+    if let Some(result) = memo.get(base_str) {
+        return *result;
     }
 
     let mut n_arrangements = 0;
 
+    let mut check_des = String::with_capacity(design.len() * 2);
+    check_des.push_str(base_str);
+
     for towel in towels.iter() {
-        let check_des = format!("{}{}", base_str, towel);
+        check_des.push_str(towel);
 
         if check_des.len() < design.len() {
             if check_des == design[..check_des.len()] {
@@ -67,6 +70,7 @@ fn can_build_design(design: &str, base_str: &str, towels: &[String], memo: &mut 
                 n_arrangements += 1;
             }
         }
+        check_des.truncate(base_str.len())
     }
 
     memo.insert(base_str.to_owned(), n_arrangements);
