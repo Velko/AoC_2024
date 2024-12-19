@@ -34,7 +34,7 @@ fn calculate_p1(input: &ParsedInput) -> usize {
 
     designs
         .into_iter()
-        .filter(|design| can_build_design(design, "", &towels, &mut HashMap::new())> 0)
+        .filter(|design| count_possible_designs(design, "", &towels, &mut HashMap::new())> 0)
         .count()
 }
 
@@ -43,11 +43,11 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 
     designs
         .into_iter()
-        .map(|design| can_build_design(design, "", towels, &mut HashMap::new()))
+        .map(|design| count_possible_designs(design, "", towels, &mut HashMap::new()))
         .sum()
 }
 
-fn can_build_design(design: &str, base_str: &str, towels: &[String], memo: &mut HashMap<String, usize>) -> usize {
+fn count_possible_designs(design: &str, base_str: &str, towels: &[String], memo: &mut HashMap<String, usize>) -> usize {
 
     if let Some(result) = memo.get(base_str) {
         return *result;
@@ -63,7 +63,7 @@ fn can_build_design(design: &str, base_str: &str, towels: &[String], memo: &mut 
 
         if check_des.len() < design.len() {
             if check_des == design[..check_des.len()] {
-                n_arrangements += can_build_design(design, &check_des, towels, memo);
+                n_arrangements += count_possible_designs(design, &check_des, towels, memo);
             }
         } else {
             if check_des == design {
