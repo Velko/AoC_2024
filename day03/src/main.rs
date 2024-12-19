@@ -58,16 +58,3 @@ fn extract_and_multiply_2(input: &str) -> Result<u32, InvalidInput> {
 
     Ok(total)
 }
-
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_works() {
-
-        assert_eq!(1, 1);
-    }
-}

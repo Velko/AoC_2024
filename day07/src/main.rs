@@ -119,7 +119,6 @@ fn concat_numbers(a: u64, b: u64) -> u64 {
 mod tests {
     use super::*;
     use aoc_tools::TestSamples;
-    use aoc_tools::ResultExt;
 
     fn load_sample(filename: &str) -> anyhow::Result<(ParsedInput, Option<u64>, Option<u64>)> {
         let samples = TestSamples::try_new()?;
