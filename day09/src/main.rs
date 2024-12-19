@@ -17,10 +17,10 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed);
+    let result1 = calculate_p1(&parsed)?;
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2(&parsed)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -59,7 +59,7 @@ fn parse_char(c: char) -> usize {
     format!("{}", c).parse().unwrap()
 }
 
-fn calculate_p1(input: &ParsedInput) -> u64 {
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     let mut dm = expand_disk_map(input);
     let disk_map = dm.as_mut_slice();
 
@@ -87,7 +87,7 @@ fn calculate_p1(input: &ParsedInput) -> u64 {
         end_idx -= 1;
     }
 
-    calculate_disk_checksum(&disk_map)
+    Ok(calculate_disk_checksum(&disk_map))
 }
 
 fn expand_disk_map(input: &ParsedInput) -> Vec<FileSysItem> {
@@ -114,7 +114,7 @@ fn calculate_disk_checksum(disk_map: &[FileSysItem]) -> u64 {
         .sum()
 }
 
-fn calculate_p2(input: &ParsedInput) -> u64 {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
     let mut dm = expand_disk_map(input);
     let mut disk_map = dm.as_mut_slice();
 
@@ -128,38 +128,25 @@ fn calculate_p2(input: &ParsedInput) -> u64 {
         let block_size = disk_map[block_idx].size;
         block_idx -= block_size - 1;
 
-        //println!("{:?}", &disk_map.as_slice()[end_idx..end_idx + block_size]);
-
         let mut free_idx = 0;
 
         while free_idx < disk_map.len() && not_fit(&disk_map[free_idx], block_size) {
             free_idx += 1;
         }
 
-
         if free_idx < disk_map.len() && block_idx > free_idx {
             let free_size = disk_map[free_idx].size;
 
-            //println!("{:?}", &disk_map.as_slice()[free_idx..free_idx + free_size]);
-
-
             move_block(&mut disk_map, free_idx, block_idx, block_size);
             resize_remaining_free(&mut disk_map, free_idx + block_size, free_size - block_size);
-
-            //println!("{:?}\n", disk_map);
-            //print_map(&disk_map);
         }
         if block_idx == 0 {
             break;
         }
         block_idx -= 1;
-
-        //println!("{}", 100 * (disk_map.len() - block_idx) / disk_map.len());
     }
 
-    //print_map(&disk_map);
-
-    calculate_disk_checksum(&disk_map)
+    Ok(calculate_disk_checksum(&disk_map))
 }
 
 fn not_fit(block: &FileSysItem, wanted: usize) -> bool {
@@ -215,8 +202,7 @@ mod tests {
     #[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
-
-        let result1 = calculate_p1(&parsed);
+        let result1 = calculate_p1(&parsed)?;
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
@@ -226,8 +212,7 @@ mod tests {
     #[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
-
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2(&parsed)?;
 
         println!("{:?}", expected);
 

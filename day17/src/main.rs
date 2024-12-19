@@ -8,10 +8,10 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed);
+    let result1 = calculate_p1(&parsed)?;
     println!("Result p1: {:?}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2(&parsed)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -132,15 +132,14 @@ impl Registers {
     }
 }
 
-fn calculate_p1(input: &ParsedInput) -> Vec<u8> {
-
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<Vec<u8>> {
     let program = input.progmem
         .as_slice()
         .chunks_exact(2)
         .map(Instruction::from)
         .collect_vec();
 
-    run_program(&mut input.registers.clone(), &program)
+    Ok(run_program(&mut input.registers.clone(), &program))
 }
 
 fn run_program(registers: &mut Registers, program: &[Instruction]) -> Vec<u8> {
@@ -193,8 +192,7 @@ fn run_program(registers: &mut Registers, program: &[Instruction]) -> Vec<u8> {
     output
 }
 
-fn calculate_p2(input: &ParsedInput) -> RegVal {
-
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<RegVal> {
     let program = input.progmem
         .as_slice()
         .chunks_exact(2)
@@ -203,7 +201,7 @@ fn calculate_p2(input: &ParsedInput) -> RegVal {
 
     let result = search_n_digits(input, &program, 0, input.progmem.len()-1);
 
-    result.unwrap()
+    result.ok_or_else(|| anyhow::anyhow!("Failed to find result"))
 }
 
 fn search_n_digits(input: &ParsedInput, program: &[Instruction], mut search_a: RegVal, n: usize) -> Option<RegVal> {
@@ -241,6 +239,8 @@ fn search_n_digits(input: &ParsedInput, program: &[Instruction], mut search_a: R
 
 #[cfg(test)]
 mod tests {
+    use std::num::ParseIntError;
+
     use rstest::rstest;
     use super::*;
     use aoc_tools::TestSamples;
@@ -252,13 +252,12 @@ mod tests {
         Ok((parsed, expected1, expected2))
     }
 
-    fn res2num(res: &[u8]) -> u64 {
+    fn res2num(res: &[u8]) -> Result<u64, ParseIntError> {
         res
             .into_iter()
             .map(|d|d.to_string())
             .collect::<String>()
             .parse()
-            .unwrap()
     }
 
     #[rstest]
@@ -267,7 +266,7 @@ mod tests {
     #[case(load_sample("challenging.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
-        let result1 = res2num(&calculate_p1(&parsed));
+        let result1 = res2num(&calculate_p1(&parsed)?)?;
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
@@ -279,7 +278,7 @@ mod tests {
     #[case(load_sample("challenging.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2(&parsed)?;
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())

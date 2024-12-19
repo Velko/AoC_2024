@@ -7,10 +7,10 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed);
-    println!("Result p1: {}", result1.unwrap());
+    let result1 = calculate_p1(&parsed)?;
+    println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed);
+    let result2 = calculate_p2(&parsed)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -31,7 +31,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok((grid, start))
 }
 
-fn calculate_p1(input: &ParsedInput) -> Option<usize> {
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
     let (grid, start) = input;
 
     let start_state = BfsState {
@@ -88,7 +88,7 @@ fn calculate_p1(input: &ParsedInput) -> Option<usize> {
         }
     }
 
-    best_score
+    best_score.ok_or_else(|| anyhow::anyhow!("Failed to find best score"))
 }
 
 
@@ -112,7 +112,7 @@ impl PartialOrd for BfsState {
 }
 
 
-fn calculate_p2(input: &ParsedInput) -> usize {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
     let (grid, start) = input;
 
     let start_state = BfsState {
@@ -187,10 +187,9 @@ fn calculate_p2(input: &ParsedInput) -> usize {
         .into_iter()
         .collect();
 
-    // a "pseudo" + 1 score to make the follow_back() pick up the end cell on the first step
-    follow_back(end_pos.unwrap(), &visited_states, 1 + best_score.unwrap(), grid.size(), &mut traceback);
+    follow_back(end_pos.ok_or_else(|| anyhow::anyhow!("Failed to find end position"))?, &visited_states, 1 + best_score.ok_or_else(|| anyhow::anyhow!("Failed to find best score"))?, grid.size(), &mut traceback);
 
-    traceback.len()
+    Ok(traceback.len())
 }
 
 fn follow_back(end_pos: Point, vis_scores: &Vec<BfsState>, score: usize, bounds: (usize, usize), traceback: &mut HashSet<Point>) {
@@ -227,10 +226,9 @@ mod tests {
     #[case(load_sample("sample_1.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+        let result1 = calculate_p1(&parsed)?;
 
-        let result1 = calculate_p1(&parsed);
-
-        assert_eq!(expected, result1.map(|r| r as u64));
+        assert_eq!(expected, Some(result1 as u64));
         Ok(())
     }
 
@@ -239,8 +237,7 @@ mod tests {
     #[case(load_sample("sample_1.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
-
-        let result2 = calculate_p2(&parsed);
+        let result2 = calculate_p2(&parsed)?;
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())

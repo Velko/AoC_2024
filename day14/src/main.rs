@@ -18,10 +18,10 @@ fn main() -> anyhow::Result<()> {
 
     //draw_picture_p2(&parsed, 101, 103);
 
-    let result1 = calculate_p1(&parsed, 101, 103);
+    let result1 = calculate_p1(&parsed, 101, 103)?;
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed, 101, 103);
+    let result2 = calculate_p2(&parsed, 101, 103)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -48,7 +48,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
 }
 
-fn calculate_p1(input: &ParsedInput, width: usize, height: usize) -> u64 {
+fn calculate_p1(input: &ParsedInput, width: usize, height: usize) -> anyhow::Result<u64> {
     let time = 100;
 
     let mut q1 = 0;
@@ -74,7 +74,7 @@ fn calculate_p1(input: &ParsedInput, width: usize, height: usize) -> u64 {
         }
     }
 
-    q1 * q2 * q3 * q4
+    Ok(q1 * q2 * q3 * q4)
 }
 
 impl Robot {
@@ -89,7 +89,7 @@ impl Robot {
     }
 }
 
-fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
+fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> anyhow::Result<usize> {
     for time in 0..(width * height) {
         let mut positions: Grid<bool> = Grid::new(false, width, height);
         
@@ -110,11 +110,11 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> usize {
 
         if nmatches > input.len() {
             print_map_after(input, time, width, height);
-            return time;
+            return Ok(time);
         }
     }
 
-    0
+    Err(anyhow::anyhow!("Failed to calculate result"))
 }
 
 fn draw_picture_p2(input: &ParsedInput, width: usize, height: usize) {
@@ -227,8 +227,7 @@ mod tests {
     #[case(load_sample("sample.txt")?, 11, 7)]
     #[case(load_sample("input.txt")?, 101, 103)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] width: usize, #[case] height: usize) -> anyhow::Result<()> {
-
-        let result1 = calculate_p1(&parsed, width, height);
+        let result1 = calculate_p1(&parsed, width, height)?;
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
@@ -237,8 +236,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("input.txt")?, 101, 103)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] width: usize, #[case] height: usize) -> anyhow::Result<()> {
-
-        let result2 = calculate_p2(&parsed, width, height);
+        let result2 = calculate_p2(&parsed, width, height)?;
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())

@@ -7,10 +7,10 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed);
+    let result1 = calculate_p1(&parsed)?;
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2_v2(&parsed);
+    let result2 = calculate_p2_v2(&parsed)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -36,12 +36,12 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         .collect()
 }
 
-fn calculate_p1(input: &ParsedInput) -> u64 {
-    input
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
+    Ok(input
         .into_iter()
         .filter(|(expected, args)| calc_exp_value_1(*expected, args))
         .map(|(expected, _)| expected)
-        .sum()
+        .sum())
 }
 
 fn calc_exp_value_1(expected: u64, args: &Vec<u64>) -> bool {
@@ -66,12 +66,12 @@ fn calc_exp_value_1(expected: u64, args: &Vec<u64>) -> bool {
         })
 }
 
-fn calculate_p2_v2(input: &ParsedInput) -> u64 {
-    input
+fn calculate_p2_v2(input: &ParsedInput) -> anyhow::Result<u64> {
+    Ok(input
         .into_par_iter()
         .filter(|(expected, args)| calc_exp_value_2_v2(*expected, args))
         .map(|(expected, _)| expected)
-        .sum()
+        .sum())
 }
 
 fn calc_exp_value_2_v2(expected: u64, args: &Vec<u64>) -> bool {
@@ -131,7 +131,7 @@ mod tests {
     fn test_sample_p1() -> anyhow::Result<()> {
         let (parsed, expected, _) = load_sample("sample.txt")?;
 
-        let result1 = calculate_p1(&parsed);
+        let result1 = calculate_p1(&parsed)?;
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
@@ -141,7 +141,7 @@ mod tests {
     fn test_sample_p2_v2() -> anyhow::Result<()> {
         let (parsed, _, expected) = load_sample("sample.txt")?;
 
-        let result2 = calculate_p2_v2(&parsed);
+        let result2 = calculate_p2_v2(&parsed)?;
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
