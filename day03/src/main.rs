@@ -22,8 +22,8 @@ fn extract_and_multiply_1(input: &str) -> Result<u32, InvalidInput> {
 
     for (_, [n1, n2]) in re.captures_iter(input).map(|c| c.extract()) {
 
-        let arg1 = str::parse::<u32>(n1).map_err_to_invalid_input(n1)?;
-        let arg2 = str::parse::<u32>(n2).map_err_to_invalid_input(n2)?;
+        let arg1: u32 = n1.parse().map_err_to_invalid_input(n1)?;
+        let arg2: u32 = n2.parse().map_err_to_invalid_input(n2)?;
 
         total += arg1 * arg2;
     }

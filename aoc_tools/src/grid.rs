@@ -198,13 +198,15 @@ mod tests {
     }
 
     #[test]
-    fn test_grid_from_reader() {
+    fn test_grid_from_reader() -> anyhow::Result<()> {
 
         let buffer = "123\n456\n789\n".as_bytes();
 
 
-        let grid = Grid::try_from_reader(buffer).unwrap();
+        let grid = Grid::try_from_reader(buffer)?;
 
         assert_eq!((3, 3), grid.size());
+
+        Ok(())
     }
 }

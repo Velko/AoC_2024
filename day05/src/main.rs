@@ -11,10 +11,10 @@ fn main() -> anyhow::Result<()> {
 
     let (updates, rule_map) = parse_input(input)?;
 
-    let result1 = calculate_p1(&updates, &rule_map);
+    let result1 = calculate_p1(&updates, &rule_map)?;
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&updates, &rule_map);
+    let result2 = calculate_p2(&updates, &rule_map)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -83,14 +83,14 @@ fn parse_update<S: AsRef<str>>(dim: S) -> Result<Vec<u32>, InvalidInput>
 }
 
 
-fn calculate_p1(updates: &Updates, rule_map: &RuleMap) -> u32 {
+fn calculate_p1(updates: &Updates, rule_map: &RuleMap) -> anyhow::Result<u32> {
 
     let safe_updates: Vec<_> = updates
     .iter()
     .filter(|u|is_update_safe(u, rule_map))
     .collect();
 
-    let result1: u32 = safe_updates
+    let result1 = safe_updates
         .iter()
         .map(|&mp| extract_middle_page(mp))
         .sum();
@@ -98,7 +98,7 @@ fn calculate_p1(updates: &Updates, rule_map: &RuleMap) -> u32 {
     result1
 }
 
-fn calculate_p2(updates: &Updates, rule_map: &RuleMap) -> u32 {
+fn calculate_p2(updates: &Updates, rule_map: &RuleMap) -> anyhow::Result<u32> {
 
     let fixed_updates: Vec<_> = updates
         .iter()
@@ -106,7 +106,7 @@ fn calculate_p2(updates: &Updates, rule_map: &RuleMap) -> u32 {
         .map(|u| fix_unsafe_update(u, &rule_map))
         .collect();
 
-    let result2: u32 = fixed_updates
+    let result2 = fixed_updates
         .iter()
         .map(|mp| extract_middle_page(mp))
         .sum();
@@ -121,13 +121,11 @@ fn is_update_safe(update: &Vec<u32>, rules: &RuleMap) -> bool {
         .is_sorted_by(|a, b| cmp_by_rules(a, b, rules) != Ordering::Greater)
 }
 
-fn extract_middle_page(update: &Vec<u32>) -> u32 {
-    assert!(update.len() & 1 == 1);
+fn extract_middle_page(update: &[u32]) -> anyhow::Result<u32> {
+
+    anyhow::ensure!(update.len() & 1 != 0, "Update length is not odd");
     let mid_idx = update.len() / 2;
-
-    let val = update.get(mid_idx).unwrap();
-
-    *val
+    Ok(update[mid_idx])
 }
 
 
@@ -169,9 +167,9 @@ mod tests {
 
         let (updates, rule_map) = parse_input(input)?;
 
-        let result1 = calculate_p1(&updates, &rule_map).into();
+        let result1 = calculate_p1(&updates, &rule_map)?;
 
-        assert_eq!(expected, result1);
+        assert_eq!(expected, result1 as u64);
         Ok(())
     }
 
@@ -183,9 +181,9 @@ mod tests {
 
         let (updates, rule_map) = parse_input(input)?;
 
-        let result2 = calculate_p2(&updates, &rule_map).into();
+        let result2 = calculate_p2(&updates, &rule_map)?;
 
-        assert_eq!(expected, result2);
+        assert_eq!(expected, result2 as u64);
         Ok(())
     }
 }
