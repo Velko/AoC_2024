@@ -428,3 +428,22 @@ Part 2
 
 Changed the return type from bool to integer and counted the number of arrangements instead. Obviously that worked fine for example, but was too
 slow for the real input. Since this was a recursive solution, adding memoization was not complicated.
+
+
+Day 20
+------
+
+Part 1
+------
+
+Another pathfinding? This time it's more like enumerating the grid cells with distances from start. I did not trully trust the input, so I still checked
+if there are no "parallel" distance cells.
+
+Now if a cell 2 places up, down, left or right is reachable faster than by normal means, it must be a cheat. Out with off-by-one errors, welcome off-by-2
+errors.
+
+
+Part 2
+------
+
+Not that different from the previous one. Just have to check if any cell within Manhattan distance up to 20 could be reached faster than by normal means.
