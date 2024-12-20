@@ -45,9 +45,10 @@ fn calculate_p2(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 
 fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> HashSet<Cheat> {
 
+    // build a Vec with valid track cells, so that we can parallelize
     let track_cells: Vec<_> = track
         .enumerate()
-        .filter_map(|(c, pos)| Some((c.as_ref()?, pos)))
+        .filter_map(|(c, pos)| Some((c.as_ref()?, pos))) // only those with Some, unpack the cell
         .collect();
 
     track_cells
@@ -56,7 +57,7 @@ fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> Has
         .filter_map(|(cell, pos, n)| {
             let neighbour = track[n]?;
             let normal_distance = pos.manhattan_distance(&n);
-            let gain = neighbour.distance.checked_sub(cell.distance + normal_distance)?;
+            let gain = neighbour.distance.checked_sub(cell.distance + normal_distance)?; // bail out if gain < 0
             Some(Cheat {
                 start: pos,
                 end: n.into(),
@@ -70,12 +71,12 @@ fn points_within_distance(point: Point, distance: usize, (width, height): (usize
     let idist = distance as isize;
 
     (-idist..=idist).into_iter()
-        .filter_map(move |dy|point.y.clamped_add_signed(dy, height))
+        .filter_map(move |dy|point.y.clamped_add_signed(dy, height)) // only valid rows
         .flat_map(move |py| {
             (-idist..=idist).into_iter()
-                .filter_map(move |dx|point.x.clamped_add_signed(dx, width))
+                .filter_map(move |dx|point.x.clamped_add_signed(dx, width)) // and valid cols
                 .map(move |px| (px, py).into())
-                .filter(move |p| point.manhattan_distance(p) <= distance)
+                .filter(move |p| point.manhattan_distance(p) <= distance) // within the range
         })
 }
 
@@ -92,12 +93,15 @@ fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
         }
     }
 
+    // Unpack the 'start' or fail
+    let start = start.map_err_to_invalid_input("Start not found")?;
+
     let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
     queue.push(BfsState {
-        pos: start.map_err_to_invalid_input("Start not found")?,
+        pos: start,
         distance: 0,
     });
-    track[start.unwrap()] = Some(TrackCell {
+    track[start] = Some(TrackCell {
         distance: 0,
     });
 
@@ -114,8 +118,8 @@ fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
 
         for neighbour in neighbours {
             if grid[neighbour] != '#' {
-                let reached = track[neighbour].unwrap_or(far_away);
-                if reached.distance > state.distance + 1 {
+                let reached = track[neighbour].unwrap_or(far_away); // trick the next 'if' (should enter if None or further)
+                if reached.distance > new_distance {
                     track[neighbour] = Some(TrackCell {
                         distance: new_distance,
                     });
