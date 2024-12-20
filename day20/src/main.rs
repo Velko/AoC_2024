@@ -101,33 +101,26 @@ fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
         distance: 0,
     });
 
+    let far_away = TrackCell { distance: usize::MAX };
+
     while let Some(state) = queue.pop() {
         let new_distance = state.distance + 1;
 
         if grid[state.pos] == 'E' {
-            break;
+            return Ok(track);
         }
 
         let neighbours = Neighbours2D::new(state.pos.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
 
-        for neihbour in neighbours {
-            if grid[neihbour] != '#' {
-                if let Some(reached) = track[neihbour] {
-                    if reached.distance > state.distance + 1 {
-                        track[neihbour] = Some(TrackCell {
-                            distance: new_distance,
-                        });
-                        queue.push(BfsState {
-                            pos: neihbour.into(),
-                            distance: new_distance,
-                        })
-                    }
-                } else {
-                    track[neihbour] = Some(TrackCell {
+        for neighbour in neighbours {
+            if grid[neighbour] != '#' {
+                let reached = track[neighbour].unwrap_or(far_away);
+                if reached.distance > state.distance + 1 {
+                    track[neighbour] = Some(TrackCell {
                         distance: new_distance,
                     });
                     queue.push(BfsState {
-                        pos: neihbour.into(),
+                        pos: neighbour.into(),
                         distance: new_distance,
                     })
                 }
@@ -135,7 +128,7 @@ fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
         }
     }
 
-    Ok(track)
+    Err(anyhow::anyhow!("Did not reach the end position"))
 }
 
 #[derive(Debug, Eq, PartialEq)]
