@@ -54,17 +54,14 @@ fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> Has
         .into_par_iter()
         .flat_map_iter(|(c, pos)| points_within_distance(pos, max_distance, track.size()).map(move |n| (c, pos, n)))
         .filter_map(|(cell, pos, n)| {
-            let neihbour = track[n]?;
+            let neighbour = track[n]?;
             let normal_distance = pos.manhattan_distance(&n);
-            if neihbour.distance > cell.distance + normal_distance {
-                Some(Cheat {
-                    start: pos,
-                    end: n.into(),
-                    gain: neihbour.distance - cell.distance - normal_distance,
-                })
-            } else {
-                None
-            }
+            let gain = neighbour.distance.checked_sub(cell.distance + normal_distance)?;
+            Some(Cheat {
+                start: pos,
+                end: n.into(),
+                gain,
+            })
         })
         .collect()
 }
