@@ -1,5 +1,6 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, Point, Neighbours2D, NeighbourMap};
 use std::collections::{BinaryHeap, HashSet};
+use itertools::Itertools;
 
 type ParsedInput = Grid<char>;
 
@@ -86,6 +87,7 @@ fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
 
     while let Some(pos) = p {
         grid[pos] = 'O';
+        //println!("{}", track[pos].unwrap().distance);
         p = track[pos].unwrap().came_from;
     }
 
@@ -96,11 +98,12 @@ fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
             let neighbours = Neighbours2D::new_with_distance(pos.into(), track.size(), 2, NeighbourMap::Plus).filter_map(|f|f);
             for n in neighbours {
                 if let Some(neihbour) = track[n] {
-                    if neihbour.distance > cell.distance && track[pos.middle(&n.into())].is_none() {
+                    let middle = pos.middle(&n.into());
+                    if neihbour.distance > cell.distance && track[middle].is_none() {
                         cheats.insert(Cheat {
-                            start: pos,
+                            start: middle,
                             end: n.into(),
-                            gain: neihbour.distance - cell.distance,
+                            gain: neihbour.distance - cell.distance - 2,
                         });
                     }
                 }
@@ -109,12 +112,17 @@ fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
     }
 
 
-    // println!("{:?}", cheats);
+    for c in cheats.iter().sorted_by_key(|s|s.gain) {
+        println!("{:?}", c);
+        //, track[c.end].unwrap().distance, track[c.start].unwrap().distance
+    }
+
+    //println!("{:?}", cheats);
     // println!("{:?}", cheats.len());
 
     Ok(cheats
         .into_iter()
-        //.filter(|c|c.gain >= 100)
+        .filter(|c|c.gain >= 100)
         .count())
 
     // grid.print();
