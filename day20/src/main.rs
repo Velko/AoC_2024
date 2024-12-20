@@ -1,4 +1,4 @@
-use aoc_tools::{IterMoreTools, InvalidInput, ResultExt, Grid, Point, Neighbours2D, NeighbourMap};
+use aoc_tools::{ResultExt, Grid, Point, Neighbours2D, NeighbourMap};
 use std::collections::{BinaryHeap, HashSet};
 use itertools::Itertools;
 
@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
     let parsed = parse_input(input)?;
 
-    let result1 = calculate_p1(&parsed)?;
+    let result1 = calculate_p1(&parsed, 100)?;
     println!("Result p1: {}", result1);
 
     let result2 = calculate_p2(&parsed)?;
@@ -21,75 +21,8 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(input.read_grid()?)
 }
 
-fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
-    let mut track: Grid<Option<TrackCell>> = Grid::new(None, grid.width(), grid.height());
-
-    let mut start:Option<Point> = None;
-
-    for (cell, point) in grid.enumerate() {
-        if *cell == 'S' {
-            start = Some(point);
-            break;
-        }
-    }
-
-    let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
-    queue.push(BfsState {
-        pos: start.map_err_to_invalid_input("Start not found")?,
-        distance: 0,
-    });
-    track[start.unwrap()] = Some(TrackCell {
-        came_from: None,
-        distance: 0,
-    });
-
-    let mut end_point: Option<Point> = None;
-
-    while let Some(state) = queue.pop() {
-        let new_distance = state.distance + 1;
-
-        if grid[state.pos] == 'E' {
-            end_point = Some(state.pos);
-            break;
-        }
-
-        let neighbours = Neighbours2D::new(state.pos.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
-
-        for neihbour in neighbours {
-            if grid[neihbour] != '#' {
-                if let Some(reached) = track[neihbour] {
-                    if reached.distance > state.distance + 1 {
-                        track[neihbour] = Some(TrackCell {
-                            came_from: Some(state.pos),
-                            distance: new_distance,
-                        });
-                        queue.push(BfsState {
-                            pos: neihbour.into(),
-                            distance: new_distance,
-                        })
-                    }
-                } else {
-                    track[neihbour] = Some(TrackCell {
-                        came_from: Some(state.pos),
-                        distance: new_distance,
-                    });
-                    queue.push(BfsState {
-                        pos: neihbour.into(),
-                        distance: new_distance,
-                    })
-                }
-            }
-        }
-    }
-
-    let mut grid = grid.clone();
-    let mut p: Option<Point> = end_point;
-
-    while let Some(pos) = p {
-        grid[pos] = 'O';
-        //println!("{}", track[pos].unwrap().distance);
-        p = track[pos].unwrap().came_from;
-    }
+fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
+    let track = fill_track(grid)?;
 
     let mut cheats: HashSet<Cheat> = HashSet::new();
 
@@ -122,7 +55,7 @@ fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
 
     Ok(cheats
         .into_iter()
-        .filter(|c|c.gain >= 100)
+        .filter(|c|c.gain >= limit)
         .count())
 
     // grid.print();
@@ -133,6 +66,65 @@ fn calculate_p1(grid: &ParsedInput) -> anyhow::Result<usize> {
 
 fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(0)
+}
+
+
+fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
+    let mut track: Grid<Option<TrackCell>> = Grid::new(None, grid.width(), grid.height());
+
+    let mut start:Option<Point> = None;
+
+    for (cell, point) in grid.enumerate() {
+        if *cell == 'S' {
+            start = Some(point);
+            break;
+        }
+    }
+
+    let mut queue: BinaryHeap<BfsState> = BinaryHeap::new();
+    queue.push(BfsState {
+        pos: start.map_err_to_invalid_input("Start not found")?,
+        distance: 0,
+    });
+    track[start.unwrap()] = Some(TrackCell {
+        distance: 0,
+    });
+
+    while let Some(state) = queue.pop() {
+        let new_distance = state.distance + 1;
+
+        if grid[state.pos] == 'E' {
+            break;
+        }
+
+        let neighbours = Neighbours2D::new(state.pos.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
+
+        for neihbour in neighbours {
+            if grid[neihbour] != '#' {
+                if let Some(reached) = track[neihbour] {
+                    if reached.distance > state.distance + 1 {
+                        track[neihbour] = Some(TrackCell {
+                            distance: new_distance,
+                        });
+                        queue.push(BfsState {
+                            pos: neihbour.into(),
+                            distance: new_distance,
+                        })
+                    }
+                } else {
+                    track[neihbour] = Some(TrackCell {
+                        distance: new_distance,
+                    });
+                    queue.push(BfsState {
+                        pos: neihbour.into(),
+                        distance: new_distance,
+                    })
+                }
+            }
+        }
+    }
+
+    Ok(track)
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -156,7 +148,6 @@ impl PartialOrd for BfsState {
 
 #[derive(Debug, Clone, Copy)]
 struct TrackCell {
-    came_from: Option<Point>,
     distance: usize,
 }
 
@@ -181,11 +172,11 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    #[case(load_sample("sample.txt")?, 2)]
+    #[case(load_sample("input.txt")?, 100)]
+    fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>), #[case] limit: usize) -> anyhow::Result<()> {
 
-        let result1 = calculate_p1(&parsed)?;
+        let result1 = calculate_p1(&parsed, limit)?;
 
         assert_eq!(expected, Some(result1 as u64));
         Ok(())
