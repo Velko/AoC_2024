@@ -1,6 +1,5 @@
 use aoc_tools::{ResultExt, Grid, Point, Neighbours2D, NeighbourMap, NumExt};
 use std::collections::{BinaryHeap, HashSet};
-use itertools::Itertools;
 
 type ParsedInput = Grid<char>;
 
@@ -44,26 +43,25 @@ fn calculate_p2(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 }
 
 fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> HashSet<Cheat> {
-    let mut cheats: HashSet<Cheat> = HashSet::new();
 
-    for (cell, pos, n) in track
+    track
         .enumerate()
         .filter_map(|(c, pos)| Some((c.as_ref()?, pos)))
         .flat_map(|(c, pos)| points_within_distance(pos, max_distance, track.size()).map(move |n| (c, pos, n)))
-        {
-            if let Some(neihbour) = track[n] {
-                let normal_distance = pos.manhattan_distance(&n);
-                if neihbour.distance > cell.distance + normal_distance {
-                    cheats.insert(Cheat {
-                        start: pos,
-                        end: n.into(),
-                        gain: neihbour.distance - cell.distance - normal_distance,
-                    });
-                }
+        .filter_map(|(cell, pos, n)| {
+            let neihbour = track[n]?;
+            let normal_distance = pos.manhattan_distance(&n);
+            if neihbour.distance > cell.distance + normal_distance {
+                Some(Cheat {
+                    start: pos,
+                    end: n.into(),
+                    gain: neihbour.distance - cell.distance - normal_distance,
+                })
+            } else {
+                None
             }
-    }
-
-    cheats
+        })
+        .collect()
 }
 
 fn points_within_distance(point: Point, distance: usize, (width, height): (usize, usize)) -> impl Iterator<Item = Point> {
