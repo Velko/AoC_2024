@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
     let result1 = calculate_p1(&parsed, 100)?;
     println!("Result p1: {}", result1);
 
-    let result2 = calculate_p2(&parsed)?;
+    let result2 = calculate_p2(&parsed, 100)?;
     println!("Result p2: {}", result2);
 
     Ok(())
@@ -26,30 +26,20 @@ fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 
     let cheats = calculate_cheats(&track, 2);
 
-
-    // for c in cheats.iter().sorted_by_key(|s|s.gain) {
-    //     println!("{:?}", c);
-    // }
-
     Ok(cheats
         .into_iter()
         .filter(|c|c.gain >= limit)
         .count())
 }
 
-fn calculate_p2(grid: &ParsedInput) -> anyhow::Result<usize> {
+fn calculate_p2(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
     let track = fill_track(grid)?;
 
     let cheats = calculate_cheats(&track, 20);
 
-
-    // for c in cheats.iter().sorted_by_key(|s|s.gain) {
-    //     println!("{:?}", c);
-    // }
-
     Ok(cheats
         .into_iter()
-        .filter(|c|c.gain >= 100)
+        .filter(|c|c.gain >= limit)
         .count())
 }
 
@@ -213,11 +203,11 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
+    #[case(load_sample("sample.txt")?, 50)]
+    #[case(load_sample("input.txt")?, 100)]
+    fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>), #[case] limit: usize) -> anyhow::Result<()> {
 
-        let result2 = calculate_p2(&parsed)?;
+        let result2 = calculate_p2(&parsed, limit)?;
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
