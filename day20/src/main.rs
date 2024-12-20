@@ -1,5 +1,6 @@
 use aoc_tools::{ResultExt, Grid, Point, Neighbours2D, NeighbourMap, NumExt};
 use std::collections::{BinaryHeap, HashSet};
+use rayon::prelude::*;
 
 type ParsedInput = Grid<char>;
 
@@ -44,10 +45,14 @@ fn calculate_p2(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 
 fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> HashSet<Cheat> {
 
-    track
+    let track_cells: Vec<_> = track
         .enumerate()
         .filter_map(|(c, pos)| Some((c.as_ref()?, pos)))
-        .flat_map(|(c, pos)| points_within_distance(pos, max_distance, track.size()).map(move |n| (c, pos, n)))
+        .collect();
+
+    track_cells
+        .into_par_iter()
+        .flat_map_iter(|(c, pos)| points_within_distance(pos, max_distance, track.size()).map(move |n| (c, pos, n)))
         .filter_map(|(cell, pos, n)| {
             let neihbour = track[n]?;
             let normal_distance = pos.manhattan_distance(&n);
