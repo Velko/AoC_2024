@@ -46,46 +46,37 @@ fn calculate_p2(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> HashSet<Cheat> {
     let mut cheats: HashSet<Cheat> = HashSet::new();
 
-    for (c, pos) in track.enumerate() {
-        if let Some(cell) = c {
-            let neighbours = points_within_distance(&pos, max_distance, track.size()).into_iter();
-            for n in neighbours {
-                if let Some(neihbour) = track[n] {
-                    let normal_distance = pos.manhattan_distance(&n);
-                    if neihbour.distance > cell.distance + normal_distance {
-                        cheats.insert(Cheat {
-                            start: pos,
-                            end: n.into(),
-                            gain: neihbour.distance - cell.distance - normal_distance,
-                        });
-                    }
+    for (cell, pos, n) in track
+        .enumerate()
+        .filter_map(|(c, pos)| Some((c.as_ref()?, pos)))
+        .flat_map(|(c, pos)| points_within_distance(pos, max_distance, track.size()).map(move |n| (c, pos, n)))
+        {
+            if let Some(neihbour) = track[n] {
+                let normal_distance = pos.manhattan_distance(&n);
+                if neihbour.distance > cell.distance + normal_distance {
+                    cheats.insert(Cheat {
+                        start: pos,
+                        end: n.into(),
+                        gain: neihbour.distance - cell.distance - normal_distance,
+                    });
                 }
             }
-        }
     }
 
     cheats
 }
 
-fn points_within_distance(point: &Point, distance: usize, (width, height): (usize, usize)) -> Vec<Point> {
+fn points_within_distance(point: Point, distance: usize, (width, height): (usize, usize)) -> impl Iterator<Item = Point> {
     let idist = distance as isize;
 
-    let mut points = Vec::with_capacity(distance * distance * 4);
-    for dy in -idist..=idist {
-        if let Some(py) = point.y.clamped_add_signed(dy, height) {
-            for dx in -idist..=idist {
-                if let Some(px) = point.x.clamped_add_signed(dx, width) {
-                    let n_point = (px, py).into();
-
-                    if point.manhattan_distance(&n_point) <= distance {
-                        points.push(n_point);
-                    }
-                }
-            }
-        }
-    }
-
-    points
+    (-idist..=idist).into_iter()
+        .filter_map(move |dy|point.y.clamped_add_signed(dy, height))
+        .flat_map(move |py| {
+            (-idist..=idist).into_iter()
+                .filter_map(move |dx|point.x.clamped_add_signed(dx, width))
+                .map(move |px| (px, py).into())
+                .filter(move |p| point.manhattan_distance(p) <= distance)
+        })
 }
 
 
@@ -211,5 +202,18 @@ mod tests {
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
+    }
+
+    #[test]
+    fn test_2d_iter() {
+        let res: Vec<_> =
+            (0..3)
+                .into_iter()
+                .flat_map(|y| (0..3).into_iter().map(move |x|(x, y)))
+                .collect();
+
+        assert_eq!(vec![(0, 0), (1, 0), (2, 0),
+                        (0, 1), (1, 1), (2, 1),
+                        (0, 2), (1, 2), (2, 2)], res);
     }
 }
