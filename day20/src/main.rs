@@ -31,10 +31,9 @@ fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
             let neighbours = Neighbours2D::new_with_distance(pos.into(), track.size(), 2, NeighbourMap::Plus).filter_map(|f|f);
             for n in neighbours {
                 if let Some(neihbour) = track[n] {
-                    let middle = pos.middle(&n.into());
-                    if neihbour.distance > cell.distance && track[middle].is_none() {
+                    if neihbour.distance > cell.distance + 2 {
                         cheats.insert(Cheat {
-                            start: middle,
+                            start: pos,
                             end: n.into(),
                             gain: neihbour.distance - cell.distance - 2,
                         });
@@ -47,21 +46,12 @@ fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
 
     for c in cheats.iter().sorted_by_key(|s|s.gain) {
         println!("{:?}", c);
-        //, track[c.end].unwrap().distance, track[c.start].unwrap().distance
     }
-
-    //println!("{:?}", cheats);
-    // println!("{:?}", cheats.len());
 
     Ok(cheats
         .into_iter()
         .filter(|c|c.gain >= limit)
         .count())
-
-    // grid.print();
-
-
-    //Err(anyhow::anyhow!("Result not yet calculated"))
 }
 
 fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
