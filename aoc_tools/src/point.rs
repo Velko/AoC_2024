@@ -34,6 +34,13 @@ impl Point {
             }),
          }
     }
+
+    pub fn middle(&self, other: &Self) -> Self {
+        Self {
+            x: (other.x + self.x) / 2,
+            y: (other.y + self.y) / 2,
+        }
+    }
 }
 
 impl From<(usize, usize)> for Point {
