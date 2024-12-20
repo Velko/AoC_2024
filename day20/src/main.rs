@@ -1,4 +1,4 @@
-use aoc_tools::{ResultExt, Grid, Point, Neighbours2D, NeighbourMap};
+use aoc_tools::{ResultExt, Grid, Point, Neighbours2D, NeighbourMap, NumExt};
 use std::collections::{BinaryHeap, HashSet};
 use itertools::Itertools;
 
@@ -24,29 +24,12 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
     let track = fill_track(grid)?;
 
-    let mut cheats: HashSet<Cheat> = HashSet::new();
-
-    for (c, pos) in track.enumerate() {
-        if let Some(cell) = c {
-            let neighbours = Neighbours2D::new_with_distance(pos.into(), track.size(), 2, NeighbourMap::Plus).filter_map(|f|f);
-            for n in neighbours {
-                if let Some(neihbour) = track[n] {
-                    if neihbour.distance > cell.distance + 2 {
-                        cheats.insert(Cheat {
-                            start: pos,
-                            end: n.into(),
-                            gain: neihbour.distance - cell.distance - 2,
-                        });
-                    }
-                }
-            }
-        }
-    }
+    let cheats = calculate_cheats(&track, 2);
 
 
-    for c in cheats.iter().sorted_by_key(|s|s.gain) {
-        println!("{:?}", c);
-    }
+    // for c in cheats.iter().sorted_by_key(|s|s.gain) {
+    //     println!("{:?}", c);
+    // }
 
     Ok(cheats
         .into_iter()
@@ -54,8 +37,65 @@ fn calculate_p1(grid: &ParsedInput, limit: usize) -> anyhow::Result<usize> {
         .count())
 }
 
-fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
-    Ok(0)
+fn calculate_p2(grid: &ParsedInput) -> anyhow::Result<usize> {
+    let track = fill_track(grid)?;
+
+    let cheats = calculate_cheats(&track, 20);
+
+
+    // for c in cheats.iter().sorted_by_key(|s|s.gain) {
+    //     println!("{:?}", c);
+    // }
+
+    Ok(cheats
+        .into_iter()
+        .filter(|c|c.gain >= 100)
+        .count())
+}
+
+fn calculate_cheats(track: &Grid<Option<TrackCell>>, max_distance: usize) -> HashSet<Cheat> {
+    let mut cheats: HashSet<Cheat> = HashSet::new();
+
+    for (c, pos) in track.enumerate() {
+        if let Some(cell) = c {
+            let neighbours = points_within_distance(&pos, max_distance, track.size()).into_iter();
+            for n in neighbours {
+                if let Some(neihbour) = track[n] {
+                    let normal_distance = pos.manhattan_distance(&n);
+                    if neihbour.distance > cell.distance + normal_distance {
+                        cheats.insert(Cheat {
+                            start: pos,
+                            end: n.into(),
+                            gain: neihbour.distance - cell.distance - normal_distance,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    cheats
+}
+
+fn points_within_distance(point: &Point, distance: usize, (width, height): (usize, usize)) -> Vec<Point> {
+    let idist = distance as isize;
+
+    let mut points = Vec::with_capacity(distance * distance * 4);
+    for dy in -idist..=idist {
+        if let Some(py) = point.y.clamped_add_signed(dy, height) {
+            for dx in -idist..=idist {
+                if let Some(px) = point.x.clamped_add_signed(dx, width) {
+                    let n_point = (px, py).into();
+
+                    if point.manhattan_distance(&n_point) <= distance {
+                        points.push(n_point);
+                    }
+                }
+            }
+        }
+    }
+
+    points
 }
 
 
@@ -175,7 +215,6 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;

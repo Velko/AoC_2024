@@ -41,6 +41,11 @@ impl Point {
             y: (other.y + self.y) / 2,
         }
     }
+
+    pub fn manhattan_distance(&self, other: &Self) -> usize {
+        ((self.x as isize - other.x as isize).abs() +
+        (self.y as isize - other.y as isize).abs()) as usize
+    }
 }
 
 impl From<(usize, usize)> for Point {
