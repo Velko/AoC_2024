@@ -100,7 +100,7 @@ fn calculate_p2(input: &ParsedInput, width: usize, height: usize) -> anyhow::Res
         let mut nmatches = 0;
         for (v, pos) in positions.enumerate() {
             if *v {
-                for neigh in Neighbours2D::new(pos.into(), (width as usize, height as usize), aoc_tools::NeighbourMap::Plus).filter_map(|f|f) {
+                for neigh in Neighbours2D::new_only_valid(pos.into(), (width as usize, height as usize), aoc_tools::NeighbourMap::Plus) {
                     if positions[neigh] {
                         nmatches += 1;
                     }

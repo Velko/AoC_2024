@@ -66,7 +66,7 @@ fn traverse_grid(input: &ParsedInput, width: usize, height: usize, nbytes: usize
             break;
         }
 
-        let neigh = Neighbours2D::new(state.pos.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
+        let neigh = Neighbours2D::new_only_valid(state.pos.into(), grid.size(), NeighbourMap::Plus);
 
         for n in neigh {
             let new_state = BfsState {

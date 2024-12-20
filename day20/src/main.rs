@@ -114,7 +114,7 @@ fn fill_track(grid: &ParsedInput) -> anyhow::Result<Grid<Option<TrackCell>>> {
             return Ok(track);
         }
 
-        let neighbours = Neighbours2D::new(state.pos.into(), grid.size(), NeighbourMap::Plus).filter_map(|f|f);
+        let neighbours = Neighbours2D::new_only_valid(state.pos.into(), grid.size(), NeighbourMap::Plus);
 
         for neighbour in neighbours {
             if grid[neighbour] != '#' {

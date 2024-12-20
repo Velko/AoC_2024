@@ -165,9 +165,9 @@ fn calculate_p2(input: &ParsedInput) -> usize {
 }
 
 fn mark_plot_side(plots: &mut Grid<Plot>, current_id: &mut Option<usize>, pos: (usize, usize), chk_side: NeighbourMap) {
-    let neigh = Neighbours2D::new(pos, plots.size(), chk_side);
+    let mut neigh = Neighbours2D::new_only_valid(pos, plots.size(), chk_side);
     let mut is_border = true;
-    if let Some(n_pos) = neigh.filter_map(|f|f).next() {
+    if let Some(n_pos) = neigh.next() {
         if plots[n_pos].id == plots[pos].id {
             is_border = false;
         }

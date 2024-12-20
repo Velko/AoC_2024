@@ -47,6 +47,10 @@ impl Neighbours2D {
         }
     }
 
+    pub fn new_only_valid(position: (usize, usize), size: (usize, usize), nmap: NeighbourMap) -> impl Iterator<Item=(usize, usize)> {
+        Self::new(position, size, nmap).filter_map(|n|n)
+    }
+
     fn get_neighbour(&self, off_row: isize, off_col: isize) -> Option<(usize, usize)> {
         let n_col = self.col.checked_add_signed(off_col * self.distance as isize)?;
         let n_row = self.row.checked_add_signed(off_row * self.distance as isize)?;
@@ -131,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_neighbours_0_0_valid_only() {
-        let mut neigh = Neighbours2D::new((0, 0), (5, 5), NeighbourMap::All).filter_map(|n|n);
+        let mut neigh = Neighbours2D::new_only_valid((0, 0), (5, 5), NeighbourMap::All);
 
         assert_eq!(Some((1, 0)), neigh.next());
         assert_eq!(Some((0, 1)), neigh.next());
