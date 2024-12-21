@@ -447,3 +447,18 @@ Part 2
 ------
 
 Not that different from the previous one. Just have to check if any cell within Manhattan distance up to 20 could be reached faster than by normal means.
+
+Day 21
+
+Part 1
+------
+
+From the description it did not seem that complicated. A bit of emulation, then take that in reverse. When simple heuristics failed, I resorted to searching
+all the possibilities. Still, the brute-force looked like "waitable". I only pruned off the most obvious cases.
+
+After submitting the result, the beginnings for P2 made me come back and write a proper solution, recording required transitions between numpad keys.
+
+Part 2
+------
+
+Ok, waiting for it won't work. Now I have to think on a proper solution.
