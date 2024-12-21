@@ -32,6 +32,12 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
     let transitions = prepare_numpad_transitions();
 
+    let dir_transitions = prepare_directional_transitions();
+
+    let cmdd = find_and_check_commands("256A")?;
+
+    println!("256: {} {}", cmdd, cmdd.len());
+
     let mut totals = 0;
 
     for digits in input.iter() {
@@ -71,6 +77,34 @@ fn prepare_numpad_transitions() -> HashMap<(char, char), usize>{
     transitions
 }
 
+fn prepare_directional_transitions() -> HashMap<(char, char), usize>{
+    let all_buttons = ['A', '>', '<', '^', 'v'];
+
+    let mut transitions: HashMap<(char, char), usize> = HashMap::new();
+
+    for start in all_buttons.iter() {
+        for end in all_buttons.iter() {
+            let start_point = directional_button_to_command(*start);
+            let end_point = commands_from_string(&end.to_string());
+            let start_key = command_to_directional_key(&start_point);
+            let end_key = commands_to_directional_keys(&end_point);
+
+            let dir_dist = distances_between_points(&start_key, &end_key);
+
+            let mut result: Option<String> = None;
+            let mut shortest = usize::MAX;
+
+            eval_dir_distances(&dir_dist, &start_key, &mut result, &mut shortest);
+
+            println!("{} -> {}: {} {}", start, end, result.unwrap(), shortest);
+
+            //transitions.insert((*start, *end), commands.len());
+        }
+    }
+
+    transitions
+}
+
 fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(0)
 }
@@ -101,39 +135,45 @@ fn eval_key_distances(distances: &[(isize, isize)], initial_pos: Point) -> Optio
     let mut shortest = usize::MAX;
 
     for cmds in all_commands_from_distances(&distances).into_iter() {
-        //println!("Cmds: {:?}", commands_to_string(&cmds));
+        println!("Cmds: {:?}", commands_to_string(&cmds));
         if commands_on_numeric_pad(&cmds, initial_pos).is_err() { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
         let distances2 = distances_between_points(&DIRECTIONAL_A, &keys2);
-        for cmds2 in all_commands_from_distances(&distances2) {
-            if commands_on_directional_pad(&cmds2).is_err() { continue;}
-            //print!("."); io::stdout().flush().unwrap();
-            let keys3 = commands_to_directional_keys(&cmds2);
-            let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
-            for cmds3 in all_commands_from_distances(&distances3) {
-                if commands_on_directional_pad(&cmds3).is_err() { continue;}
-                if cmds3.len() < shortest {
-                    shortest = cmds3.len();
-                    //println!("New shortest: {}", shortest);
-                    result = Some(commands_to_string(&cmds3));
-                }
-            }
-        }
-        //println!();
+
+        eval_dir_distances(&distances2, &DIRECTIONAL_A, &mut result, &mut shortest);
     }
 
     result
 }
 
+fn eval_dir_distances(distances2: &[(isize, isize)], initial_dpos: &Point, result: &mut Option<String>, shortest: &mut usize) {
+
+    for cmds2 in all_commands_from_distances(&distances2) {
+            if commands_on_directional_pad(&cmds2, *initial_dpos).is_err() { continue;}
+            //print!("."); io::stdout().flush().unwrap();
+            let keys3 = commands_to_directional_keys(&cmds2);
+            let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
+            for cmds3 in all_commands_from_distances(&distances3) {
+                if commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
+                if cmds3.len() < *shortest {
+                    *shortest = cmds3.len();
+                    //println!("New shortest: {}", shortest);
+                    *result = Some(commands_to_string(&cmds3));
+                }
+            }
+        }
+        //println!();
+}
+
 
 fn commands_to_digits(commands: &str) -> anyhow::Result<String> {
-    let cmds = commands_from_string(commands)?;
+    let cmds = commands_from_string(commands);
 
-    let step1_output = commands_on_directional_pad(&cmds)?;
+    let step1_output = commands_on_directional_pad(&cmds, DIRECTIONAL_A)?;
 
     let cmds2 = directional_keys_to_commands(&step1_output);
     //println!("St 2: {:?}", commands_to_string(&cmds2));
-    let step2_output = commands_on_directional_pad(&cmds2)?;
+    let step2_output = commands_on_directional_pad(&cmds2, DIRECTIONAL_A)?;
 
     let cmds3 = directional_keys_to_commands(&step2_output);
     //println!("St 3: {:?}", commands_to_string(&cmds3));
@@ -146,22 +186,27 @@ fn commands_on_numeric_pad(cmds: &[Command], initial_pos: Point) -> anyhow::Resu
     interpret_commands(cmds, initial_pos, (3, 4), NUMERIC_F)
 }
 
-fn commands_on_directional_pad(cmds: &[Command]) -> anyhow::Result<Vec<Point>> {
-    interpret_commands(cmds, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)
+fn commands_on_directional_pad(cmds: &[Command], initial_pos: Point) -> anyhow::Result<Vec<Point>> {
+    interpret_commands(cmds, initial_pos, (3, 2), DIRECTIONAL_F)
 }
 
-fn commands_from_string(s: &str) -> anyhow::Result<Vec<Command>> {
-    Ok(s.chars()
-        .map(|c| match c {
-            '^' => Ok(Command::Move(Direction::Up)),
-            '>' => Ok(Command::Move(Direction::Right)),
-            'v' => Ok(Command::Move(Direction::Down)),
-            '<' => Ok(Command::Move(Direction::Left)),
-            'A' => Ok(Command::Activate),
-            _ => Err(InvalidInput(format!("Invalid command: {}", c))),
-        })
-        .try_collect_vec()?)
+fn commands_from_string(s: &str) -> Vec<Command> {
+    s.chars()
+        .map(directional_button_to_command)
+        .collect()
 }
+
+fn directional_button_to_command(button: char) -> Command {
+    match button {
+        '^' => Command::Move(Direction::Up),
+        '>' => Command::Move(Direction::Right),
+        'v' => Command::Move(Direction::Down),
+        '<' => Command::Move(Direction::Left),
+        'A' => Command::Activate,
+        _ => panic!("Invalid key: {:?}", button),
+    }
+}
+
 
 fn commands_to_string(cmds: &[Command]) -> String {
     cmds.iter().map(|cmd| match cmd {
@@ -208,16 +253,19 @@ fn directional_keys_to_commands(keys: &[Point]) -> Vec<Command> {
     }).collect()
 }
 
+
 fn commands_to_directional_keys(commands: &[Command]) -> Vec<Point> {
-    commands.iter().map(|cmd| {
-        match cmd {
-            Command::Move(Direction::Up) => Point { x: 1, y: 0 },
-            Command::Move(Direction::Right) => Point { x: 2, y: 1 },
-            Command::Move(Direction::Down) => Point { x: 1, y: 1 },
-            Command::Move(Direction::Left) => Point { x: 0, y: 1 },
-            Command::Activate => Point { x: 2, y: 0 },
-        }
-    }).collect()
+    commands.iter().map(command_to_directional_key).collect()
+}
+
+fn command_to_directional_key(command: &Command) -> Point {
+    match command {
+        Command::Move(Direction::Up) => Point { x: 1, y: 0 },
+        Command::Move(Direction::Right) => Point { x: 2, y: 1 },
+        Command::Move(Direction::Down) => Point { x: 1, y: 1 },
+        Command::Move(Direction::Left) => Point { x: 0, y: 1 },
+        Command::Activate => Point { x: 2, y: 0 },
+    }
 }
 
 fn numeric_keys_to_digits(keys: &[Point]) -> String {
