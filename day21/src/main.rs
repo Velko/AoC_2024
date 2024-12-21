@@ -30,7 +30,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
-    let transitions = prepare_transitions();
+    let transitions = prepare_numpad_transitions();
 
     let mut totals = 0;
 
@@ -50,7 +50,7 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 }
 
 
-fn prepare_transitions() -> HashMap<(char, char), usize>{
+fn prepare_numpad_transitions() -> HashMap<(char, char), usize>{
     let all_digits = ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
     let mut transitions: HashMap<(char, char), usize> = HashMap::new();
@@ -371,7 +371,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case("453A", "")]
+    #[case("256A", "<vA<AA>>^AvA<^A>AvA^A<v<A>>^AvA^A<vA>^A<A>A<v<A>A>^AAvA<^A>A")]
+    #[case("512A", "<vA<AA>>^AvA<^A>AAvA^A<vA<AA>>^AvA^AvA<^A>A<vA>^A<A>A<v<A>A>^AvA^A<A>A")]
     fn test_commands_to_digits(#[case] expected: &str, #[case] input: &str) -> anyhow::Result<()> {
         let result = commands_to_digits(input)?;
         assert_eq!(result, expected);
