@@ -1,5 +1,7 @@
+use anyhow::anyhow;
 use aoc_tools::{Direction, InvalidInput, IterMoreTools, Point, ResultExt};
 use itertools::Itertools;
+use std::io::{self, Write};
 
 type ParsedInput = Vec<String>;
 
@@ -26,33 +28,16 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(input.read_lines()?)
 }
 
-fn calculate_p1(_input: &ParsedInput) -> anyhow::Result<u64> {
-
-    let mut commands = digits_to_commands("029A");
-    println!("Comm: {:?}", commands.len());
-    println!("------------------------------");
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
 
 
-    commands.sort_by_key(|l| l.len());
+    for digits in input.into_iter() {
+        let valid_cmd = find_and_check_commands(digits)?;
 
-    // for cmd in commands.iter() {
-    //     println!("Cmd: {}", cmd);
-    // }
+        println!("Valid: {:?} {}", valid_cmd, valid_cmd.len());
+    }
 
 
-    let valid = commands
-        .into_iter()
-        .filter(|cmd| commands_to_digits(&cmd).unwrap_or("FAILED".to_owned()) == "029A")
-        .next();
-
-    println!("Valid: {:?}", valid);
-
-    // //let commands = "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A";
-    // println!("Comm: {}", commands);
-    // match commands_to_digits(&commands) {
-    //     Ok(digits) => println!("Digits: {}", digits),
-    //     Err(e) => println!("Ejjoj: {}", e),
-    // }
 
     Ok(0)
 }
@@ -61,6 +46,18 @@ fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(0)
 }
 
+fn find_and_check_commands(digits: &str) -> anyhow::Result<String> {
+    let mut commands = digits_to_commands(digits);
+    commands.sort_by_key(|l| l.len());
+
+    commands
+        .into_iter()
+        .filter(|cmd| commands_to_digits(&cmd).unwrap_or("INVALID".to_owned()) == digits)
+        .next()
+        .ok_or(anyhow!("No valid command found"))
+}
+
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Command {
     Move(Direction),
@@ -68,22 +65,32 @@ enum Command {
 }
 
 fn digits_to_commands(digits: &str) -> Vec<String> {
+    let mut shortest = usize::MAX;
     let mut results = Vec::new();
     println!("Digits: {}", digits);
     let keys = digits_to_numeric_keys(digits);
     let distances = distances_between_points(NUMERIC_A, &keys);
     for cmds in all_commands_from_distances(&distances).into_iter() {
         println!("Cmds: {:?}", commands_to_string(&cmds));
+        if commands_on_numeric_pad(&cmds).is_err() { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
         let distances2 = distances_between_points(DIRECTIONAL_A, &keys2);
         for cmds2 in all_commands_from_distances(&distances2) {
-            println!("Cmd2: {:?}", commands_to_string(&cmds2));
+            if commands_on_directional_pad(&cmds2).is_err() { continue;}
+            print!(".");
+            io::stdout().flush().unwrap();
             let keys3 = commands_to_directional_keys(&cmds2);
             let distances3 = distances_between_points(DIRECTIONAL_A, &keys3);
             for cmds3 in all_commands_from_distances(&distances3) {
-                results.push(commands_to_string(&cmds3))
+                if commands_on_directional_pad(&cmds3).is_err() { continue;}
+                if cmds3.len() < shortest {
+                    shortest = cmds3.len();
+                    println!("New shortest: {}", shortest);
+                    results.push(commands_to_string(&cmds3));
+                }
             }
         }
+        println!();
     }
 
     results
@@ -93,17 +100,25 @@ fn digits_to_commands(digits: &str) -> Vec<String> {
 fn commands_to_digits(commands: &str) -> anyhow::Result<String> {
     let cmds = commands_from_string(commands)?;
 
-    let step1_output = interpret_commands(&cmds, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)?;
+    let step1_output = commands_on_directional_pad(&cmds)?;
 
     let cmds2 = directional_keys_to_commands(&step1_output);
     //println!("St 2: {:?}", commands_to_string(&cmds2));
-    let step2_output = interpret_commands(&cmds2, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)?;
+    let step2_output = commands_on_directional_pad(&cmds2)?;
 
     let cmds3 = directional_keys_to_commands(&step2_output);
     //println!("St 3: {:?}", commands_to_string(&cmds3));
-    let step3_output = interpret_commands(&cmds3, NUMERIC_A, (3, 4), NUMERIC_F)?;
+    let step3_output = commands_on_numeric_pad(&cmds3)?;
 
     Ok(numeric_keys_to_digits(&step3_output))
+}
+
+fn commands_on_numeric_pad(cmds: &[Command]) -> anyhow::Result<Vec<Point>> {
+    interpret_commands(cmds, NUMERIC_A, (3, 4), NUMERIC_F)
+}
+
+fn commands_on_directional_pad(cmds: &[Command]) -> anyhow::Result<Vec<Point>> {
+    interpret_commands(cmds, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)
 }
 
 fn commands_from_string(s: &str) -> anyhow::Result<Vec<Command>> {
