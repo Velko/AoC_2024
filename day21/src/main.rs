@@ -1,4 +1,5 @@
 use aoc_tools::{Direction, InvalidInput, IterMoreTools, Point, ResultExt};
+use itertools::Itertools;
 
 type ParsedInput = Vec<String>;
 
@@ -15,11 +16,43 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+const NUMERIC_A: Point = Point { x: 2, y: 3 };
+const NUMERIC_F: Point = Point { x: 0, y: 3 };
+
+const DIRECTIONAL_A: Point = Point { x: 2, y: 0 };
+const DIRECTIONAL_F: Point = Point { x: 0, y: 0 };
+
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(input.read_lines()?)
 }
 
 fn calculate_p1(_input: &ParsedInput) -> anyhow::Result<u64> {
+
+    let mut commands = digits_to_commands("029A");
+    println!("Comm: {:?}", commands.len());
+    println!("------------------------------");
+
+
+    commands.sort_by_key(|l| l.len());
+
+    // for cmd in commands.iter() {
+    //     println!("Cmd: {}", cmd);
+    // }
+
+
+    let valid = commands
+        .into_iter()
+        .filter(|cmd| commands_to_digits(&cmd).unwrap_or("FAILED".to_owned()) == "029A")
+        .next();
+
+    println!("Valid: {:?}", valid);
+
+    // //let commands = "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A";
+    // println!("Comm: {}", commands);
+    // match commands_to_digits(&commands) {
+    //     Ok(digits) => println!("Digits: {}", digits),
+    //     Err(e) => println!("Ejjoj: {}", e),
+    // }
 
     Ok(0)
 }
@@ -28,23 +61,47 @@ fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(0)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Command {
     Move(Direction),
     Activate,
+}
+
+fn digits_to_commands(digits: &str) -> Vec<String> {
+    let mut results = Vec::new();
+    println!("Digits: {}", digits);
+    let keys = digits_to_numeric_keys(digits);
+    let distances = distances_between_points(NUMERIC_A, &keys);
+    for cmds in all_commands_from_distances(&distances).into_iter() {
+        println!("Cmds: {:?}", commands_to_string(&cmds));
+        let keys2 = commands_to_directional_keys(&cmds);
+        let distances2 = distances_between_points(DIRECTIONAL_A, &keys2);
+        for cmds2 in all_commands_from_distances(&distances2) {
+            println!("Cmd2: {:?}", commands_to_string(&cmds2));
+            let keys3 = commands_to_directional_keys(&cmds2);
+            let distances3 = distances_between_points(DIRECTIONAL_A, &keys3);
+            for cmds3 in all_commands_from_distances(&distances3) {
+                results.push(commands_to_string(&cmds3))
+            }
+        }
+    }
+
+    results
 }
 
 
 fn commands_to_digits(commands: &str) -> anyhow::Result<String> {
     let cmds = commands_from_string(commands)?;
 
-    let step1_output = interpret_commands(&cmds, Point { x: 2, y: 0 }, (3, 2), Point { x: 0, y: 0 })?;
+    let step1_output = interpret_commands(&cmds, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)?;
 
     let cmds2 = directional_keys_to_commands(&step1_output);
-    let step2_output = interpret_commands(&cmds2, Point { x: 2, y: 0 }, (3, 2), Point { x: 0, y: 0 })?;
+    //println!("St 2: {:?}", commands_to_string(&cmds2));
+    let step2_output = interpret_commands(&cmds2, DIRECTIONAL_A, (3, 2), DIRECTIONAL_F)?;
 
     let cmds3 = directional_keys_to_commands(&step2_output);
-    let step3_output = interpret_commands(&cmds3, Point { x: 2, y: 3 }, (3, 4), Point { x: 0, y: 3 })?;
+    //println!("St 3: {:?}", commands_to_string(&cmds3));
+    let step3_output = interpret_commands(&cmds3, NUMERIC_A, (3, 4), NUMERIC_F)?;
 
     Ok(numeric_keys_to_digits(&step3_output))
 }
@@ -60,6 +117,16 @@ fn commands_from_string(s: &str) -> anyhow::Result<Vec<Command>> {
             _ => Err(InvalidInput(format!("Invalid command: {}", c))),
         })
         .try_collect_vec()?)
+}
+
+fn commands_to_string(cmds: &[Command]) -> String {
+    cmds.iter().map(|cmd| match cmd {
+        Command::Move(Direction::Up) => '^',
+        Command::Move(Direction::Right) => '>',
+        Command::Move(Direction::Down) => 'v',
+        Command::Move(Direction::Left) => '<',
+        Command::Activate => 'A',
+    }).collect()
 }
 
 fn interpret_commands(cmds: &[Command], initial_pos: Point, bounds: (usize, usize), forbidden: Point) -> anyhow::Result<Vec<Point>> {
@@ -97,8 +164,19 @@ fn directional_keys_to_commands(keys: &[Point]) -> Vec<Command> {
     }).collect()
 }
 
-fn numeric_keys_to_digits(keys: &[Point]) -> String {
+fn commands_to_directional_keys(commands: &[Command]) -> Vec<Point> {
+    commands.iter().map(|cmd| {
+        match cmd {
+            Command::Move(Direction::Up) => Point { x: 1, y: 0 },
+            Command::Move(Direction::Right) => Point { x: 2, y: 1 },
+            Command::Move(Direction::Down) => Point { x: 1, y: 1 },
+            Command::Move(Direction::Left) => Point { x: 0, y: 1 },
+            Command::Activate => Point { x: 2, y: 0 },
+        }
+    }).collect()
+}
 
+fn numeric_keys_to_digits(keys: &[Point]) -> String {
     keys.iter().map(|key| {
         match key {
             Point { x: 0, y: 2 } => '1',
@@ -117,6 +195,98 @@ fn numeric_keys_to_digits(keys: &[Point]) -> String {
     }).collect()
 }
 
+fn digits_to_numeric_keys(digits: &str) -> Vec<Point> {
+    digits.chars().map(|c| {
+        match c {
+            '1' => Point { x: 0, y: 2 },
+            '2' => Point { x: 1, y: 2 },
+            '3' => Point { x: 2, y: 2 },
+            '4' => Point { x: 0, y: 1 },
+            '5' => Point { x: 1, y: 1 },
+            '6' => Point { x: 2, y: 1 },
+            '7' => Point { x: 0, y: 0 },
+            '8' => Point { x: 1, y: 0 },
+            '9' => Point { x: 2, y: 0 },
+            '0' => Point { x: 1, y: 3 },
+            'A' => Point { x: 2, y: 3 },
+            _ => panic!("Invalid digit: {}", c),
+        }
+    }).collect()
+}
+
+fn distances_between_points(start: Point, points: &[Point]) -> Vec<(isize, isize)> {
+    Some(&start)
+        .into_iter()
+        .chain(points.into_iter())
+        .tuple_windows()
+        .map(|(p1, p2)| (p2.x as isize - p1.x as isize, p2.y as isize - p1.y as isize))
+        .collect()
+}
+
+fn all_commands_from_distances(distances: &[(isize, isize)]) -> Vec<Vec<Command>> {
+    let mut output = Vec::new();
+
+    recursive_add_all_commands(distances, Vec::new(), &mut output, 0);
+
+    fn recursive_add_all_commands(distances: &[(isize, isize)], mut current: Vec<Command>, output: &mut Vec<Vec<Command>>, depth: usize) {
+        if depth == distances.len() {
+            output.push(current);
+            return;
+        }
+
+        for commands in all_commands_from_distance(distances[depth]) {
+            let mut specific = current.clone();
+            specific.extend(commands);
+            recursive_add_all_commands(distances, specific, output, depth + 1);
+        }
+    }
+
+    output
+}
+
+#[allow(dead_code)]
+fn all_commands_from_distance(distance: (isize, isize)) -> Vec<Vec<Command>> {
+    let mut output = Vec::new();
+
+    fn generate_commands(distance: (isize, isize), current: Vec<Command>, output: &mut Vec<Vec<Command>>) {
+        if distance == (0, 0) {
+            let mut new_current = current.clone();
+            new_current.push(Command::Activate);
+            output.push(new_current);
+            return;
+        }
+
+        if distance.0 > 0 {
+            let mut new_current = current.clone();
+            new_current.push(Command::Move(Direction::Right));
+            generate_commands((distance.0 - 1, distance.1), new_current, output);
+        }
+
+        if distance.0 < 0 {
+            let mut new_current = current.clone();
+            new_current.push(Command::Move(Direction::Left));
+            generate_commands((distance.0 + 1, distance.1), new_current, output);
+        }
+
+        if distance.1 > 0 {
+            let mut new_current = current.clone();
+            new_current.push(Command::Move(Direction::Down));
+            generate_commands((distance.0, distance.1 - 1), new_current, output);
+        }
+
+        if distance.1 < 0 {
+            let mut new_current = current.clone();
+            new_current.push(Command::Move(Direction::Up));
+            generate_commands((distance.0, distance.1 + 1), new_current, output);
+        }
+    }
+
+    generate_commands(distance, Vec::new(), &mut output);
+
+    output
+}
+
+
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
@@ -133,6 +303,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
+    //#[ignore]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed)?;
@@ -154,10 +325,49 @@ mod tests {
     }
 
     #[rstest]
-    #[case("", "")]
+    #[case("453A", "")]
     fn test_commands_to_digits(#[case] expected: &str, #[case] input: &str) -> anyhow::Result<()> {
         let result = commands_to_digits(input)?;
         assert_eq!(result, expected);
         Ok(())
+    }
+
+    #[test]
+    fn test_all_commands_from_distance_1_1() {
+        let result = all_commands_from_distance((1, 1));
+        
+        assert_eq!(vec![vec![Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Activate],
+                        vec![Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Activate]], result);
+    }
+
+    #[test]
+    fn test_all_commands_from_distance_0_2() {
+        let result = all_commands_from_distance((0, 2));
+        
+        assert_eq!(vec![vec![Command::Move(Direction::Down), Command::Move(Direction::Down), Command::Activate]], result);
+    }
+
+    #[test]
+    fn test_all_commands_from_distance_2_2() {
+        let result = all_commands_from_distance((2, 2));
+        
+        assert_eq!(vec![
+            vec![Command::Move(Direction::Right), Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Move(Direction::Down), Command::Activate],
+            vec![Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Activate],
+            vec![Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Activate],
+            vec![Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Activate],
+            vec![Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Activate],
+            vec![Command::Move(Direction::Down), Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Move(Direction::Right), Command::Activate],
+            ], result);
+    }
+
+    #[test]
+    fn test_all_commands_from_distances_1_1() {
+        let result = all_commands_from_distances(&[(1, 0), (1, 1), (0, 1)]);
+        
+        assert_eq!(vec![
+            vec![Command::Move(Direction::Right), Command::Activate, Command::Move(Direction::Right), Command::Move(Direction::Down), Command::Activate, Command::Move(Direction::Down), Command::Activate],
+            vec![Command::Move(Direction::Right), Command::Activate, Command::Move(Direction::Down), Command::Move(Direction::Right), Command::Activate, Command::Move(Direction::Down), Command::Activate],
+            ], result);
     }
 }
