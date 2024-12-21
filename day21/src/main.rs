@@ -1,7 +1,7 @@
 use anyhow::anyhow;
-use aoc_tools::{Direction, InvalidInput, IterMoreTools, Point, ResultExt};
+use aoc_tools::{Direction, Input, InvalidInput, IterMoreTools, Point, ResultExt};
 use itertools::Itertools;
-use std::io::{self, Write};
+use std::{collections::HashMap, io::{self, Write}};
 
 type ParsedInput = Vec<String>;
 
@@ -28,18 +28,47 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(input.read_lines()?)
 }
 
-fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
+    let transitions = prepare_transitions();
 
-    for digits in input.into_iter() {
-        let valid_cmd = find_and_check_commands(digits)?;
+    let mut totals = 0;
 
-        println!("Valid: {:?} {}", valid_cmd, valid_cmd.len());
+    for digits in input.iter() {
+        let code: usize = digits[..3].parse().unwrap();
+        let mut n_steps = 0;
+
+        for (start, end) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
+            let steps = transitions.get(&(start, end)).unwrap();
+            n_steps += steps;
+        }
+        println!("{} -> {}", code, n_steps);
+        totals += n_steps * code;
     }
 
+    Ok(totals)
+}
 
 
-    Ok(0)
+fn prepare_transitions() -> HashMap<(char, char), usize>{
+    let all_digits = ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+    let mut transitions: HashMap<(char, char), usize> = HashMap::new();
+
+    for start in all_digits.iter() {
+        for end in all_digits.iter() {
+            let start_point = digit_to_numeric_key(*start);
+            let end_point = digits_to_numeric_keys(&end.to_string());
+
+            let num_dist = distances_between_points(&start_point, &end_point);
+
+            let commands = eval_key_distances(&num_dist, start_point).unwrap();
+
+            transitions.insert((*start, *end), commands.len());
+        }
+    }
+
+    transitions
 }
 
 fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
@@ -47,13 +76,9 @@ fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
 }
 
 fn find_and_check_commands(digits: &str) -> anyhow::Result<String> {
-    let mut commands = digits_to_commands(digits);
-    commands.sort_by_key(|l| l.len());
+    let command = digits_to_commands(digits);
 
-    commands
-        .into_iter()
-        .filter(|cmd| commands_to_digits(&cmd).unwrap_or("INVALID".to_owned()) == digits)
-        .next()
+    command
         .ok_or(anyhow!("No valid command found"))
 }
 
@@ -64,36 +89,40 @@ enum Command {
     Activate,
 }
 
-fn digits_to_commands(digits: &str) -> Vec<String> {
-    let mut shortest = usize::MAX;
-    let mut results = Vec::new();
+fn digits_to_commands(digits: &str) -> Option<String> {
     println!("Digits: {}", digits);
     let keys = digits_to_numeric_keys(digits);
-    let distances = distances_between_points(NUMERIC_A, &keys);
+    let distances = distances_between_points(&NUMERIC_A, &keys);
+    eval_key_distances(&distances, NUMERIC_A)
+}
+
+fn eval_key_distances(distances: &[(isize, isize)], initial_pos: Point) -> Option<String> {
+    let mut result: Option<String> = None;
+    let mut shortest = usize::MAX;
+
     for cmds in all_commands_from_distances(&distances).into_iter() {
-        println!("Cmds: {:?}", commands_to_string(&cmds));
-        if commands_on_numeric_pad(&cmds).is_err() { continue;}
+        //println!("Cmds: {:?}", commands_to_string(&cmds));
+        if commands_on_numeric_pad(&cmds, initial_pos).is_err() { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
-        let distances2 = distances_between_points(DIRECTIONAL_A, &keys2);
+        let distances2 = distances_between_points(&DIRECTIONAL_A, &keys2);
         for cmds2 in all_commands_from_distances(&distances2) {
             if commands_on_directional_pad(&cmds2).is_err() { continue;}
-            print!(".");
-            io::stdout().flush().unwrap();
+            //print!("."); io::stdout().flush().unwrap();
             let keys3 = commands_to_directional_keys(&cmds2);
-            let distances3 = distances_between_points(DIRECTIONAL_A, &keys3);
+            let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
             for cmds3 in all_commands_from_distances(&distances3) {
                 if commands_on_directional_pad(&cmds3).is_err() { continue;}
                 if cmds3.len() < shortest {
                     shortest = cmds3.len();
-                    println!("New shortest: {}", shortest);
-                    results.push(commands_to_string(&cmds3));
+                    //println!("New shortest: {}", shortest);
+                    result = Some(commands_to_string(&cmds3));
                 }
             }
         }
-        println!();
+        //println!();
     }
 
-    results
+    result
 }
 
 
@@ -108,13 +137,13 @@ fn commands_to_digits(commands: &str) -> anyhow::Result<String> {
 
     let cmds3 = directional_keys_to_commands(&step2_output);
     //println!("St 3: {:?}", commands_to_string(&cmds3));
-    let step3_output = commands_on_numeric_pad(&cmds3)?;
+    let step3_output = commands_on_numeric_pad(&cmds3, NUMERIC_A)?;
 
     Ok(numeric_keys_to_digits(&step3_output))
 }
 
-fn commands_on_numeric_pad(cmds: &[Command]) -> anyhow::Result<Vec<Point>> {
-    interpret_commands(cmds, NUMERIC_A, (3, 4), NUMERIC_F)
+fn commands_on_numeric_pad(cmds: &[Command], initial_pos: Point) -> anyhow::Result<Vec<Point>> {
+    interpret_commands(cmds, initial_pos, (3, 4), NUMERIC_F)
 }
 
 fn commands_on_directional_pad(cmds: &[Command]) -> anyhow::Result<Vec<Point>> {
@@ -211,26 +240,28 @@ fn numeric_keys_to_digits(keys: &[Point]) -> String {
 }
 
 fn digits_to_numeric_keys(digits: &str) -> Vec<Point> {
-    digits.chars().map(|c| {
-        match c {
-            '1' => Point { x: 0, y: 2 },
-            '2' => Point { x: 1, y: 2 },
-            '3' => Point { x: 2, y: 2 },
-            '4' => Point { x: 0, y: 1 },
-            '5' => Point { x: 1, y: 1 },
-            '6' => Point { x: 2, y: 1 },
-            '7' => Point { x: 0, y: 0 },
-            '8' => Point { x: 1, y: 0 },
-            '9' => Point { x: 2, y: 0 },
-            '0' => Point { x: 1, y: 3 },
-            'A' => Point { x: 2, y: 3 },
-            _ => panic!("Invalid digit: {}", c),
-        }
-    }).collect()
+    digits.chars().map(digit_to_numeric_key).collect()
 }
 
-fn distances_between_points(start: Point, points: &[Point]) -> Vec<(isize, isize)> {
-    Some(&start)
+fn digit_to_numeric_key(digit: char) -> Point {
+    match digit {
+        '1' => Point { x: 0, y: 2 },
+        '2' => Point { x: 1, y: 2 },
+        '3' => Point { x: 2, y: 2 },
+        '4' => Point { x: 0, y: 1 },
+        '5' => Point { x: 1, y: 1 },
+        '6' => Point { x: 2, y: 1 },
+        '7' => Point { x: 0, y: 0 },
+        '8' => Point { x: 1, y: 0 },
+        '9' => Point { x: 2, y: 0 },
+        '0' => Point { x: 1, y: 3 },
+        'A' => Point { x: 2, y: 3 },
+        _ => panic!("Invalid digit: {}", digit),
+    }
+}
+
+fn distances_between_points(start: &Point, points: &[Point]) -> Vec<(isize, isize)> {
+    Some(start)
         .into_iter()
         .chain(points.into_iter())
         .tuple_windows()
