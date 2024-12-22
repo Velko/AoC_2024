@@ -3,6 +3,11 @@ use aoc_tools::{Direction, Input, InvalidInput, IterMoreTools, Point, ResultExt}
 use itertools::Itertools;
 use std::{collections::HashMap, io::{self, Write}};
 
+mod c2d;
+mod commands;
+
+use commands::{commands_to_string, Command, DIRECTIONAL_A, NUMERIC_A};
+
 type ParsedInput = Vec<String>;
 
 fn main() -> anyhow::Result<()> {
@@ -18,12 +23,6 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-const NUMERIC_A: Point = Point { x: 2, y: 3 };
-const NUMERIC_F: Point = Point { x: 0, y: 3 };
-
-const DIRECTIONAL_A: Point = Point { x: 2, y: 0 };
-const DIRECTIONAL_F: Point = Point { x: 0, y: 0 };
-
 fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     Ok(input.read_lines()?)
 }
@@ -32,11 +31,10 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
     let transitions = prepare_numpad_transitions();
 
-    let dir_transitions = prepare_directional_transitions();
+    //let dir_transitions = prepare_directional_transitions();
 
-    let cmdd = find_and_check_commands("256A")?;
-
-    println!("256: {} {}", cmdd, cmdd.len());
+    // let cmdd = find_and_check_commands("42")?;
+    // println!("256: {} {}", cmdd, cmdd.len());
 
     let mut totals = 0;
 
@@ -46,7 +44,7 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
         for (start, end) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
             let steps = transitions.get(&(start, end)).unwrap();
-            n_steps += steps;
+            n_steps += steps.len();
         }
         println!("{} -> {}", code, n_steps);
         totals += n_steps * code;
@@ -56,10 +54,10 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 }
 
 
-fn prepare_numpad_transitions() -> HashMap<(char, char), usize>{
+fn prepare_numpad_transitions() -> HashMap<(char, char), String> {
     let all_digits = ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-    let mut transitions: HashMap<(char, char), usize> = HashMap::new();
+    let mut transitions: HashMap<(char, char), String> = HashMap::new();
 
     for start in all_digits.iter() {
         for end in all_digits.iter() {
@@ -70,7 +68,7 @@ fn prepare_numpad_transitions() -> HashMap<(char, char), usize>{
 
             let commands = eval_key_distances(&num_dist, start_point).unwrap();
 
-            transitions.insert((*start, *end), commands.len());
+            transitions.insert((*start, *end), commands);
         }
     }
 
@@ -84,8 +82,8 @@ fn prepare_directional_transitions() -> HashMap<(char, char), usize>{
 
     for start in all_buttons.iter() {
         for end in all_buttons.iter() {
-            let start_point = directional_button_to_command(*start);
-            let end_point = commands_from_string(&end.to_string());
+            let start_point = c2d::directional_button_to_command(*start);
+            let end_point = c2d::commands_from_string(&end.to_string());
             let start_key = command_to_directional_key(&start_point);
             let end_key = commands_to_directional_keys(&end_point);
 
@@ -106,7 +104,22 @@ fn prepare_directional_transitions() -> HashMap<(char, char), usize>{
 }
 
 fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
-    Ok(0)
+
+    let transitions = prepare_numpad_transitions();
+
+    let a4seq = transitions.get(&('A', '4')).unwrap();
+    println!("A4t: {} {}", a4seq, a4seq.len());
+
+    let _ = c2d::commands_to_digits(&a4seq);
+
+    let c42seq = transitions.get(&('4', '2')).unwrap();
+
+    
+    println!("42t: {} {}", c42seq, c42seq.len());
+    // let f42seq = find_and_check_commands("42")?;
+    // println!("42f: {} {}", f42seq, f42seq.len());
+
+    Err(anyhow!("Not implemented"))
 }
 
 fn find_and_check_commands(digits: &str) -> anyhow::Result<String> {
@@ -116,12 +129,6 @@ fn find_and_check_commands(digits: &str) -> anyhow::Result<String> {
         .ok_or(anyhow!("No valid command found"))
 }
 
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Command {
-    Move(Direction),
-    Activate,
-}
 
 fn digits_to_commands(digits: &str) -> Option<String> {
     println!("Digits: {}", digits);
@@ -135,8 +142,8 @@ fn eval_key_distances(distances: &[(isize, isize)], initial_pos: Point) -> Optio
     let mut shortest = usize::MAX;
 
     for cmds in all_commands_from_distances(&distances).into_iter() {
-        println!("Cmds: {:?}", commands_to_string(&cmds));
-        if commands_on_numeric_pad(&cmds, initial_pos).is_err() { continue;}
+        //println!("Cmds: {:?}", commands_to_string(&cmds));
+        if c2d::commands_on_numeric_pad(&cmds, initial_pos).is_err() { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
         let distances2 = distances_between_points(&DIRECTIONAL_A, &keys2);
 
@@ -149,12 +156,12 @@ fn eval_key_distances(distances: &[(isize, isize)], initial_pos: Point) -> Optio
 fn eval_dir_distances(distances2: &[(isize, isize)], initial_dpos: &Point, result: &mut Option<String>, shortest: &mut usize) {
 
     for cmds2 in all_commands_from_distances(&distances2) {
-            if commands_on_directional_pad(&cmds2, *initial_dpos).is_err() { continue;}
+            if c2d::commands_on_directional_pad(&cmds2, *initial_dpos).is_err() { continue;}
             //print!("."); io::stdout().flush().unwrap();
             let keys3 = commands_to_directional_keys(&cmds2);
             let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
             for cmds3 in all_commands_from_distances(&distances3) {
-                if commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
+                if c2d::commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
                 if cmds3.len() < *shortest {
                     *shortest = cmds3.len();
                     //println!("New shortest: {}", shortest);
@@ -163,94 +170,6 @@ fn eval_dir_distances(distances2: &[(isize, isize)], initial_dpos: &Point, resul
             }
         }
         //println!();
-}
-
-
-fn commands_to_digits(commands: &str) -> anyhow::Result<String> {
-    let cmds = commands_from_string(commands);
-
-    let step1_output = commands_on_directional_pad(&cmds, DIRECTIONAL_A)?;
-
-    let cmds2 = directional_keys_to_commands(&step1_output);
-    //println!("St 2: {:?}", commands_to_string(&cmds2));
-    let step2_output = commands_on_directional_pad(&cmds2, DIRECTIONAL_A)?;
-
-    let cmds3 = directional_keys_to_commands(&step2_output);
-    //println!("St 3: {:?}", commands_to_string(&cmds3));
-    let step3_output = commands_on_numeric_pad(&cmds3, NUMERIC_A)?;
-
-    Ok(numeric_keys_to_digits(&step3_output))
-}
-
-fn commands_on_numeric_pad(cmds: &[Command], initial_pos: Point) -> anyhow::Result<Vec<Point>> {
-    interpret_commands(cmds, initial_pos, (3, 4), NUMERIC_F)
-}
-
-fn commands_on_directional_pad(cmds: &[Command], initial_pos: Point) -> anyhow::Result<Vec<Point>> {
-    interpret_commands(cmds, initial_pos, (3, 2), DIRECTIONAL_F)
-}
-
-fn commands_from_string(s: &str) -> Vec<Command> {
-    s.chars()
-        .map(directional_button_to_command)
-        .collect()
-}
-
-fn directional_button_to_command(button: char) -> Command {
-    match button {
-        '^' => Command::Move(Direction::Up),
-        '>' => Command::Move(Direction::Right),
-        'v' => Command::Move(Direction::Down),
-        '<' => Command::Move(Direction::Left),
-        'A' => Command::Activate,
-        _ => panic!("Invalid key: {:?}", button),
-    }
-}
-
-
-fn commands_to_string(cmds: &[Command]) -> String {
-    cmds.iter().map(|cmd| match cmd {
-        Command::Move(Direction::Up) => '^',
-        Command::Move(Direction::Right) => '>',
-        Command::Move(Direction::Down) => 'v',
-        Command::Move(Direction::Left) => '<',
-        Command::Activate => 'A',
-    }).collect()
-}
-
-fn interpret_commands(cmds: &[Command], initial_pos: Point, bounds: (usize, usize), forbidden: Point) -> anyhow::Result<Vec<Point>> {
-
-    let mut pos = initial_pos;
-    let mut output: Vec<Point> = Vec::new();
-
-    for cmd in cmds {
-        match cmd {
-            Command::Move(dir) => {
-                pos = pos.advance(*dir, bounds).map_err_to_invalid_input(&format!("Invalid position for move : {:?} {:?}", pos, dir))?;
-                if pos == forbidden {
-                    return Err(InvalidInput(format!("Forbidden position reached: {:?}", pos)))?;
-                }
-            }
-            Command::Activate => {
-                output.push(pos);
-            }
-        }
-    }
-
-    Ok(output)
-}
-
-fn directional_keys_to_commands(keys: &[Point]) -> Vec<Command> {
-    keys.iter().map(|key| {
-        match key {
-            Point { x: 1, y: 0 } => Command::Move(Direction::Up),
-            Point { x: 2, y: 0 } => Command::Activate,
-            Point { x: 0, y: 1 } => Command::Move(Direction::Left),
-            Point { x: 1, y: 1 } => Command::Move(Direction::Down),
-            Point { x: 2, y: 1 } => Command::Move(Direction::Right),
-            _ => panic!("Invalid key: {:?}", key),
-        }
-    }).collect()
 }
 
 
@@ -266,25 +185,6 @@ fn command_to_directional_key(command: &Command) -> Point {
         Command::Move(Direction::Left) => Point { x: 0, y: 1 },
         Command::Activate => Point { x: 2, y: 0 },
     }
-}
-
-fn numeric_keys_to_digits(keys: &[Point]) -> String {
-    keys.iter().map(|key| {
-        match key {
-            Point { x: 0, y: 2 } => '1',
-            Point { x: 1, y: 2 } => '2',
-            Point { x: 2, y: 2 } => '3',
-            Point { x: 0, y: 1 } => '4',
-            Point { x: 1, y: 1 } => '5',
-            Point { x: 2, y: 1 } => '6',
-            Point { x: 0, y: 0 } => '7',
-            Point { x: 1, y: 0 } => '8',
-            Point { x: 2, y: 0 } => '9',
-            Point { x: 1, y: 3 } => '0',
-            Point { x: 2, y: 3 } => 'A',
-            _ => panic!("Invalid key: {:?}", key),
-        }
-    }).collect()
 }
 
 fn digits_to_numeric_keys(digits: &str) -> Vec<Point> {
@@ -396,8 +296,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    //#[ignore]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed)?;
@@ -409,21 +308,11 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
 
         assert_eq!(expected, Some(result2 as u64));
-        Ok(())
-    }
-
-    #[rstest]
-    #[case("256A", "<vA<AA>>^AvA<^A>AvA^A<v<A>>^AvA^A<vA>^A<A>A<v<A>A>^AAvA<^A>A")]
-    #[case("512A", "<vA<AA>>^AvA<^A>AAvA^A<vA<AA>>^AvA^AvA<^A>A<vA>^A<A>A<v<A>A>^AvA^A<A>A")]
-    fn test_commands_to_digits(#[case] expected: &str, #[case] input: &str) -> anyhow::Result<()> {
-        let result = commands_to_digits(input)?;
-        assert_eq!(result, expected);
         Ok(())
     }
 
