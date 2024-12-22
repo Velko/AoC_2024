@@ -124,13 +124,20 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
     for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
         let (_, level) = transitions.get(&(nf, nt)).unwrap();
         let mut level = level.clone();
+        let mut first: Option<(char, char)> = Some(('A', level.chars().next().unwrap()));
 
         for l in 2..=3 {
             let mut next_level = String::new();
-            for (f, t) in Some('A').into_iter().chain(level.chars()).tuple_windows() {
-                next_level.push_str(&dir_transitions.get(&(f, t)).unwrap().1);
+            let mut next_first: Option<(char, char)> = None;
+            for (f, t) in first.into_iter().chain(level.chars().tuple_windows()) {
+                let (_, cmd) = dir_transitions.get(&(f, t)).unwrap();
+                if next_first.is_none() {
+                    next_first = Some((f, cmd.chars().next().unwrap()));
+                }
+                next_level.push_str(&cmd);
             }
             level = next_level;
+            first = next_first;
             println!("Level{}: {} {}", l, level, level.len());
         }
 
