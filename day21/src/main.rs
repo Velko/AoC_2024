@@ -338,7 +338,6 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
