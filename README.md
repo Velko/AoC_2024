@@ -461,4 +461,23 @@ After submitting the result, the beginnings for P2 made me come back and write a
 Part 2
 ------
 
-Ok, waiting for it won't work. Now I have to think on a proper solution.
+Ok, waiting for it won't work. Now I have to think on a proper solution. This is the first time this year, when I have to postpone the solution till
+later.
+
+
+Day 22
+------
+
+Part 1
+------
+
+This seems to be suspiciously easy. I immediately recognized bit-twiddling operations. Wondering what's coming next.
+
+
+Part 2
+------
+
+Calculate prices and their changes, build an index of price for each first occurrence of a sequence and its associated prices.
+Sum it all together and pick the highest.
+
+This indeed appears to be a relief after yesterday.
