@@ -43,8 +43,8 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
         let mut n_steps = 0;
 
         for (start, end) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
-            let steps = transitions.get(&(start, end)).unwrap();
-            n_steps += steps.len();
+            let (nsteps, _) = transitions.get(&(start, end)).unwrap();
+            n_steps += nsteps;
         }
         println!("{} -> {}", code, n_steps);
         totals += n_steps * code;
@@ -54,10 +54,10 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 }
 
 
-fn prepare_numpad_transitions() -> HashMap<(char, char), String> {
+fn prepare_numpad_transitions() -> HashMap<(char, char), (usize, String)> {
     let all_digits = ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-    let mut transitions: HashMap<(char, char), String> = HashMap::new();
+    let mut transitions: HashMap<(char, char), (usize, String)> = HashMap::new();
 
     for start in all_digits.iter() {
         for end in all_digits.iter() {
@@ -66,19 +66,19 @@ fn prepare_numpad_transitions() -> HashMap<(char, char), String> {
 
             let num_dist = distances_between_points(&start_point, &end_point);
 
-            let commands = eval_key_distances(&num_dist, start_point).unwrap();
+            let lencmd = eval_key_distances(&num_dist, |c| c2d::commands_on_numeric_pad(c, start_point).is_ok());
 
-            transitions.insert((*start, *end), commands);
+            transitions.insert((*start, *end), lencmd);
         }
     }
 
     transitions
 }
 
-fn prepare_directional_transitions() -> HashMap<(char, char), usize>{
+fn prepare_directional_transitions() -> HashMap<(char, char), (usize, String)>{
     let all_buttons = ['A', '>', '<', '^', 'v'];
 
-    let mut transitions: HashMap<(char, char), usize> = HashMap::new();
+    let mut transitions: HashMap<(char, char), (usize, String)> = HashMap::new();
 
     for start in all_buttons.iter() {
         for end in all_buttons.iter() {
@@ -89,87 +89,101 @@ fn prepare_directional_transitions() -> HashMap<(char, char), usize>{
 
             let dir_dist = distances_between_points(&start_key, &end_key);
 
-            let mut result: Option<String> = None;
-            let mut shortest = usize::MAX;
+            let lencmd = eval_key_distances(&dir_dist, |c|c2d::commands_on_directional_pad(c, start_key).is_ok());
 
-            eval_dir_distances(&dir_dist, &start_key, &mut result, &mut shortest);
-
-            println!("{} -> {}: {} {}", start, end, result.unwrap(), shortest);
-
-            //transitions.insert((*start, *end), commands.len());
+            transitions.insert((*start, *end), lencmd);
         }
     }
 
     transitions
 }
 
-fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
 
     let transitions = prepare_numpad_transitions();
+    let dir_transitions = prepare_directional_transitions();
 
-    let a4seq = transitions.get(&('A', '4')).unwrap();
-    println!("A4t: {} {}", a4seq, a4seq.len());
+    let mut totals = 0;
 
-    let _ = c2d::commands_to_digits(&a4seq);
+    for digits in input.iter() {
+        let code: usize = digits[..3].parse().unwrap();
+        let n_steps = calculate_cmd_len_v2(&transitions, &dir_transitions, digits);
 
-    let c42seq = transitions.get(&('4', '2')).unwrap();
+        println!("{} -> {}", code, n_steps);
+        totals += n_steps * code;
+    }
 
-    
-    println!("42t: {} {}", c42seq, c42seq.len());
-    // let f42seq = find_and_check_commands("42")?;
-    // println!("42f: {} {}", f42seq, f42seq.len());
+    Ok(totals)
 
-    Err(anyhow!("Not implemented"))
+//    Err(anyhow!("Not implemented"))
 }
 
-fn find_and_check_commands(digits: &str) -> anyhow::Result<String> {
-    let command = digits_to_commands(digits);
+fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str) -> usize {
+    let mut all_commands = String::new();
 
-    command
-        .ok_or(anyhow!("No valid command found"))
+    for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
+        let (_, level) = transitions.get(&(nf, nt)).unwrap();
+        let mut level = level.clone();
+
+        for l in 2..=3 {
+            let mut next_level = String::new();
+            for (f, t) in Some('A').into_iter().chain(level.chars()).tuple_windows() {
+                next_level.push_str(&dir_transitions.get(&(f, t)).unwrap().1);
+            }
+            level = next_level;
+            println!("Level{}: {} {}", l, level, level.len());
+        }
+
+        all_commands.push_str(&level);
+    }
+
+    println!("All commands: {} {}", all_commands, all_commands.len());
+
+    all_commands.len()
 }
 
+fn show_dir_transition(transitions: &HashMap<(char, char), (usize, String)>, start: char, end: char) {
+    let transition = transitions.get(&(start, end)).unwrap();
+    println!("{} -> {} : {} {}", start, end, transition.1, transition.1.len());
+}
 
 fn digits_to_commands(digits: &str) -> Option<String> {
     println!("Digits: {}", digits);
     let keys = digits_to_numeric_keys(digits);
     let distances = distances_between_points(&NUMERIC_A, &keys);
-    eval_key_distances(&distances, NUMERIC_A)
+    let (_, nkd) = eval_key_distances(&distances, |c| c2d::commands_on_numeric_pad(c, NUMERIC_A).is_ok());
+    Some(nkd)
 }
 
-fn eval_key_distances(distances: &[(isize, isize)], initial_pos: Point) -> Option<String> {
+fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> (usize, String) 
+    where F: Fn(&[Command]) -> bool
+{
     let mut result: Option<String> = None;
     let mut shortest = usize::MAX;
 
     for cmds in all_commands_from_distances(&distances).into_iter() {
         //println!("Cmds: {:?}", commands_to_string(&cmds));
-        if c2d::commands_on_numeric_pad(&cmds, initial_pos).is_err() { continue;}
+        if !validator(&cmds) { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
         let distances2 = distances_between_points(&DIRECTIONAL_A, &keys2);
 
-        eval_dir_distances(&distances2, &DIRECTIONAL_A, &mut result, &mut shortest);
-    }
-
-    result
-}
-
-fn eval_dir_distances(distances2: &[(isize, isize)], initial_dpos: &Point, result: &mut Option<String>, shortest: &mut usize) {
-
-    for cmds2 in all_commands_from_distances(&distances2) {
-            if c2d::commands_on_directional_pad(&cmds2, *initial_dpos).is_err() { continue;}
-            //print!("."); io::stdout().flush().unwrap();
-            let keys3 = commands_to_directional_keys(&cmds2);
-            let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
-            for cmds3 in all_commands_from_distances(&distances3) {
-                if c2d::commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
-                if cmds3.len() < *shortest {
-                    *shortest = cmds3.len();
-                    //println!("New shortest: {}", shortest);
-                    *result = Some(commands_to_string(&cmds3));
+        for cmds2 in all_commands_from_distances(&distances2) {
+                if c2d::commands_on_directional_pad(&cmds2, DIRECTIONAL_A).is_err() { continue;}
+                //print!("."); io::stdout().flush().unwrap();
+                let keys3 = commands_to_directional_keys(&cmds2);
+                let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
+                for cmds3 in all_commands_from_distances(&distances3) {
+                    if c2d::commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
+                    if cmds3.len() < shortest {
+                        shortest = cmds3.len();
+                        //println!("New shortest: {}", shortest);
+                        result = Some(commands_to_string(&cmds));
+                    }
                 }
-            }
         }
         //println!();
+    }
+    (shortest, result.unwrap())
 }
 
 
@@ -307,7 +321,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
