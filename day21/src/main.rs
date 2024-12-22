@@ -131,7 +131,7 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
             *level.entry(ft).or_insert(0) += 1;
         }
 
-        for l in 2..=3 {
+        for l in 0..25 {
             //println!("Level{}: {:?} {}", l, level, level.values().sum::<usize>());
             let mut next_level: HashMap<(char, char), usize> = HashMap::new();
             for (ft, cnt) in level.into_iter() {
@@ -278,16 +278,17 @@ fn all_commands_from_distance(distance: (isize, isize)) -> Vec<Vec<Command>> {
             return;
         }
 
+        if distance.1 < 0 {
+            let mut new_current = current.clone();
+            new_current.push(Command::Move(Direction::Up));
+            generate_commands((distance.0, distance.1 + 1), new_current, output);
+        }
+
+
         if distance.0 > 0 {
             let mut new_current = current.clone();
             new_current.push(Command::Move(Direction::Right));
             generate_commands((distance.0 - 1, distance.1), new_current, output);
-        }
-
-        if distance.0 < 0 {
-            let mut new_current = current.clone();
-            new_current.push(Command::Move(Direction::Left));
-            generate_commands((distance.0 + 1, distance.1), new_current, output);
         }
 
         if distance.1 > 0 {
@@ -296,11 +297,14 @@ fn all_commands_from_distance(distance: (isize, isize)) -> Vec<Vec<Command>> {
             generate_commands((distance.0, distance.1 - 1), new_current, output);
         }
 
-        if distance.1 < 0 {
+
+
+        if distance.0 < 0 {
             let mut new_current = current.clone();
-            new_current.push(Command::Move(Direction::Up));
-            generate_commands((distance.0, distance.1 + 1), new_current, output);
+            new_current.push(Command::Move(Direction::Left));
+            generate_commands((distance.0 + 1, distance.1), new_current, output);
         }
+
     }
 
     generate_commands(distance, Vec::new(), &mut output);
