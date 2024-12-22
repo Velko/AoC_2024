@@ -464,6 +464,21 @@ Part 2
 Ok, waiting for it won't work. Now I have to think on a proper solution. This is the first time this year, when I have to postpone the solution till
 later.
 
+I have an idea - let's work with _transitions_: a pair of buttons, robots have to move from one to another. It I calculate, what it takes to move from
+one digit to another, or from one directional button to another, I should be able to calculate the length of a command stream without actually building
+it whole.
+
+**The end of second day working on this problem:** It now calculates the answers to Part 1 blazingly fast. It even has a loop for the intermediate robots.
+
+Unfortunately, when I change the length of the loop to 25, the answer I get is too high. It, however, is not a off-by one error, because if I change the
+loop to 24 iterations, I get a "too low" answer. At least now I know that the number must be between these two, but that is not helping much.
+
+Hopefully I'm missing something stupid, but if my main assumption, that there is "one true way" for each transition between buttons breaks down when the
+number of levels increases, then it might be very bad. Or haven't I only identified the best ones?
+
+
+_This year I have gotten this far without looking up any hints on Reddit (I only studied an old StackOverflow post about multiple best paths). Should I admit defeat and get some help? I'd really like to figure it out myself, but that might take a while..._
+
 
 Day 22
 ------
