@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
 use itertools::Itertools;
 
@@ -39,14 +41,36 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     )
 }
 
-fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u32> {
     
     let buyers: Vec<_> = input
         .into_iter()
         .map(|seed|BuyerPrices::new(*seed))
         .collect();
     
-    Ok(0)
+    let mut total_price_index: HashMap<[i8; 4], u32> = HashMap::new();
+
+    for buyer in buyers {
+
+        let mut price_index: HashMap<[i8; 4], u32> = HashMap::new();
+        //println!("{:?}\n   {:?}", &buyer.prices[..10], &buyer.changes[..9]);
+        for i in 4..buyer.prices.len() {
+            let changes: [i8; 4] = buyer.changes[i-4..i].try_into().unwrap();
+            let _ = price_index.entry(changes).or_insert(*buyer.prices.get(i).unwrap() as u32);
+        }
+
+        //println!("Found: {:?}", price_index.get(&[-2,1,-1,3]).unwrap_or(&0));
+
+        for (changes, price) in price_index {
+            let total_price = total_price_index.entry(changes).or_insert(0);
+            *total_price += price;
+        }
+    }
+
+    let max_price = total_price_index.values().max().unwrap();
+
+
+    Ok(*max_price)
 }
 
 struct BuyerPrices {
@@ -132,9 +156,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    #[case(load_sample("sample_1.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
