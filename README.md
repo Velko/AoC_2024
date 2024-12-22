@@ -479,6 +479,10 @@ number of levels increases, then it might be very bad. Or haven't I only identif
 
 _This year I have gotten this far without looking up any hints on Reddit (I only studied an old StackOverflow post about multiple best paths). Should I admit defeat and get some help? I'd really like to figure it out myself, but that might take a while..._
 
+**Sudden win:** My "desperate" changes to re-arrange the sequence how the paths are generated suddenly yielded a number that was between the two. Tried it out and, **bingo, two stars!** It was something about preferring one direction over others. At least - I was not able to identify
+the "one true" paths properly. The whole idea was sound after all. _I'm still worhty!_
+
+I should probably study later more carefully, but this was a lucky accident.
 
 Day 22
 ------
