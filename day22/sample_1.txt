@@ -1,0 +1,1 @@
+../private/inputs/sample_22_1.txt

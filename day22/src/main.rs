@@ -1,4 +1,5 @@
 use aoc_tools::{IterMoreTools, InvalidInput, ResultExt};
+use itertools::Itertools;
 
 type ParsedInput = Vec<u32>;
 
@@ -38,24 +39,73 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     )
 }
 
-fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+    
+    let buyers: Vec<_> = input
+        .into_iter()
+        .map(|seed|BuyerPrices::new(*seed))
+        .collect();
+    
     Ok(0)
 }
 
-fn generate_secret(seed: u32) -> u64 {
-    let mut value:u64 = seed as u64;
-    for _ in 0..2000 {
-        value ^= value * 64;
-        value %= 16777216;
-        
-        value ^= value / 32;
-        value %= 16777216;
-        
-        value ^= value * 2048;
-        value %= 16777216;
-    }
-    value
+struct BuyerPrices {
+    prices: Vec<u8>,
+    changes: Vec<i8>,
 }
+
+impl BuyerPrices {
+    fn new(seed: u32) -> Self {
+        let prices: Vec<u8> = SecretGenerator::new(seed)
+            .take(2000)
+            .map(|secret| (secret % 10) as u8)
+            .collect();
+        let changes = prices.iter().tuple_windows::<(_, _)>()
+            .map(|(a, b)| *b as i8 - *a as i8)
+            .collect();
+
+        Self {
+            prices,
+            changes,
+        }
+    }
+}
+
+struct SecretGenerator {
+    value: u64,
+}
+
+impl SecretGenerator {
+    fn new(seed: u32) -> Self {
+        Self {
+            value: seed as u64,
+        }
+    }
+}
+
+impl Iterator for SecretGenerator {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let result = self.value;
+        self.value ^= self.value * 64;
+        self.value %= 16777216;
+        
+        self.value ^= self.value / 32;
+        self.value %= 16777216;
+        
+        self.value ^= self.value * 2048;
+        self.value %= 16777216;
+        
+        Some(result)
+    }
+}
+
+fn generate_secret(seed: u32) -> u64 {
+    SecretGenerator::new(seed).nth(2000).unwrap()
+}
+
+
 
 #[cfg(test)]
 mod tests {
@@ -91,5 +141,19 @@ mod tests {
 
         assert_eq!(expected, Some(result2 as u64));
         Ok(())
+    }
+
+    #[test]
+    fn test_prices() {
+        let buyer = BuyerPrices::new(486);
+
+        assert_eq!(vec![6, 9, 0, 1, 4, 0, 7, 4, 1, 7].as_slice(), &buyer.prices[..10]);
+    }
+
+    #[test]
+    fn test_changes() {
+        let buyer = BuyerPrices::new(486);
+
+        assert_eq!(vec![3, -9, 1, 3, -4, 7, -3, -3, 6].as_slice(), &buyer.changes[..9]);
     }
 }
