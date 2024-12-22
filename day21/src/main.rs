@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use aoc_tools::{Direction, Input, InvalidInput, IterMoreTools, Point, ResultExt};
 use itertools::Itertools;
+use core::num;
 use std::{collections::HashMap, io::{self, Write}};
 
 mod c2d;
@@ -119,34 +120,40 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
 }
 
 fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str) -> usize {
-    let mut all_commands = String::new();
+    let mut all_commands: HashMap<(char, char), usize> = HashMap::new();
 
     for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
-        let (_, level) = transitions.get(&(nf, nt)).unwrap();
-        let mut level = level.clone();
-        let mut first: Option<(char, char)> = Some(('A', level.chars().next().unwrap()));
+        let (_, num_level) = transitions.get(&(nf, nt)).unwrap();
+        println!("{}", num_level);
+        let mut level: HashMap<(char, char), usize> = HashMap::new();
 
-        for l in 2..=3 {
-            let mut next_level = String::new();
-            let mut next_first: Option<(char, char)> = None;
-            for (f, t) in first.into_iter().chain(level.chars().tuple_windows()) {
-                let (_, cmd) = dir_transitions.get(&(f, t)).unwrap();
-                if next_first.is_none() {
-                    next_first = Some((f, cmd.chars().next().unwrap()));
-                }
-                next_level.push_str(&cmd);
-            }
-            level = next_level;
-            first = next_first;
-            println!("Level{}: {} {}", l, level, level.len());
+        for ft in Some('A').into_iter().chain(num_level.chars()).tuple_windows() {
+            *level.entry(ft).or_insert(0) += 1;
         }
 
-        all_commands.push_str(&level);
+        for l in 2..=3 {
+            //println!("Level{}: {:?} {}", l, level, level.values().sum::<usize>());
+            let mut next_level: HashMap<(char, char), usize> = HashMap::new();
+            for (ft, cnt) in level.into_iter() {
+                let (_, dir_level) = dir_transitions.get(&ft).unwrap();
+                //print!("{} ", dir_level);
+                for nft in Some('A').into_iter().chain(dir_level.chars()).tuple_windows() {
+                    *next_level.entry(nft).or_insert(0) += cnt;
+                }
+            }
+            //println!();
+            level = next_level;
+        }
+        //println!("Level{}: {:?} {}", 3, level, level.values().sum::<usize>());
+
+        for (ft, cnt) in level.into_iter() {
+            *all_commands.entry(ft).or_insert(0) += cnt;
+        }
     }
 
-    println!("All commands: {} {}", all_commands, all_commands.len());
+    println!("All commands: {:?} {}", all_commands, all_commands.values().sum::<usize>());
 
-    all_commands.len()
+    all_commands.values().sum()
 }
 
 fn show_dir_transition(transitions: &HashMap<(char, char), (usize, String)>, start: char, end: char) {
