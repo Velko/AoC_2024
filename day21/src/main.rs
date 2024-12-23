@@ -1,6 +1,6 @@
 use aoc_tools::{Direction, Point};
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::{collections::HashMap, usize};
 
 mod c2d;
 mod commands;
@@ -27,24 +27,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 }
 
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
-
-    let transitions = prepare_numpad_transitions();
-
-    let mut totals = 0;
-
-    for digits in input.iter() {
-        let code: usize = digits[..3].parse().unwrap();
-        let mut n_steps = 0;
-
-        for (start, end) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
-            let (nsteps, _) = transitions.get(&(start, end)).unwrap();
-            n_steps += nsteps;
-        }
-        println!("{} -> {}", code, n_steps);
-        totals += n_steps * code;
-    }
-
-    Ok(totals)
+    calculate_p_x(input, 2)
 }
 
 
@@ -93,6 +76,10 @@ fn prepare_directional_transitions() -> HashMap<(char, char), (usize, String)>{
 }
 
 fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
+    calculate_p_x(input, 25)
+}
+
+fn calculate_p_x(input: &ParsedInput, middle_bots: usize) -> anyhow::Result<usize> {
 
     let transitions = prepare_numpad_transitions();
     let dir_transitions = prepare_directional_transitions();
@@ -101,7 +88,7 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
 
     for digits in input.iter() {
         let code: usize = digits[..3].parse().unwrap();
-        let n_steps = calculate_cmd_len_v2(&transitions, &dir_transitions, digits);
+        let n_steps = calculate_cmd_len_v2(&transitions, &dir_transitions, digits, middle_bots);
 
         println!("{} -> {}", code, n_steps);
         totals += n_steps * code;
@@ -110,7 +97,7 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
     Ok(totals)
 }
 
-fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str) -> usize {
+fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str, middle_bots: usize) -> usize {
     let mut all_commands: HashMap<(char, char), usize> = HashMap::new();
 
     for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
@@ -122,7 +109,7 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
             *level.entry(ft).or_insert(0) += 1;
         }
 
-        for _ in 0..25 {
+        for _ in 0..middle_bots {
             let mut next_level: HashMap<(char, char), usize> = HashMap::new();
             for (ft, cnt) in level.into_iter() {
                 let (_, dir_level) = dir_transitions.get(&ft).unwrap();
