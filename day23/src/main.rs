@@ -73,54 +73,34 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
         .filter(|set| set.iter().any(|i| with_t.contains(i)))
         .collect();
 
-    // for set in sets_of_3.iter() {
-    //     println!("{},{},{}", names[set[0]], names[set[1]], names[set[2]]);
-    // }
-
     Ok(sets_containing_t.len())
 }
 
-fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<String> {
     let (names, index) = input;
-
-    //println!("Names: {:?}", names);
-
-    // println!("Index:");
-    // for (i, v) in index.iter() {
-    //     println!("{}: {}", names[*i], v.iter().map(|i| names[*i].as_str()).join(", "));
-    // }
 
     let mut best_intersection = HashSet::new();
 
     for start in 0..names.len() {
-        let intersection = find_best_intersection(index, start, names);
+        let intersection = find_best_intersection(index, start);
         if intersection.len() > best_intersection.len() {
             best_intersection = intersection;
         }
     }
-    
+
     let best_as_str: Vec<_> = best_intersection.iter().map(|i| names[*i].as_str()).collect();
     let passw = best_as_str.into_iter().sorted().join(",");
 
-    println!("Best intersection: {:?}", passw);
-
-
-    Ok(55)
+    Ok(passw)
 }
 
-fn find_best_intersection(index: &HashMap<usize, Vec<usize>>, start: usize, names: &Box<[String]>) -> HashSet<usize> {
+fn find_best_intersection(index: &HashMap<usize, Vec<usize>>, start: usize) -> HashSet<usize> {
     let sets_0 = collect_node_sets(index, start);
-    // println!("Sets: {}", names[start]);
-    // for set in sets_0.iter() {
-    //     println!("{:?}", set.iter().map(|i| names[*i].as_str()).join(", "));
-    // }
 
     for picks in (1..=sets_0.len()).rev() {
-        //println!("Picks: {}", picks);
         for comb in sets_0.iter().combinations(picks) {
             let intersection = intersect_all(comb.into_iter());
             if intersection.len() == picks {
-                //println!("Intersection: {:?}", intersection.iter().map(|i| names[*i].as_str()).join(", "));
                 return intersection;
             }
         }
@@ -163,6 +143,8 @@ fn intersect_all<'a, I>(mut sets: I) -> HashSet<usize>
 
 #[cfg(test)]
 mod tests {
+    use std::hash::{DefaultHasher, Hasher};
+
     use rstest::rstest;
     use super::*;
     use aoc_tools::TestSamples;
@@ -187,12 +169,16 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
 
-        assert_eq!(expected, Some(result2 as u64));
+        println!("Result: {}", result2);
+        let mut hasher = DefaultHasher::new();
+        hasher.write(result2.as_bytes());
+
+        assert_eq!(expected, Some(hasher.finish()));
         Ok(())
     }
 }
