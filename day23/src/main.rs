@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use aoc_tools::{InvalidInput, IterMoreTools, NameRegistry, ResultExt};
+use itertools::Itertools;
 
-type ParsedInput = (Vec<String>, Vec<(usize, usize)>);
+type ParsedInput = (Box<[String]>, HashMap<usize, Vec<usize>>);
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -21,7 +22,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let lines = input.read_lines()?;
 
     let mut namereg = NameRegistry::new();
-    let mut edges = Vec::new();
+    let mut index: HashMap<usize, Vec<usize>> = HashMap::new();
 
     for line in lines.into_iter() {
         let (n1, n2) = line.split_once('-').map_err_to_invalid_input(&line)?;
@@ -29,28 +30,24 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
         let p1 = namereg.add_or_lookup(n1);
         let p2 = namereg.add_or_lookup(n2);
 
-        edges.push((p1, p2));
-        edges.push((p2, p1));
+        index.entry(p1).or_insert_with(Vec::new).push(p2);
+        index.entry(p2).or_insert_with(Vec::new).push(p1);
     }
 
 
-    Ok((namereg.into(), edges))
+    let names_vec: Vec<String> = namereg.into();
+
+    Ok((names_vec.into_boxed_slice(), index))
 }
 
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
-    let (namereg, edges) = input;
-
-    let mut index: HashMap<usize, Vec<usize>> = HashMap::new();
-
-    for (s0, s1) in edges.iter() {
-        index.entry(*s0).or_insert_with(Vec::new).push(*s1);
-    }
+    let (names, index) = input;
 
     let null_vec = Vec::new();
 
     let mut sets_of_3: HashSet<[usize; 3]> = HashSet::new();
 
-    for s0 in 0..namereg.len() {
+    for s0 in 0..names.len() {
 
         let s1items = index.get(&s0).unwrap_or(&null_vec);
         for s1 in s1items {
@@ -63,9 +60,6 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
             }
         }
     }
-
-
-    let names = namereg.as_slice();
 
     let with_t: HashSet<_> = names
         .iter()
@@ -86,8 +80,17 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
     Ok(sets_containing_t.len())
 }
 
-fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
-    Ok(0)
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+    let (names, index) = input;
+
+
+    for (i, v) in index.iter() {
+        println!("{}: {}", names[*i], v.iter().map(|i| names[*i].as_str()).join(", "));
+    }
+    //println!("index: {:?}", index);
+
+
+    Ok(55)
 }
 
 #[cfg(test)]
@@ -117,7 +120,6 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample.txt")?)]
     //#[case(load_sample("input.txt")?)]
-    #[ignore]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
