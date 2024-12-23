@@ -525,3 +525,8 @@ nothing is found, decrement the number and repeat.
 
 I was worried that if the number goes too low, it might generate a large amount of combinations to check (like 7 out of 13), but it
 did stay high enough.
+
+Those non-numeric answers are killing me! Since it is not allowed by authors of AoC to include any part of a puzzle in a published
+solution, I try my best to comply. I have a "test loader" that loads the inputs and expected results from external files (ones, I
+keep private). It was working quite well while the expected answer was numeric. On Day 17 I could get away with concatenating digits,
+now I had no choice, but to calculate a hash of the string.
