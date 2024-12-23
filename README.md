@@ -431,7 +431,7 @@ slow for the real input. Since this was a recursive solution, adding memoization
 
 
 Day 20
-------
+======
 
 Part 1
 ------
@@ -449,6 +449,7 @@ Part 2
 Not that different from the previous one. Just have to check if any cell within Manhattan distance up to 20 could be reached faster than by normal means.
 
 Day 21
+======
 
 Part 1
 ------
@@ -485,7 +486,7 @@ the "one true" paths properly. The whole idea was sound after all. _I'm still wo
 I should probably study later more carefully, but this was a lucky accident.
 
 Day 22
-------
+======
 
 Part 1
 ------
@@ -500,3 +501,27 @@ Calculate prices and their changes, build an index of price for each first occur
 Sum it all together and pick the highest.
 
 This indeed appears to be a relief after yesterday.
+
+
+Day 23
+======
+
+Part 1
+------
+
+I was probably exhausted after yesterday's fight with D21p2. At first I could not even get the first step done: those example sets
+of three inter-connected nodes. Got various lists, but not the one in the puzzle. Then, when I got it right, turned out it was slow.
+Slow, but "waitable". I knew I'll have to come back with optimizations, but at least the result was correct.
+
+Part 2
+------
+
+Came up with an idea, working with _sets_. Pick one node, build a set of it. Then build sets for each node the first one is connected
+to.
+
+Pick a number of these sets (decrement from full) and make an intersection between them. If number of items in the resulting set is
+equal to number of sets, it means we have found an answer for that node. If not, repeat with different sets (all combinations). If
+nothing is found, decrement the number and repeat.
+
+I was worried that if the number goes too low, it might generate a large amount of combinations to check (like 7 out of 13), but it
+did stay high enough.
