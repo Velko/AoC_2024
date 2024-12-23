@@ -1,13 +1,11 @@
-use anyhow::anyhow;
-use aoc_tools::{Direction, Input, InvalidInput, IterMoreTools, Point, ResultExt};
+use aoc_tools::{Direction, Point};
 use itertools::Itertools;
-use core::num;
-use std::{collections::HashMap, io::{self, Write}};
+use std::collections::HashMap;
 
 mod c2d;
 mod commands;
 
-use commands::{commands_to_string, Command, DIRECTIONAL_A, NUMERIC_A};
+use commands::{commands_to_string, Command, DIRECTIONAL_A};
 
 type ParsedInput = Vec<String>;
 
@@ -31,11 +29,6 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 
     let transitions = prepare_numpad_transitions();
-
-    //let dir_transitions = prepare_directional_transitions();
-
-    // let cmdd = find_and_check_commands("42")?;
-    // println!("256: {} {}", cmdd, cmdd.len());
 
     let mut totals = 0;
 
@@ -115,8 +108,6 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<usize> {
     }
 
     Ok(totals)
-
-//    Err(anyhow!("Not implemented"))
 }
 
 fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str) -> usize {
@@ -131,42 +122,23 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
             *level.entry(ft).or_insert(0) += 1;
         }
 
-        for l in 0..25 {
-            //println!("Level{}: {:?} {}", l, level, level.values().sum::<usize>());
+        for _ in 0..25 {
             let mut next_level: HashMap<(char, char), usize> = HashMap::new();
             for (ft, cnt) in level.into_iter() {
                 let (_, dir_level) = dir_transitions.get(&ft).unwrap();
-                //print!("{} ", dir_level);
                 for nft in Some('A').into_iter().chain(dir_level.chars()).tuple_windows() {
                     *next_level.entry(nft).or_insert(0) += cnt;
                 }
             }
-            //println!();
             level = next_level;
         }
-        //println!("Level{}: {:?} {}", 3, level, level.values().sum::<usize>());
 
         for (ft, cnt) in level.into_iter() {
             *all_commands.entry(ft).or_insert(0) += cnt;
         }
     }
 
-    println!("All commands: {:?} {}", all_commands, all_commands.values().sum::<usize>());
-
     all_commands.values().sum()
-}
-
-fn show_dir_transition(transitions: &HashMap<(char, char), (usize, String)>, start: char, end: char) {
-    let transition = transitions.get(&(start, end)).unwrap();
-    println!("{} -> {} : {} {}", start, end, transition.1, transition.1.len());
-}
-
-fn digits_to_commands(digits: &str) -> Option<String> {
-    println!("Digits: {}", digits);
-    let keys = digits_to_numeric_keys(digits);
-    let distances = distances_between_points(&NUMERIC_A, &keys);
-    let (_, nkd) = eval_key_distances(&distances, |c| c2d::commands_on_numeric_pad(c, NUMERIC_A).is_ok());
-    Some(nkd)
 }
 
 fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> (usize, String) 
@@ -176,26 +148,22 @@ fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> (usize, 
     let mut shortest = usize::MAX;
 
     for cmds in all_commands_from_distances(&distances).into_iter() {
-        //println!("Cmds: {:?}", commands_to_string(&cmds));
         if !validator(&cmds) { continue;}
         let keys2 = commands_to_directional_keys(&cmds);
         let distances2 = distances_between_points(&DIRECTIONAL_A, &keys2);
 
         for cmds2 in all_commands_from_distances(&distances2) {
                 if c2d::commands_on_directional_pad(&cmds2, DIRECTIONAL_A).is_err() { continue;}
-                //print!("."); io::stdout().flush().unwrap();
                 let keys3 = commands_to_directional_keys(&cmds2);
                 let distances3 = distances_between_points(&DIRECTIONAL_A, &keys3);
                 for cmds3 in all_commands_from_distances(&distances3) {
                     if c2d::commands_on_directional_pad(&cmds3, DIRECTIONAL_A).is_err() { continue;}
                     if cmds3.len() < shortest {
                         shortest = cmds3.len();
-                        //println!("New shortest: {}", shortest);
                         result = Some(commands_to_string(&cmds));
                     }
                 }
         }
-        //println!();
     }
     (shortest, result.unwrap())
 }
@@ -250,7 +218,7 @@ fn all_commands_from_distances(distances: &[(isize, isize)]) -> Vec<Vec<Command>
 
     recursive_add_all_commands(distances, Vec::new(), &mut output, 0);
 
-    fn recursive_add_all_commands(distances: &[(isize, isize)], mut current: Vec<Command>, output: &mut Vec<Vec<Command>>, depth: usize) {
+    fn recursive_add_all_commands(distances: &[(isize, isize)], current: Vec<Command>, output: &mut Vec<Vec<Command>>, depth: usize) {
         if depth == distances.len() {
             output.push(current);
             return;
