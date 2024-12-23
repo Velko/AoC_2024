@@ -31,10 +31,10 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 }
 
 
-fn prepare_numpad_transitions() -> HashMap<(char, char), (usize, String)> {
+fn prepare_numpad_transitions() -> HashMap<(char, char), String> {
     let all_digits = ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-    let mut transitions: HashMap<(char, char), (usize, String)> = HashMap::new();
+    let mut transitions: HashMap<(char, char), String> = HashMap::new();
 
     for start in all_digits.iter() {
         for end in all_digits.iter() {
@@ -52,10 +52,10 @@ fn prepare_numpad_transitions() -> HashMap<(char, char), (usize, String)> {
     transitions
 }
 
-fn prepare_directional_transitions() -> HashMap<(char, char), (usize, String)>{
+fn prepare_directional_transitions() -> HashMap<(char, char), String>{
     let all_buttons = ['A', '>', '<', '^', 'v'];
 
-    let mut transitions: HashMap<(char, char), (usize, String)> = HashMap::new();
+    let mut transitions: HashMap<(char, char), String> = HashMap::new();
 
     for start in all_buttons.iter() {
         for end in all_buttons.iter() {
@@ -90,19 +90,17 @@ fn calculate_p_x(input: &ParsedInput, middle_bots: usize) -> anyhow::Result<usiz
         let code: usize = digits[..3].parse().unwrap();
         let n_steps = calculate_cmd_len_v2(&transitions, &dir_transitions, digits, middle_bots);
 
-        println!("{} -> {}", code, n_steps);
         totals += n_steps * code;
     }
 
     Ok(totals)
 }
 
-fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, dir_transitions: &HashMap<(char, char), (usize, String)>, digits: &str, middle_bots: usize) -> usize {
+fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), String>, dir_transitions: &HashMap<(char, char), String>, digits: &str, middle_bots: usize) -> usize {
     let mut all_commands: HashMap<(char, char), usize> = HashMap::new();
 
     for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
-        let (_, num_level) = transitions.get(&(nf, nt)).unwrap();
-        println!("{}", num_level);
+        let num_level = transitions.get(&(nf, nt)).unwrap();
         let mut level: HashMap<(char, char), usize> = HashMap::new();
 
         for ft in Some('A').into_iter().chain(num_level.chars()).tuple_windows() {
@@ -112,7 +110,7 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
         for _ in 0..middle_bots {
             let mut next_level: HashMap<(char, char), usize> = HashMap::new();
             for (ft, cnt) in level.into_iter() {
-                let (_, dir_level) = dir_transitions.get(&ft).unwrap();
+                let dir_level = dir_transitions.get(&ft).unwrap();
                 for nft in Some('A').into_iter().chain(dir_level.chars()).tuple_windows() {
                     *next_level.entry(nft).or_insert(0) += cnt;
                 }
@@ -128,7 +126,7 @@ fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), (usize, String)>, di
     all_commands.values().sum()
 }
 
-fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> (usize, String) 
+fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> String
     where F: Fn(&[Command]) -> bool
 {
     let mut result: Option<String> = None;
@@ -152,7 +150,7 @@ fn eval_key_distances<F>(distances: &[(isize, isize)], validator: F) -> (usize, 
                 }
         }
     }
-    (shortest, result.unwrap())
+    result.unwrap()
 }
 
 
