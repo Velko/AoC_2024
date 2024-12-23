@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use aoc_tools::{InvalidInput, IterMoreTools, NameRegistry, ResultExt};
 
@@ -40,30 +40,32 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
     let (namereg, edges) = input;
 
-    // println!("{:?}", namereg);
-    // println!("{:?}", edges);
+    let mut index: HashMap<usize, Vec<usize>> = HashMap::new();
+
+    for (s0, s1) in edges.iter() {
+        index.entry(*s0).or_insert_with(Vec::new).push(*s1);
+    }
+
+    let null_vec = Vec::new();
 
     let mut sets_of_3: HashSet<[usize; 3]> = HashSet::new();
 
     for s0 in 0..namereg.len() {
-        println!("{}/{}", s0, namereg.len());
-        for s1 in (s0 + 1)..namereg.len() {
-            if edges.contains(&(s0, s1)) {
-               for s2 in (s1 + 1)..namereg.len() {
-                   if edges.contains(&(s1, s2)) && edges.contains(&(s0, s2)) {
-                    let mut set = [s0, s1, s2];
-                    set.sort();
-                    sets_of_3.insert(set);
-                   }
-               }
+
+        let s1items = index.get(&s0).unwrap_or(&null_vec);
+        for s1 in s1items {
+            let s2items = index.get(&s1).unwrap_or(&null_vec);
+
+            for s2 in s2items.iter().filter(|s| s1items.contains(s)) {
+                let mut set = [s0, *s1, *s2];
+                set.sort();
+                sets_of_3.insert(set);
             }
         }
     }
 
 
     let names = namereg.as_slice();
-
-    println!("{:?} {}", sets_of_3, sets_of_3.len());
 
     let with_t: HashSet<_> = names
         .iter()
@@ -77,14 +79,9 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
         .filter(|set| set.iter().any(|i| with_t.contains(i)))
         .collect();
 
-    println!("{:?} {}", sets_containing_t, sets_containing_t.len());
-
-
     // for set in sets_of_3.iter() {
     //     println!("{},{},{}", names[set[0]], names[set[1]], names[set[2]]);
     // }
-
-
 
     Ok(sets_containing_t.len())
 }
@@ -108,7 +105,7 @@ mod tests {
 
     #[rstest]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed)?;
