@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc_tools::{InvalidInput, IterMoreTools, NameRegistry, ResultExt};
+use aoc_tools::{NameRegistry, ResultExt};
 use itertools::Itertools;
 
 type ParsedInput = (Box<[String]>, HashMap<usize, Vec<usize>>);
@@ -83,15 +83,83 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<usize> {
 fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
     let (names, index) = input;
 
+    //println!("Names: {:?}", names);
 
-    for (i, v) in index.iter() {
-        println!("{}: {}", names[*i], v.iter().map(|i| names[*i].as_str()).join(", "));
+    // println!("Index:");
+    // for (i, v) in index.iter() {
+    //     println!("{}: {}", names[*i], v.iter().map(|i| names[*i].as_str()).join(", "));
+    // }
+
+    let mut best_intersection = HashSet::new();
+
+    for start in 0..names.len() {
+        let intersection = find_best_intersection(index, start, names);
+        if intersection.len() > best_intersection.len() {
+            best_intersection = intersection;
+        }
     }
-    //println!("index: {:?}", index);
+    
+    let best_as_str: Vec<_> = best_intersection.iter().map(|i| names[*i].as_str()).collect();
+    let passw = best_as_str.into_iter().sorted().join(",");
+
+    println!("Best intersection: {:?}", passw);
 
 
     Ok(55)
 }
+
+fn find_best_intersection(index: &HashMap<usize, Vec<usize>>, start: usize, names: &Box<[String]>) -> HashSet<usize> {
+    let sets_0 = collect_node_sets(index, start);
+    // println!("Sets: {}", names[start]);
+    // for set in sets_0.iter() {
+    //     println!("{:?}", set.iter().map(|i| names[*i].as_str()).join(", "));
+    // }
+
+    for picks in (1..=sets_0.len()).rev() {
+        //println!("Picks: {}", picks);
+        for comb in sets_0.iter().combinations(picks) {
+            let intersection = intersect_all(comb.into_iter());
+            if intersection.len() == picks {
+                //println!("Intersection: {:?}", intersection.iter().map(|i| names[*i].as_str()).join(", "));
+                return intersection;
+            }
+        }
+    }
+
+    HashSet::new()
+}
+
+fn collect_node_sets(index: &HashMap<usize, Vec<usize>>, start: usize) -> Vec<HashSet<usize>> {
+    let mut sets: Vec<HashSet<usize>> = Vec::new();
+
+    let neighbours = index.get(&start).unwrap();
+    let mut set = HashSet::new();
+    set.insert(start);
+    set.extend(neighbours.iter().copied());
+    sets.push(set);
+
+    for n in neighbours.iter() {
+        let n_neighbours = index.get(n).unwrap();
+        let mut n_set = HashSet::new();
+        n_set.insert(*n);
+        n_set.extend(n_neighbours.iter().copied());
+        sets.push(n_set);
+    }
+
+    sets
+}
+
+fn intersect_all<'a, I>(mut sets: I) -> HashSet<usize>
+    where I: Iterator<Item = &'a HashSet<usize>> {
+    let mut result = sets.next().unwrap().clone();
+
+    for set in sets {
+        result = result.intersection(set).copied().collect();
+    }
+
+    result
+}
+
 
 #[cfg(test)]
 mod tests {
