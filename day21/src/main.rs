@@ -99,8 +99,8 @@ fn calculate_p_x(input: &ParsedInput, middle_bots: usize) -> anyhow::Result<usiz
 fn calculate_cmd_len_v2(transitions: &HashMap<(char, char), String>, dir_transitions: &HashMap<(char, char), String>, digits: &str, middle_bots: usize) -> usize {
     let mut all_commands: HashMap<(char, char), usize> = HashMap::new();
 
-    for (nf, nt) in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
-        let num_level = transitions.get(&(nf, nt)).unwrap();
+    for nft in Some('A').into_iter().chain(digits.chars()).tuple_windows() {
+        let num_level = transitions.get(&nft).unwrap();
         let mut level: HashMap<(char, char), usize> = HashMap::new();
 
         for ft in Some('A').into_iter().chain(num_level.chars()).tuple_windows() {
