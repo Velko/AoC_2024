@@ -77,11 +77,16 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
 fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     let (names, nodes) = input;
 
-    //println!("{}, {}", names.len(), nodes.len());
+    let mut values = vec![None; nodes.len()];
 
-    let mut val_vec = vec![None; names.len()];
-    let values: &mut [Option<bool>] = val_vec.as_mut_slice();
+    let znames = find_nodes(names, "z", SeqOrder::Descending);
+    process_adder(nodes, &mut values);
+    //Err(anyhow!("Not implemented"))
+    
+    Ok(wires_to_int(&values, &znames))
+}
 
+fn process_adder(nodes: &[Node], values: &mut [Option<bool>]) {
     let mut new_values = true;
     while new_values {
         new_values = false;
@@ -92,15 +97,29 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
             }
         }
     }
+}
 
-    let znames: Vec<_> = names
+enum SeqOrder {
+    Ascending,
+    Descending,
+}
+
+fn find_nodes(names: &[String], prefix: &str, seq: SeqOrder) -> Vec<usize> {
+    names
         .iter()
         .enumerate()
-        .filter(|(_, n)| n.starts_with("z"))
-        .sorted_by(|(_, a), (_, b)| b.cmp(a))
+        .filter(|(_, n)| n.starts_with(prefix))
+        .sorted_by(|(_, a), (_, b)| 
+            match seq {
+                SeqOrder::Ascending => a.cmp(b),
+                SeqOrder::Descending => b.cmp(a),
+            }
+        )
         .map(|(i, _)|i)
-        .collect();
+        .collect()
+}
 
+fn wires_to_int(values: &[Option<bool>], znames: &[usize]) -> u64 {
     let mut result: u64 = 0;
 
     for zi in znames.iter() {
@@ -109,9 +128,7 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
             result |= 1;
         }
     }
-
-    //Err(anyhow!("Not implemented"))
-    Ok(result)
+    result
 }
 
 impl NodeOp {
