@@ -86,6 +86,104 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(wires_to_int(&values, &znames))
 }
 
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+    let (names, nodes) = input;
+
+    let xnames = find_nodes(names, "x", SeqOrder::Ascending);
+    let ynames = find_nodes(names, "y", SeqOrder::Ascending);
+    let znames = find_nodes(names, "z", SeqOrder::Descending);
+
+
+    println!("Xnames: {}", xnames.len());
+    for bit in 0..xnames.len() {
+
+        let calc_result = add_numbers(1 << bit, 0, nodes, &xnames, &ynames, &znames);
+        if calc_result != 1 << bit {
+            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
+        }
+    }
+
+    println!("Ynames: {}", ynames.len());
+    for bit in 0..ynames.len() {
+
+        let calc_result = add_numbers(0, 1 << bit, nodes, &xnames, &ynames, &znames);
+        if calc_result != 1 << bit {
+            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
+        }
+    }
+
+    println!("XYnames: {}", ynames.len());
+    for bit in 0..ynames.len() {
+
+        let calc_result = add_numbers(1 << bit, 1 << bit, nodes, &xnames, &ynames, &znames);
+        if calc_result != 1 << (bit + 1) {
+            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << (bit + 1),  calc_result);
+        }
+    }
+
+
+    // for z in znames.iter() {
+    //     println!("{} {}, {:?}", *z, names[*z], nodes.iter().find(|i| i.id == *z));
+    // }
+
+    // for x in ynames.iter() {
+    //     println!("{} {}, {:?}", *x, names[*x], nodes.iter().find(|i| i.id == *x));
+    // }
+
+    let i = 11;
+    for n in nodes.iter() {
+        if match n.op {
+            NodeOp::And(arg0, arg1) => arg0 == i || arg1 == i,
+            NodeOp::Or(arg0, arg1) => arg0 == i || arg1 == i,
+            NodeOp::Xor(arg0, arg1) => arg0 == i || arg1 == i,
+            _ => false,
+        }{
+            println!("{:?}", n);
+        }
+        
+    }
+
+    // print_node(nodes, names, 240);
+    // print_node(nodes, names, 239);
+    // print_node(nodes, names, 10);
+    // print_node(nodes, names, 55);
+    // print_node(nodes, names, 238);
+    // print_node(nodes, names, 307);
+    // print_node(nodes, names, 9);
+    // print_node(nodes, names, 54);
+    
+    // print_node(nodes, names, 216);
+
+
+
+
+
+    print_node(nodes, names, 305); //z11
+    print_node(nodes, names, 11); //x11
+    print_node(nodes, names, 56); //y11
+
+
+    Err(anyhow!("Not implemented"))
+}
+
+
+fn print_node(nodes: &[Node], names: &[String], id: usize) {
+    let node = nodes.iter().find(|i| i.id == id).unwrap();
+
+    println!("{} {:?}", names[node.id], node);
+}
+
+fn add_numbers(x: u64, y: u64, nodes: &[Node], xnames: &[usize], ynames: &[usize], znames: &[usize]) -> u64 {
+    let mut wires = vec![None; nodes.len()];
+
+    int_to_wires(&mut wires, xnames, x);
+    int_to_wires(&mut wires, ynames, y);
+
+    process_adder(nodes, &mut wires);
+
+    wires_to_int(&wires, znames)
+}
+
 fn process_adder(nodes: &[Node], values: &mut [Option<bool>]) {
     let mut new_values = true;
     while new_values {
@@ -131,6 +229,13 @@ fn wires_to_int(values: &[Option<bool>], znames: &[usize]) -> u64 {
     result
 }
 
+fn int_to_wires(wires: &mut [Option<bool>], names: &[usize], mut value: u64) {
+    for name in names {
+        wires[*name] = Some((value & 1) != 0);
+        value >>= 1;
+    }
+}
+
 impl NodeOp {
     fn eval<F>(&self, fetch: F) -> Option<bool> 
         where F: Fn(usize) -> Option<bool>
@@ -144,10 +249,6 @@ impl NodeOp {
     }
 }
 
-
-fn calculate_p2(_input: &ParsedInput) -> anyhow::Result<u64> {
-    Ok(0)
-}
 
 #[cfg(test)]
 mod tests {
@@ -175,9 +276,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
-    #[ignore]
+    //#[case(load_sample("sample.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result2 = calculate_p2(&parsed)?;
