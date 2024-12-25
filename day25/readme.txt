@@ -1,0 +1,1 @@
+../private/puzzles/25.txt
