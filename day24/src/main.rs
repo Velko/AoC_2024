@@ -79,7 +79,7 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
 
     let mut values = vec![None; nodes.len()];
 
-    let znames = find_nodes(names, "z", SeqOrder::Descending);
+    let znames = find_nodes(names, "z");
     process_adder(nodes, &mut values);
     //Err(anyhow!("Not implemented"))
     
@@ -91,9 +91,9 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<String> {
 
     let mut nodes = nodes.clone();
 
-    let xnames = find_nodes(names, "x", SeqOrder::Ascending);
-    let ynames = find_nodes(names, "y", SeqOrder::Ascending);
-    let znames = find_nodes(names, "z", SeqOrder::Descending);
+    let xnames = find_nodes(names, "x");
+    let ynames = find_nodes(names, "y");
+    let znames = find_nodes(names, "z");
 
 
     swap_nodes(&mut nodes, 305, 127);
@@ -212,22 +212,12 @@ fn process_adder(nodes: &[Node], values: &mut [Option<bool>]) {
     }
 }
 
-enum SeqOrder {
-    Ascending,
-    Descending,
-}
-
-fn find_nodes(names: &[String], prefix: &str, seq: SeqOrder) -> Vec<usize> {
+fn find_nodes(names: &[String], prefix: &str) -> Vec<usize> {
     names
         .iter()
         .enumerate()
         .filter(|(_, n)| n.starts_with(prefix))
-        .sorted_by(|(_, a), (_, b)| 
-            match seq {
-                SeqOrder::Ascending => a.cmp(b),
-                SeqOrder::Descending => b.cmp(a),
-            }
-        )
+        .sorted_by(|(_, a), (_, b)| a.cmp(b))
         .map(|(i, _)|i)
         .collect()
 }
@@ -235,7 +225,7 @@ fn find_nodes(names: &[String], prefix: &str, seq: SeqOrder) -> Vec<usize> {
 fn wires_to_int(values: &[Option<bool>], znames: &[usize]) -> u64 {
     let mut result: u64 = 0;
 
-    for zi in znames.iter() {
+    for zi in znames.iter().rev() {
         result <<= 1;
         if values[*zi] == Some(true) {
             result |= 1;
