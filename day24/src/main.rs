@@ -1,9 +1,11 @@
-use aoc_tools::{InvalidInput, IterMoreTools, NameRegistry, ResultExt};
+use std::collections::HashMap;
+
+use aoc_tools::NameRegistry;
 use anyhow::anyhow;
 use itertools::Itertools;
 use regex::Regex;
 
-type ParsedInput = (Box<[String]>, Vec<Node>);
+type ParsedInput = (Box<[String]>, HashMap<usize, Node>);
 
 fn main() -> anyhow::Result<()> {
     let input = aoc_tools::Input::from_cmd()?;
@@ -18,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum NodeOp {
     Const(bool),
     And(usize, usize),
@@ -39,16 +41,18 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
     let op_rx = Regex::new(r"(\w+) (AND|OR|XOR) (\w+) -> (\w+)").unwrap();
 
     let mut name_reg: NameRegistry = NameRegistry::new();
-    let mut nodes: Vec<Node> = Vec::new();
+    let mut nodes: HashMap<usize, Node> = HashMap::new();
 
     for line in lines.into_iter() {
         if let Some(in_wire) = in_rx.captures(&line) {
             let (_, [name, val]) = in_wire.extract();
 
-            nodes.push(Node {
+            let node = Node {
                 id: name_reg.add_or_lookup(name),
                 op: NodeOp::Const(val == "1"),
-            });
+            };
+
+            nodes.insert(node.id, node);
 
         } else if let Some(in_op) = op_rx.captures(&line) {
             let (_, [arg0, op_name, arg1, target]) = in_op.extract();
@@ -56,7 +60,7 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
             let a1 = name_reg.add_or_lookup(arg1);
             let t = name_reg.add_or_lookup(target);
 
-            nodes.push(Node {
+            let node = Node {
                 id: t,
                 op: match op_name {
                     "AND" => NodeOp::And(a0, a1),
@@ -64,7 +68,8 @@ fn parse_input(input: aoc_tools::Input) -> anyhow::Result<ParsedInput> {
                     "XOR" => NodeOp::Xor(a0, a1),
                     _ => panic!("Invalid op")
                 }
-            });
+            };
+            nodes.insert(node.id, node);
         } else if line != "" {
             panic!("Invalid input line")
         }
@@ -81,8 +86,7 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
 
     let znames = find_nodes(names, "z");
     process_adder(nodes, &mut values);
-    //Err(anyhow!("Not implemented"))
-    
+
     Ok(wires_to_int(&values, &znames))
 }
 
@@ -95,60 +99,21 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<String> {
     let ynames = find_nodes(names, "y");
     let znames = find_nodes(names, "z");
 
+    let mut swaps = Vec::new();
 
-    swap_nodes(&mut nodes, 305, 127);
-    swap_nodes(&mut nodes, 267, 115);
-    swap_nodes(&mut nodes, 173, 179);
-    swap_nodes(&mut nodes, 299, 192);
+    let defective = find_defective_bits(&nodes, &xnames, &ynames, &znames);
 
-    println!("Xnames: {}", xnames.len());
-    for bit in 0..xnames.len() {
+    for d in defective.iter() {
+        let x = xnames[*d];
+        let z = znames[*d];
 
-        let calc_result = add_numbers(1 << bit, 0, &nodes, &xnames, &ynames, &znames);
-        if calc_result != 1 << bit {
-            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
-        }
+        repair_out_xor(&mut nodes, x, z, &mut swaps);
     }
 
-    println!("Ynames: {}", ynames.len());
-    for bit in 0..ynames.len() {
-
-        let calc_result = add_numbers(0, 1 << bit, &nodes, &xnames, &ynames, &znames);
-        if calc_result != 1 << bit {
-            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
-        }
+    let verify = find_defective_bits(&nodes, &xnames, &ynames, &znames);
+    if verify.len() > 0 {
+        Err(anyhow!("Could not repair the circuit"))?
     }
-
-    println!("XYnames: {}", ynames.len());
-    for bit in 0..ynames.len() {
-
-        let calc_result = add_numbers(1 << bit, 1 << bit, &nodes, &xnames, &ynames, &znames);
-        if calc_result != 1 << (bit + 1) {
-            println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << (bit + 1),  calc_result);
-        }
-    }
-
-
-    // for z in znames.iter() {
-    //     println!("{} {}, {:?}", *z, names[*z], nodes.iter().find(|i| i.id == *z));
-    // }
-
-    // for x in ynames.iter() {
-    //     println!("{} {}, {:?}", *x, names[*x], nodes.iter().find(|i| i.id == *x));
-    // }
-
-
-    // print_node(&nodes, names, 299);
-    // print_node(&nodes, names, 37);
-    // print_node(&nodes, names, 82);
-    // nodes_with_input(&nodes, 37);
-    // nodes_with_input(&nodes, 273);
-
-    let swaps = vec![
-        305, 127,
-        267, 115,
-        173, 179,
-        299, 192,];
 
     let result = swaps
         .iter()
@@ -157,38 +122,97 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<String> {
         .join(",");
 
     Ok(result)
-
-    //Err(anyhow!("Not implemented"))
 }
 
 
-fn nodes_with_input(nodes: &[Node], i: usize) {
-    for n in nodes.iter() {
-        if match n.op {
-            NodeOp::And(arg0, arg1) => arg0 == i || arg1 == i,
-            NodeOp::Or(arg0, arg1) => arg0 == i || arg1 == i,
-            NodeOp::Xor(arg0, arg1) => arg0 == i || arg1 == i,
-            _ => false,
-        }{
-            println!("{:?}", n);
+fn repair_out_xor(nodes: &mut HashMap<usize, Node>, x: usize, z: usize, swaps: &mut Vec<usize>) {
+    let out_node = nodes.get(&z).unwrap();
+    match out_node.op {
+        NodeOp::And(_, _)
+        | NodeOp::Or(_, _)
+        | NodeOp::Const(_) => {
+            // the output stage of an adder must be XOR gate
+            // if it is not, traverse the gate chain from input
+            // site through 2 XORs to get the node
+            if let Some(xor2) = find_z_from_x(&nodes, x) {
+                swap_nodes(nodes, z, xor2);
+                swaps.push(z);
+                swaps.push(xor2);
+            }
+        },
+        NodeOp::Xor(arg0, arg1) => {
+            repair_out_xor_input(nodes, x, arg0, swaps);
+            repair_out_xor_input(nodes, x, arg1, swaps);
         }
-        
+    };
+}
+
+fn repair_out_xor_input(nodes: &mut HashMap<usize, Node>, x: usize, arg: usize, swaps: &mut Vec<usize>) {
+    let xor_in_node = nodes.get(&arg).unwrap();
+    match xor_in_node.op {
+        NodeOp::Or(_, _) => {
+            // if input comes from OR gate, most likely it is Carry from
+            // previous stage. It is fine, leaving it as-is
+        },
+        NodeOp::Xor(_, _) => {
+            // input comes from XOR gate, most likely that came from 1st stage
+            // half-adder XOR, It is fine, leave as-is
+        },
+        NodeOp::And(_, _)
+        | NodeOp::Const(_) => {
+            // unexpected input
+            // assuming that carry from previous bit is fine, let's adjust this one to be from
+            // 1st stage half-adder's output
+            if let Some(xor1) = node_xor_with_input(nodes, x) {
+                swap_nodes(nodes, arg, xor1);
+                swaps.push(arg);
+                swaps.push(xor1);
+            }
+        },
     }
 }
 
-fn print_node(nodes: &[Node], names: &[String], id: usize) {
-    let node = nodes.iter().find(|i| i.id == id).unwrap();
-
-    println!("{} {:?}", names[node.id], node);
+fn find_z_from_x(nodes: &HashMap<usize, Node>, x: usize) -> Option<usize> {
+    let xor1 = node_xor_with_input(nodes, x)?;
+    node_xor_with_input(nodes, xor1)
 }
 
-fn swap_nodes(nodes: &mut [Node], n1: usize, n2: usize) {
-    let i2 = nodes.iter().position(|i|i.id == n2).unwrap();
-    nodes.iter_mut().find(|i|i.id == n1).as_mut().unwrap().id = n2;
-    nodes.get_mut(i2).unwrap().id = n1;
+fn node_xor_with_input(nodes: &HashMap<usize, Node>, input: usize) -> Option<usize> {
+    for node in nodes.values() {
+        match node.op {
+            NodeOp::Xor(arg0, arg1) if arg0 == input || arg1 == input => {
+                return Some(node.id);
+            },
+            _ => {},
+        }
+    }
+
+    None
 }
 
-fn add_numbers(x: u64, y: u64, nodes: &[Node], xnames: &[usize], ynames: &[usize], znames: &[usize]) -> u64 {
+fn swap_nodes(nodes: &mut HashMap<usize, Node>, n1: usize, n2: usize) {
+
+    let t = nodes.get(&n1).unwrap().op;
+    nodes.get_mut(&n1).unwrap().op = nodes.get(&n2).unwrap().op;
+    nodes.get_mut(&n2).unwrap().op = t;
+}
+
+fn find_defective_bits(nodes: &HashMap<usize, Node>, xnames: &[usize], ynames: &[usize], znames: &[usize]) -> Vec<usize> {
+
+    let mut defective = Vec::new();
+
+    for bit in 0..xnames.len() {
+
+        let calc_result = add_numbers(1 << bit, 0, &nodes, &xnames, &ynames, &znames);
+        if calc_result != 1 << bit {
+            defective.push(bit);
+        }
+    }
+
+    defective
+}
+
+fn add_numbers(x: u64, y: u64, nodes: &HashMap<usize, Node>, xnames: &[usize], ynames: &[usize], znames: &[usize]) -> u64 {
     let mut wires = vec![None; nodes.len()];
 
     int_to_wires(&mut wires, xnames, x);
@@ -199,11 +223,11 @@ fn add_numbers(x: u64, y: u64, nodes: &[Node], xnames: &[usize], ynames: &[usize
     wires_to_int(&wires, znames)
 }
 
-fn process_adder(nodes: &[Node], values: &mut [Option<bool>]) {
+fn process_adder(nodes: &HashMap<usize, Node>, values: &mut [Option<bool>]) {
     let mut new_values = true;
     while new_values {
         new_values = false;
-        for node in nodes.iter() {
+        for node in nodes.values() {
             if values[node.id].is_none() {
                 values[node.id] = node.op.eval(|v| values[v]);
                 new_values |= values[node.id].is_some();
@@ -272,7 +296,7 @@ mod tests {
     #[rstest]
     #[case(load_sample("sample_0.txt")?)]
     #[case(load_sample("sample.txt")?)]
-    //#[case(load_sample("input.txt")?)]
+    #[case(load_sample("input.txt")?)]
     fn test_sample_p1(#[case] (parsed, expected, _): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
         let result1 = calculate_p1(&parsed)?;
@@ -282,7 +306,6 @@ mod tests {
     }
 
     #[rstest]
-    //#[case(load_sample("sample.txt")?)]
     #[case(load_sample("input.txt")?)]
     fn test_sample_p2(#[case] (parsed, _, expected): (ParsedInput, Option<u64>, Option<u64>)) -> anyhow::Result<()> {
 
