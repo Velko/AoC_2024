@@ -548,7 +548,9 @@ Ok, so it is a defective adder? Most likely a ripple-carry one. I have pretty go
 but to figure out how to repair it programmatically - that's a whole another story.
 
 Did not really had time for it either, so I had to return to it only after Christmas. Still had no idea of algorithmic solution,
-but solving it manually still gives the result. I'll probably will come up with an automated solution some day.
+but solving it manually still gives the result.
+
+Later I wrote an algorithm that detects and fixes the issues present in my input, but it probably is not able to handle all cases from other inputs.
 
 
 Day 25
@@ -557,7 +559,7 @@ Day 25
 Part 1
 ------
 
-An that's it? Felt like a puzzle for Day 1.
+And that's it? Felt like a puzzle for Day 1.
 
 Part 2
 ------
