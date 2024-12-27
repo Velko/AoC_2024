@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum NodeOp {
     Const(bool),
     And(usize, usize),
@@ -26,7 +26,7 @@ enum NodeOp {
     Xor(usize, usize),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Node {
     id: usize,
     op: NodeOp,
@@ -86,18 +86,25 @@ fn calculate_p1(input: &ParsedInput) -> anyhow::Result<u64> {
     Ok(wires_to_int(&values, &znames))
 }
 
-fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
+fn calculate_p2(input: &ParsedInput) -> anyhow::Result<String> {
     let (names, nodes) = input;
+
+    let mut nodes = nodes.clone();
 
     let xnames = find_nodes(names, "x", SeqOrder::Ascending);
     let ynames = find_nodes(names, "y", SeqOrder::Ascending);
     let znames = find_nodes(names, "z", SeqOrder::Descending);
 
 
+    swap_nodes(&mut nodes, 305, 127);
+    swap_nodes(&mut nodes, 267, 115);
+    swap_nodes(&mut nodes, 173, 179);
+    swap_nodes(&mut nodes, 299, 192);
+
     println!("Xnames: {}", xnames.len());
     for bit in 0..xnames.len() {
 
-        let calc_result = add_numbers(1 << bit, 0, nodes, &xnames, &ynames, &znames);
+        let calc_result = add_numbers(1 << bit, 0, &nodes, &xnames, &ynames, &znames);
         if calc_result != 1 << bit {
             println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
         }
@@ -106,7 +113,7 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
     println!("Ynames: {}", ynames.len());
     for bit in 0..ynames.len() {
 
-        let calc_result = add_numbers(0, 1 << bit, nodes, &xnames, &ynames, &znames);
+        let calc_result = add_numbers(0, 1 << bit, &nodes, &xnames, &ynames, &znames);
         if calc_result != 1 << bit {
             println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << bit,  calc_result);
         }
@@ -115,7 +122,7 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
     println!("XYnames: {}", ynames.len());
     for bit in 0..ynames.len() {
 
-        let calc_result = add_numbers(1 << bit, 1 << bit, nodes, &xnames, &ynames, &znames);
+        let calc_result = add_numbers(1 << bit, 1 << bit, &nodes, &xnames, &ynames, &znames);
         if calc_result != 1 << (bit + 1) {
             println!("Bit #{}, Expect: {:x} Res: {:x}", bit, 1u64 << (bit + 1),  calc_result);
         }
@@ -130,7 +137,32 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
     //     println!("{} {}, {:?}", *x, names[*x], nodes.iter().find(|i| i.id == *x));
     // }
 
-    let i = 11;
+
+    // print_node(&nodes, names, 299);
+    // print_node(&nodes, names, 37);
+    // print_node(&nodes, names, 82);
+    // nodes_with_input(&nodes, 37);
+    // nodes_with_input(&nodes, 273);
+
+    let swaps = vec![
+        305, 127,
+        267, 115,
+        173, 179,
+        299, 192,];
+
+    let result = swaps
+        .iter()
+        .map(|s|&names[*s])
+        .sorted()
+        .join(",");
+
+    Ok(result)
+
+    //Err(anyhow!("Not implemented"))
+}
+
+
+fn nodes_with_input(nodes: &[Node], i: usize) {
     for n in nodes.iter() {
         if match n.op {
             NodeOp::And(arg0, arg1) => arg0 == i || arg1 == i,
@@ -142,35 +174,18 @@ fn calculate_p2(input: &ParsedInput) -> anyhow::Result<u64> {
         }
         
     }
-
-    // print_node(nodes, names, 240);
-    // print_node(nodes, names, 239);
-    // print_node(nodes, names, 10);
-    // print_node(nodes, names, 55);
-    // print_node(nodes, names, 238);
-    // print_node(nodes, names, 307);
-    // print_node(nodes, names, 9);
-    // print_node(nodes, names, 54);
-    
-    // print_node(nodes, names, 216);
-
-
-
-
-
-    print_node(nodes, names, 305); //z11
-    print_node(nodes, names, 11); //x11
-    print_node(nodes, names, 56); //y11
-
-
-    Err(anyhow!("Not implemented"))
 }
-
 
 fn print_node(nodes: &[Node], names: &[String], id: usize) {
     let node = nodes.iter().find(|i| i.id == id).unwrap();
 
     println!("{} {:?}", names[node.id], node);
+}
+
+fn swap_nodes(nodes: &mut [Node], n1: usize, n2: usize) {
+    let i2 = nodes.iter().position(|i|i.id == n2).unwrap();
+    nodes.iter_mut().find(|i|i.id == n1).as_mut().unwrap().id = n2;
+    nodes.get_mut(i2).unwrap().id = n1;
 }
 
 fn add_numbers(x: u64, y: u64, nodes: &[Node], xnames: &[usize], ynames: &[usize], znames: &[usize]) -> u64 {
