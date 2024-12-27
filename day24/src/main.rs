@@ -267,6 +267,7 @@ impl NodeOp {
 
 #[cfg(test)]
 mod tests {
+    use std::hash::{DefaultHasher, Hasher};
     use rstest::rstest;
     use super::*;
     use aoc_tools::TestSamples;
@@ -297,7 +298,10 @@ mod tests {
 
         let result2 = calculate_p2(&parsed)?;
 
-        assert_eq!(expected, Some(result2 as u64));
+        let mut hasher = DefaultHasher::new();
+        hasher.write(result2.as_bytes());
+
+        assert_eq!(expected, Some(hasher.finish()));
         Ok(())
     }
 }
