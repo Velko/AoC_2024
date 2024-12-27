@@ -530,3 +530,37 @@ Those non-numeric answers are killing me! Since it is not allowed by authors of 
 solution, I try my best to comply. I have a "test loader" that loads the inputs and expected results from external files (ones, I
 keep private). It was working quite well while the expected answer was numeric. On Day 17 I could get away with concatenating digits,
 now I had no choice, but to calculate a hash of the string.
+
+
+Day 24
+======
+
+Part 1
+------
+
+One of puzzles I've been waiting for whole December! Couldn't really decide if I want to convert the input into code (or even [switch languages](https://en.wikipedia.org/wiki/Verilog)) or just emulate. Went with latter.
+
+
+Part 2
+------
+
+Ok, so it is a defective adder? Most likely a ripple-carry one. I have pretty good ideas how to diagnose which bits are defective,
+but to figure out how to repair it programmatically - that's a whole another story.
+
+Did not really had time for it either, so I had to return to it only after Christmas. Still had no idea of algorithmic solution,
+but solving it manually still gives the result. I'll probably will come up with an automated solution some day.
+
+
+Day 25
+======
+
+Part 1
+------
+
+An that's it? Felt like a puzzle for Day 1.
+
+Part 2
+------
+
+Ok, we all know there is no Part 2. It just had to wait for me to complete Day 24.
+
